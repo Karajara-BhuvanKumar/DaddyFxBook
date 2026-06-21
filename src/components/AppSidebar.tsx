@@ -19,6 +19,8 @@ import {
   Award,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 
 type NavItem = {
@@ -99,8 +101,12 @@ function NavRow({ item, collapsed, isActive }: { item: NavItem; collapsed: boole
 export default function AppSidebar() {
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { settings } = useUserSettings();
   const [collapsed, setCollapsed] = useState(false);
-  const initial = (user?.email?.[0] ?? "u").toUpperCase();
+  
+  const initial = (settings?.display_name || user?.email || "U").slice(0, 2).toUpperCase();
+  const displayName = settings?.display_name || user?.email?.split("@")[0] || "User";
+  const username = settings?.username ? `@${settings.username}` : user?.email || "";
 
   return (
     <aside
@@ -140,20 +146,23 @@ export default function AppSidebar() {
 
       {/* User card */}
       {!collapsed && (
-        <div className="mx-4 mt-2 mb-6 rounded-2xl bg-[#0B0B0B] border border-white/[0.02] p-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors cursor-pointer relative group">
-          <div className="w-10 h-10 rounded-xl bg-[#2A2A2A] text-zinc-400 flex items-center justify-center font-bold text-sm shrink-0">
-            {initial}
-          </div>
+        <div className="mx-4 mt-2 mb-6 rounded-2xl bg-muted/40 border border-border/50 p-3 flex items-center gap-3 hover:bg-muted/60 transition-colors cursor-pointer relative group">
+          <Avatar className="w-10 h-10 rounded-xl border border-border">
+            <AvatarImage src={settings?.avatar_url ?? undefined} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm rounded-xl">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-[13px] font-semibold text-zinc-300 truncate">
-                {user?.email?.split("@")[0] ?? "trading ve..."}
+              <p className="text-[13px] font-semibold text-foreground truncate">
+                {displayName}
               </p>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-white/[0.08] text-zinc-500 bg-white/[0.02]">FREE</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-border text-muted-foreground bg-muted/30">FREE</span>
             </div>
-            <p className="text-[11px] text-zinc-500 truncate">{user?.email ?? "tradingview47@gmail.com"}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{username}</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-500 absolute right-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground absolute right-4 opacity-50 group-hover:opacity-100 transition-opacity" />
         </div>
       )}
 

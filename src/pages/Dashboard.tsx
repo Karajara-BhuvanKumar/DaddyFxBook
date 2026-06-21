@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTrades } from "@/hooks/useTrades";
 import { DollarSign, Clock, CheckCircle2, Target, Activity, BarChart3, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { DayTradesPopup } from "@/components/DayTradesPopup";
 
 const timeframes = ["1D", "1W", "1M", "3M", "ALL"] as const;
@@ -37,13 +37,15 @@ export default function Dashboard() {
     let cumulative = 0;
     const points = sorted.map((t) => {
       cumulative += Number(t.pnl);
+      const dateObj = new Date(t.close_time);
       return {
-        date: new Date(t.close_time).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        date: dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        fullDate: dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }),
         cumulative: Number(cumulative.toFixed(2)),
       };
     });
     if (points.length === 1) {
-      return [{ date: "Start", cumulative: 0 }, points[0]];
+      return [{ date: "Start", fullDate: "Start", cumulative: 0 }, points[0]];
     }
     return points;
   }, [filteredTrades]);
@@ -206,36 +208,36 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Performance */}
         <div
-          className="lg:col-span-3 rounded-[20px] flex flex-col transition-colors"
+          className="lg:col-span-3 rounded-2xl flex flex-col transition-colors border border-white/[0.05] relative overflow-hidden"
           style={{
-            height: 430,
-            padding: 32,
-            background: "#0B0B0B",
+            height: 480,
+            padding: "32px 32px 16px 32px",
+            background: "#080808",
           }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-start justify-between mb-8 z-10">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">PERFORMANCE</span>
+                <TrendingUp className="w-4 h-4 text-zinc-500" />
+                <span className="text-[12px] font-bold text-zinc-500 tracking-widest uppercase">PERFORMANCE</span>
               </div>
-              <div className="flex items-center gap-3">
-                <p className={`font-black leading-none ${totalPnl >= 0 ? "text-profit" : "text-loss"}`} style={{ fontSize: 32 }}>
+              <div className="flex items-center gap-4">
+                <p className={`font-black leading-none tracking-tight ${totalPnl >= 0 ? "text-[#3b82f6]" : "text-[#ef4444]"}`} style={{ fontSize: 44 }}>
                   {totalPnl >= 0 ? "+" : "-"}${Math.abs(totalPnl).toFixed(2)}
                 </p>
-                <span className="flex items-center gap-1 bg-blue-500/10 text-blue-500 px-2.5 py-1 rounded-full text-[13px] font-bold border border-blue-500/20">
+                <span className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[14px] font-bold border ${totalPnl >= 0 ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
                   <TrendingUp className="w-3.5 h-3.5" />
                   200.0%
                 </span>
               </div>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 bg-[#121212] p-1 rounded-xl border border-white/[0.05]">
               {timeframes.map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all duration-200 ${timeframe === tf
-                      ? "bg-[#2A2A2A] text-white"
+                  className={`px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all duration-200 ${timeframe === tf
+                      ? "bg-[#2A2A2A] text-white shadow-sm"
                       : "text-zinc-500 hover:text-white"
                     }`}
                 >
@@ -245,65 +247,116 @@ export default function Dashboard() {
             </div>
           </div>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset={gradientOffset} stopColor="var(--chart-profit)" stopOpacity={1} />
-                    <stop offset={gradientOffset} stopColor="var(--chart-loss)" stopOpacity={1} />
-                  </linearGradient>
-                  <linearGradient id="splitFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset={gradientOffset} stopColor="var(--chart-profit)" stopOpacity={gradientOffset > 0 ? 0.15 : 0} />
-                    <stop offset={gradientOffset} stopColor="var(--chart-loss)" stopOpacity={gradientOffset < 1 ? 0.15 : 0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: "var(--text-secondary)", fontSize: 11, fontFamily: "Inter" }}
-                  axisLine={false}
-                  tickLine={false}
-                  dy={8}
-                />
-                <YAxis
-                  orientation="right"
-                  tick={{ fill: "var(--text-secondary)", fontSize: 11, fontFamily: "Inter" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `$${v}`}
-                  dx={4}
-                  width={48}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--card-bg)",
-                    border: "1px solid var(--border-color)",
-                    borderRadius: "12px",
-                    color: "var(--text-primary)",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                    padding: "10px 14px",
-                    fontFamily: "Inter",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, "P&L"]}
-                  labelStyle={{ color: "var(--text-secondary)", fontSize: "11px", marginBottom: "4px" }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="cumulative"
-                  stroke="url(#splitColor)"
-                  fill="url(#splitFill)"
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{ r: 5, fill: "var(--chart-profit)", stroke: "var(--card-bg)", strokeWidth: 2 }}
-                  animationDuration={900}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="flex-1 -mx-4 -mb-2 relative z-10">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset={gradientOffset} stopColor="#3b82f6" stopOpacity={1} />
+                      <stop offset={gradientOffset} stopColor="#ef4444" stopOpacity={1} />
+                    </linearGradient>
+                    <linearGradient id="splitFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="#3b82f6" stopOpacity={0.4} />
+                      <stop offset={gradientOffset} stopColor="#3b82f6" stopOpacity={0} />
+                      <stop offset={gradientOffset} stopColor="#ef4444" stopOpacity={0} />
+                      <stop offset="1" stopColor="#ef4444" stopOpacity={0.4} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={true} horizontal={true} />
+                  <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "#64748B", fontSize: 11, fontFamily: "Inter", fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={16}
+                    minTickGap={30}
+                  />
+                  <YAxis
+                    orientation="right"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={({ x, y, payload }: any) => {
+                      const isProfit = payload.value >= 0;
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          dx={16}
+                          dy={4}
+                          textAnchor="start"
+                          fill={isProfit ? "#3b82f6" : "#ef4444"}
+                          fontSize={11}
+                          fontFamily="Inter"
+                          fontWeight="600"
+                        >
+                          {payload.value >= 0 ? "" : "-"}${Math.abs(payload.value).toFixed(0)}
+                        </text>
+                      );
+                    }}
+                    width={40}
+                  />
+                  <Tooltip
+                    content={({ active, payload }: any) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const isProfit = data.cumulative >= 0;
+                        const color = isProfit ? "#3b82f6" : "#ef4444";
+                        const sign = isProfit ? "+" : "-";
+                        return (
+                          <div
+                            className="rounded-2xl px-5 py-4"
+                            style={{
+                              background: "#080808",
+                              border: `1px solid ${isProfit ? "rgba(59, 130, 246, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+                              boxShadow: `0 8px 32px ${isProfit ? "rgba(59, 130, 246, 0.15)" : "rgba(239, 68, 68, 0.15)"}`,
+                            }}
+                          >
+                            <p className="text-[#94A3B8] text-[12px] font-semibold mb-2 tracking-wide">
+                              {data.fullDate}
+                            </p>
+                            <p className="font-black text-[32px] tracking-tight leading-none mb-1.5" style={{ color }}>
+                              {sign}${Math.abs(data.cumulative).toFixed(2)}
+                            </p>
+                            <p className="text-[#64748B] text-[10px] font-bold tracking-widest uppercase">
+                              Cumulative P&L
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                    cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="cumulative"
+                    stroke="url(#splitColor)"
+                    fill="url(#splitFill)"
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={({ cx, cy, payload }: any) => {
+                      const isProfit = payload.cumulative >= 0;
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={6}
+                          fill={isProfit ? "#3b82f6" : "#ef4444"}
+                          stroke="#080808"
+                          strokeWidth={3}
+                        />
+                      );
+                    }}
+                    animationDuration={900}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-zinc-500">
+            <div className="flex-1 flex items-center justify-center text-zinc-500 relative z-10">
               <div className="text-center">
-                <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                <TrendingUp className="w-10 h-10 mx-auto mb-3 opacity-20" />
                 <p className="text-sm font-medium">Add trades to see your performance</p>
               </div>
             </div>

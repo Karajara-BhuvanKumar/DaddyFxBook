@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { Search, Plus, Clock, Bell, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserSettings } from "@/hooks/useUserSettings";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { user } = useAuth();
+  const { settings } = useUserSettings();
   const [time, setTime] = useState(new Date());
-  const initial = (user?.email?.[0] ?? "u").toUpperCase();
+  const initial = (settings?.display_name || user?.email || "U").slice(0, 2).toUpperCase();
 
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 1000);
@@ -66,10 +69,13 @@ export default function TopHeader({ title, subtitle }: { title: string; subtitle
         >
           <Bell className="w-4 h-4" />
         </button>
-        <div style={{ height: 44, borderRadius: 12, background: "#0B0B0B" }} className="flex items-center px-1.5 cursor-pointer hover:bg-white/[0.02] transition-colors gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#2A2A2A] text-zinc-400 flex items-center justify-center font-bold text-sm">
-            {initial}
-          </div>
+        <div className="h-11 rounded-xl bg-card border border-border flex items-center px-1.5 cursor-pointer hover:bg-muted/50 transition-colors gap-2">
+          <Avatar className="w-8 h-8 rounded-lg">
+            <AvatarImage src={settings?.avatar_url ?? undefined} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs rounded-lg">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
         </div>
       </div>
     </header>
