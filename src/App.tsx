@@ -23,6 +23,7 @@ const AIScorecard = lazy(() => import("./pages/AIScorecard"));
 const Backtesting = lazy(() => import("./pages/Backtesting"));
 const BacktestSession = lazy(() => import("./pages/BacktestSession"));
 const Settings = lazy(() => import("./pages/Settings"));
+const ShareTrade = lazy(() => import("./pages/ShareTrade"));
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
                   <Route path="/backtesting/:id" element={<BacktestSession />} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
+                <Route path="/trade/share/:tradeId" element={<ShareTrade />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

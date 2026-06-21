@@ -18,9 +18,11 @@ type TradeCardProps = {
   trade: TradeRow;
   formatDate: (dateStr: string) => string;
   onDelete?: (id: string) => void;
+  onEdit?: () => void;
+  onShare?: () => void;
 };
 
-function TradeCard({ trade, formatDate, onDelete }: TradeCardProps) {
+function TradeCard({ trade, formatDate, onDelete, onEdit, onShare }: TradeCardProps) {
   const pnl = Number(trade.pnl);
   const isProfit = pnl >= 0;
 
@@ -66,10 +68,18 @@ function TradeCard({ trade, formatDate, onDelete }: TradeCardProps) {
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-1">
-        <button className="touch-target flex items-center justify-center text-[#3B82F6] hover:brightness-125 transition-all" aria-label="Edit">
+        <button 
+          onClick={onEdit}
+          className="touch-target flex items-center justify-center text-[#3B82F6] hover:brightness-125 transition-all min-w-[44px] min-h-[44px]" 
+          aria-label="Edit Trade"
+        >
           <Pencil className="w-4 h-4" />
         </button>
-        <button className="touch-target flex items-center justify-center text-[#3B82F6] hover:brightness-125 transition-all" aria-label="Share">
+        <button 
+          onClick={onShare}
+          className="touch-target flex items-center justify-center text-[#3B82F6] hover:brightness-125 transition-all min-w-[44px] min-h-[44px]" 
+          aria-label="Share Trade"
+        >
           <Share2 className="w-4 h-4" />
         </button>
         {onDelete && (

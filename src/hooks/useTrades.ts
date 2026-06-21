@@ -87,6 +87,65 @@ export function useAddTrade() {
   });
 }
 
+export function useUpdateTrade() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      tradeData,
+      journalData,
+      checklistData
+    }: {
+      id: string;
+      tradeData: Partial<Trade>;
+      journalData?: Partial<Journal>;
+      checklistData?: Partial<Checklist>;
+    }) => {
+      if (!user) throw new Error("Not authenticated");
+
+      if (Object.keys(tradeData).length > 0) {
+        if (tradeData.direction && tradeData.entry_price && tradeData.exit_price && tradeData.lot_size) {
+           tradeData.pnl = calculatePnl(tradeData.direction, tradeData.entry_price, tradeData.exit_price, tradeData.lot_size);
+        }
+        const { error: tradeError } = await supabase
+          .from('trades')
+          .update(tradeData)
+          .eq('id', id)
+          .eq('user_id', user.id);
+        if (tradeError) throw tradeError;
+      }
+
+      if (journalData && Object.keys(journalData).length > 0) {
+        const { data: existingJournal } = await supabase.from('journals').select('id').eq('trade_id', id).maybeSingle();
+        if (existingJournal) {
+          const { error } = await supabase.from('journals').update(journalData).eq('id', existingJournal.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('journals').insert({ ...journalData, trade_id: id, user_id: user.id });
+          if (error) throw error;
+        }
+      }
+
+      if (checklistData && Object.keys(checklistData).length > 0) {
+        const { data: existingChecklist } = await supabase.from('checklists').select('id').eq('trade_id', id).maybeSingle();
+        if (existingChecklist) {
+          const { error } = await supabase.from('checklists').update(checklistData).eq('id', existingChecklist.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('checklists').insert({ ...checklistData, trade_id: id, user_id: user.id });
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['trades'] });
+      qc.invalidateQueries({ queryKey: ['journal'] });
+      qc.invalidateQueries({ queryKey: ['checklist'] });
+    },
+  });
+}
+
 export function useDeleteTrade() {
   const qc = useQueryClient();
   return useMutation({
@@ -270,5 +329,50 @@ export async function fetchExportData(userId: string, startDate?: string, endDat
   );
 
   return { trades, journals, checklists, screenshots };
+}
+
+export function usePublicTrade(tradeId: string | null) {
+  return useQuery({
+    queryKey: ['public-trade', tradeId],
+    queryFn: async () => {
+      if (!tradeId) return null;
+      
+      const { data: trade, error: tradeError } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('id', tradeId)
+        .maybeSingle();
+      if (tradeError) throw tradeError;
+      if (!trade) return null;
+
+      const { data: journal } = await supabase
+        .from('journals')
+        .select('*')
+        .eq('trade_id', tradeId)
+        .maybeSingle();
+
+      const { data: rawScreenshots } = await supabase
+        .from('screenshots')
+        .select('*')
+        .eq('trade_id', tradeId);
+
+      const screenshots = await Promise.all(
+        (rawScreenshots ?? []).map(async (row) => {
+          let path = row.image_url as string;
+          const marker = '/object/public/screenshots/';
+          if (path.includes(marker)) {
+            path = decodeURIComponent(path.split(marker)[1]);
+          }
+          const { data: signed } = await supabase.storage
+            .from('screenshots')
+            .createSignedUrl(path, 3600);
+          return { ...row, signed_url: signed?.signedUrl ?? '' };
+        })
+      );
+
+      return { trade: trade as Trade, journal: journal as Journal | null, screenshots };
+    },
+    enabled: !!tradeId,
+  });
 }
 

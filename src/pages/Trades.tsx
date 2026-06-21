@@ -1,14 +1,18 @@
 import { useState, useMemo } from "react";
-import { useTrades, useAddTrade, useDeleteTrade, calculatePnl } from "@/hooks/useTrades";
+import { useTrades, useAddTrade, useDeleteTrade, calculatePnl, Trade } from "@/hooks/useTrades";
 import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X, SlidersHorizontal, DollarSign, Share2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import TradeCard from "@/components/TradeCard";
+import EditTradeModal from "@/components/EditTradeModal";
+import ShareTradeModal from "@/components/ShareTradeModal";
 
 export default function Trades() {
   const { data: trades = [], isLoading } = useTrades();
   const addTrade = useAddTrade();
   const deleteTrade = useDeleteTrade();
   const [showForm, setShowForm] = useState(false);
+  const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
+  const [sharingTrade, setSharingTrade] = useState<Trade | null>(null);
   const [form, setForm] = useState({
     direction: 'Long' as 'Long' | 'Short',
     entryPrice: '',
@@ -177,7 +181,14 @@ export default function Trades() {
             </div>
           ) : (
             trades.map(t => (
-              <TradeCard key={t.id} trade={t} formatDate={formatDate} onDelete={handleDelete} />
+              <TradeCard 
+                key={t.id} 
+                trade={t as any} 
+                formatDate={formatDate} 
+                onDelete={handleDelete}
+                onEdit={() => setEditingTrade(t)}
+                onShare={() => setSharingTrade(t)}
+              />
             ))
           )}
         </div>
@@ -237,14 +248,25 @@ export default function Trades() {
                     </td>
                     <td className="px-4 py-5 text-right">
                       <div className="flex items-center justify-end gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
-                        <button className="text-[#3B82F6] hover:brightness-125 transition-all">
-                          <Pencil className="w-3.5 h-3.5" />
+                        <button 
+                          onClick={() => setEditingTrade(t)}
+                          className="touch-target flex items-center justify-center text-[#3B82F6] hover:brightness-125 transition-all min-w-[44px] min-h-[44px]"
+                          aria-label="Edit Trade"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </button>
-                        <button className="text-[#3B82F6] hover:brightness-125 transition-all">
-                          <Share2 className="w-3.5 h-3.5" />
+                        <button 
+                          onClick={() => setSharingTrade(t)}
+                          className="touch-target flex items-center justify-center text-[#3B82F6] hover:brightness-125 transition-all min-w-[44px] min-h-[44px]"
+                          aria-label="Share Trade"
+                        >
+                          <Share2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(t.id)} className="text-[#EF4444] hover:brightness-125 transition-all">
-                          <Trash2 className="w-3.5 h-3.5" />
+                        <button 
+                          onClick={() => handleDelete(t.id)} 
+                          className="touch-target flex items-center justify-center text-[#EF4444] hover:brightness-125 transition-all min-w-[44px] min-h-[44px]"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -255,6 +277,18 @@ export default function Trades() {
           </table>
         </div>
       </div>
+
+      <EditTradeModal 
+        trade={editingTrade} 
+        isOpen={!!editingTrade} 
+        onClose={() => setEditingTrade(null)} 
+      />
+      
+      <ShareTradeModal 
+        trade={sharingTrade} 
+        isOpen={!!sharingTrade} 
+        onClose={() => setSharingTrade(null)} 
+      />
     </div>
   );
 }
