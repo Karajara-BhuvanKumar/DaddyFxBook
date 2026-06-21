@@ -30,10 +30,10 @@ export default function AuthPage() {
 
       <div className="w-full max-w-[420px] relative z-10">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 rounded-[20px] btn-premium flex items-center justify-center mx-auto mb-5 shadow-lg">
-            <TrendingUp className="w-8 h-8 text-primary-foreground" />
+          <div className="flex items-center justify-center mx-auto mb-5">
+            <img src="/daddyfxbook-logo.png" alt="DaddyFxBook Logo" className="w-24 h-24 object-contain drop-shadow-2xl" />
           </div>
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">DaddyFX Book</h1>
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">DaddyFxBook</h1>
           <p className="text-base text-muted-foreground mt-2 font-medium">Professional XAUUSD Trading Journal</p>
         </div>
 

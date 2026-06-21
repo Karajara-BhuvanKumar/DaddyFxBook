@@ -123,18 +123,21 @@ export default function AppSidebar() {
       <div className={`px-5 pt-7 pb-4 flex flex-col ${collapsed ? "items-center" : ""}`}>
         <div className="flex items-center gap-2.5 w-full">
           {collapsed ? (
-            <img
-              src="/daddyfxbook-logo.png"
-              alt="DF"
-              className="w-10 h-10 object-contain dark:invert dark:hue-rotate-180"
-            />
-          ) : (
-            <div className="flex items-center gap-2 w-full">
+            <div className="flex justify-center w-full">
               <img
                 src="/daddyfxbook-logo.png"
-                alt="DaddyFxBook"
-                className="h-10 object-contain dark:invert dark:hue-rotate-180"
+                alt="DaddyFxBook Logo"
+                className="w-9 h-9 object-contain"
               />
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 w-full">
+              <img
+                src="/daddyfxbook-logo.png"
+                alt="DaddyFxBook Logo"
+                className="w-9 h-9 object-contain"
+              />
+              <span className="text-[17px] font-extrabold tracking-tight text-foreground">DaddyFxBook</span>
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#d8a400] text-white ml-auto">BETA</span>
             </div>
           )}
