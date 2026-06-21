@@ -52,7 +52,6 @@ GRANT ALL ON public.trading_rules TO service_role;
 ALTER TABLE public.trading_rules ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage own rules" ON public.trading_rules FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE TRIGGER trg_trading_rules_updated BEFORE UPDATE ON public.trading_rules FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-CREATE INDEX idx_trading_rules_user_created ON public.trading_rules(user_id, created_at DESC);
 
 CREATE TABLE public.trades (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -80,11 +79,8 @@ CREATE POLICY "Users can insert own trades" ON public.trades FOR INSERT WITH CHE
 CREATE POLICY "Users can update own trades" ON public.trades FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own trades" ON public.trades FOR DELETE USING (auth.uid() = user_id);
 
-CREATE TRIGGER update_trades_updated BEFORE UPDATE ON public.trades
+CREATE TRIGGER update_trades_updated_at BEFORE UPDATE ON public.trades
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-CREATE INDEX idx_trades_user_created ON public.trades(user_id, created_at DESC);
-CREATE INDEX idx_trades_symbol ON public.trades(symbol);
-CREATE INDEX idx_trades_session ON public.trades(session);
 
 CREATE TABLE public.journals (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -108,9 +104,8 @@ CREATE POLICY "Users can insert own journals" ON public.journals FOR INSERT WITH
 CREATE POLICY "Users can update own journals" ON public.journals FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own journals" ON public.journals FOR DELETE USING (auth.uid() = user_id);
 
-CREATE TRIGGER update_journals_updated BEFORE UPDATE ON public.journals
+CREATE TRIGGER update_journals_updated_at BEFORE UPDATE ON public.journals
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-CREATE INDEX idx_journals_user_created ON public.journals(user_id, created_at DESC);
 
 CREATE TABLE public.checklists (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -121,8 +116,7 @@ CREATE TABLE public.checklists (
   fits_plan BOOLEAN DEFAULT false,
   key_levels BOOLEAN DEFAULT false,
   news_checked BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 ALTER TABLE public.checklists ENABLE ROW LEVEL SECURITY;
@@ -131,8 +125,6 @@ CREATE POLICY "Users can view own checklists" ON public.checklists FOR SELECT US
 CREATE POLICY "Users can insert own checklists" ON public.checklists FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own checklists" ON public.checklists FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own checklists" ON public.checklists FOR DELETE USING (auth.uid() = user_id);
-CREATE TRIGGER update_checklists_updated BEFORE UPDATE ON public.checklists
-FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE TABLE public.screenshots (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -147,11 +139,11 @@ ALTER TABLE public.screenshots ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own screenshots" ON public.screenshots FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own screenshots" ON public.screenshots FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own screenshots" ON public.screenshots FOR DELETE USING (auth.uid() = user_id);
-CREATE INDEX idx_screenshots_user_created ON public.screenshots(user_id, created_at DESC);
 
+-- Backtest sessions
 CREATE TABLE public.backtest_sessions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   name TEXT NOT NULL,
   pair TEXT,
   strategy TEXT,
@@ -166,9 +158,10 @@ CREATE POLICY "owners manage backtest sessions" ON public.backtest_sessions FOR 
 CREATE INDEX idx_backtest_sessions_user ON public.backtest_sessions(user_id, created_at DESC);
 CREATE TRIGGER trg_backtest_sessions_updated BEFORE UPDATE ON public.backtest_sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Backtest trades
 CREATE TABLE public.backtest_trades (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   session_id UUID NOT NULL REFERENCES public.backtest_sessions(id) ON DELETE CASCADE,
   trade_number INT,
   pair TEXT NOT NULL,
@@ -197,18 +190,15 @@ ALTER TABLE public.backtest_trades ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "owners manage backtest trades" ON public.backtest_trades FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE INDEX idx_backtest_trades_session ON public.backtest_trades(session_id, created_at);
 CREATE TRIGGER trg_backtest_trades_updated BEFORE UPDATE ON public.backtest_trades FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-CREATE INDEX idx_backtest_trades_user_created ON public.backtest_trades(user_id, created_at DESC);
-CREATE INDEX idx_backtest_trades_session_id ON public.backtest_trades(session_id);
-CREATE INDEX idx_backtest_trades_pair ON public.backtest_trades(pair);
-CREATE INDEX idx_backtest_trades_setup ON public.backtest_trades(setup);
-CREATE INDEX idx_backtest_trades_trade_date ON public.backtest_trades(trade_date);
 
-INSERT INTO storage.buckets (id, name, public) VALUES ('screenshots', 'screenshots', false);
+-- Screenshots storage bucket
+INSERT INTO storage.buckets (id, name, public) VALUES ('screenshots', 'screenshots', true);
 
-CREATE POLICY "Users read own screenshots" ON storage.objects FOR SELECT USING (bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Users upload own screenshots" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Users delete own screenshots" ON storage.objects FOR DELETE USING (bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Anyone can view screenshots" ON storage.objects FOR SELECT USING (bucket_id = 'screenshots');
+CREATE POLICY "Users can upload screenshots" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Users can delete own screenshots" ON storage.objects FOR DELETE USING (bucket_id = 'screenshots' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+-- Avatars storage bucket
 INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', false);
 
 CREATE POLICY "Users read own avatars" ON storage.objects FOR SELECT USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
