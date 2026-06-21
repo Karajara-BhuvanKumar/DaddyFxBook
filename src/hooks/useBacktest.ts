@@ -173,20 +173,11 @@ export function useDeleteTrade(sessionId: string) {
 }
 
 export function useBacktestAIReport(sessionId: string | undefined) {
+  // No longer queries the database; use local state instead
   return useQuery({
     queryKey: ["backtest-ai-report", sessionId],
-    enabled: !!sessionId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("backtest_ai_reports")
-        .select("*")
-        .eq("session_id", sessionId!)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    enabled: false, // Disable since we don't fetch from DB anymore
+    queryFn: async () => null,
   });
 }
 
@@ -201,7 +192,9 @@ export function useGenerateBacktestAIReport() {
       if ((data as any)?.error) throw new Error((data as any).error);
       return data;
     },
-    onSuccess: (_d, sessionId) =>
-      qc.invalidateQueries({ queryKey: ["backtest-ai-report", sessionId] }),
+    onSuccess: (data, sessionId) => {
+      // Set the report data directly into query cache so AIReportPanel can use it
+      qc.setQueryData(["backtest-ai-report", sessionId], data?.report);
+    },
   });
 }

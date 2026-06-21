@@ -77,7 +77,7 @@ export default function AIReportPanel({ sessionId, hasTrades }: { sessionId: str
             <h3 className="font-semibold text-foreground">AI Strategy Report</h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Lovable AI analyses every trade and identifies strengths, weaknesses, recurring patterns, and a strategy scorecard.
+            AI analyses every trade and identifies strengths, weaknesses, recurring patterns, and a strategy scorecard using your Gemini API key.
           </p>
         </div>
         <Button onClick={onGenerate} disabled={!hasTrades || gen.isPending} className="gap-2">
