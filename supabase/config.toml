@@ -1,0 +1,16 @@
+project_id = "hfzfypjngoytwbxnymfi"
+
+[functions.ai-report]
+verify_jwt = true
+
+[functions.ai-insights]
+verify_jwt = true
+
+[functions.backtest-ai]
+verify_jwt = true
+
+[functions.market-events]
+verify_jwt = false
+
+[functions.market-ai]
+verify_jwt = true

@@ -1,0 +1,228 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* TradeFXBook-clone palette — flat, dark, institutional */
+    --background: 225 47% 4%;          /* #05070F */
+    --foreground: 210 40% 98%;         /* #F8FAFC */
+
+    --card: 224 38% 9%;                /* #0E1220 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 38% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;            /* #3B82F6 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 40% 10%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 40% 9%;
+    --muted-foreground: 215 20% 65%;   /* #94A3B8 */
+
+    --accent: 222 40% 12%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 30% 11%;
+    --input: 220 30% 11%;
+    --ring: 217 91% 60%;
+
+    --radius: 1.5rem;
+
+    --profit: 217 91% 60%;
+    --loss: 0 84% 60%;
+    --warning: 38 92% 50%;
+
+    --card-gradient: linear-gradient(180deg, rgba(14, 18, 32, 0.96) 0%, rgba(9, 12, 22, 0.96) 100%);
+    --card-border: rgba(255, 255, 255, 0.04);
+    --card-glow: none;
+    --glass-bg: rgba(11, 18, 32, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.05);
+
+    --sidebar-background: 222 41% 7%;  /* #090E18 */
+    --sidebar-foreground: 215 20% 65%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 91% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 30% 8%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-feature-settings: 'cv11';
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(220, 25%, 16%);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(220, 25%, 22%);
+  }
+}
+
+@layer utilities {
+  .text-profit { color: hsl(var(--profit)); }
+  .text-loss   { color: hsl(var(--loss)); }
+  .bg-profit   { background-color: hsl(var(--profit)); }
+  .bg-loss     { background-color: hsl(var(--loss)); }
+  .border-profit { border-color: hsl(var(--profit)); }
+  .border-loss   { border-color: hsl(var(--loss)); }
+
+  /* Card surface — flat, soft glassmorphism, no shadow halo */
+  .glass-card {
+    background: var(--card-gradient);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: none;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 1.5rem;
+  }
+
+  /* Calendar cell — softer, more spacious */
+  .calendar-cell {
+    background: #0C1324;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background-color 200ms ease, border-color 200ms ease;
+  }
+  .calendar-cell:hover { background: #111B31; }
+  .calendar-cell-profit { border-color: rgba(59, 130, 246, 0.5); }
+  .calendar-cell-loss   { border-color: rgba(239, 68, 68, 0.5); }
+
+
+  /* Hover lift — kept subtle, no glow */
+  .hover-lift {
+    @apply transition-colors duration-200 ease-out;
+  }
+  .hover-lift:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* === Typography === */
+
+  .text-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    opacity: 0.6;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .text-metric {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 3vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-metric-sm {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-num {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-wordmark {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    font-size: 1.0625rem;
+    color: hsl(var(--foreground));
+  }
+  .brand-wordmark .accent { color: hsl(var(--primary)); }
+
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 9999px;
+    line-height: 1.4;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Legacy glow classes — neutralized (kept so existing markup compiles) */
+  .glow-profit,
+  .glow-loss,
+  .glow-primary {
+    box-shadow: none;
+  }
+
+  .gradient-text {
+    color: hsl(var(--primary));
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  /* Flat primary button — no glow */
+  .btn-premium {
+    background: hsl(var(--primary));
+    box-shadow: none;
+  }
+  .btn-premium:hover {
+    background: hsl(217, 91%, 55%);
+    box-shadow: none;
+  }
+}
