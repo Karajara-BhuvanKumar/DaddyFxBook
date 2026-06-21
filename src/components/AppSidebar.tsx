@@ -69,8 +69,8 @@ function NavRow({ item, collapsed, isActive }: { item: NavItem; collapsed: boole
     <RouterNavLink
       to={item.to}
       className={`relative flex items-center ${collapsed ? "justify-center" : "gap-[14px]"} ${collapsed ? "px-3" : "pl-5 pr-3"} rounded-xl text-[13px] font-medium transition-all duration-200 group ${isActive
-          ? "bg-blue-500/10 text-blue-600 dark:bg-gradient-to-r dark:from-blue-500/20 dark:to-transparent dark:text-white"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          ? "bg-[#0A1224] text-[#3b82f6]"
+          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02]"
         }`}
       style={{ height: 48 }}
     >
@@ -104,7 +104,7 @@ export default function AppSidebar() {
 
   return (
     <aside
-      className={`${collapsed ? "w-[72px]" : "w-[260px]"} min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300 ease-out relative`}
+      className={`${collapsed ? "w-[72px]" : "w-[260px]"} min-h-screen bg-sidebar flex flex-col shrink-0 transition-all duration-300 ease-out relative`}
     >
       <button
         onClick={() => setCollapsed(!collapsed)}
@@ -140,20 +140,20 @@ export default function AppSidebar() {
 
       {/* User card */}
       {!collapsed && (
-        <div className="mx-4 mt-2 mb-6 rounded-2xl bg-card border border-border p-3 flex items-center gap-3 hover:bg-accent/50 dark:hover:bg-white/5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors cursor-pointer relative">
-          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+        <div className="mx-4 mt-2 mb-6 rounded-2xl bg-[#0B0B0B] border border-white/[0.02] p-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors cursor-pointer relative group">
+          <div className="w-10 h-10 rounded-xl bg-[#2A2A2A] text-zinc-400 flex items-center justify-center font-bold text-sm shrink-0">
             {initial}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-[13px] font-semibold text-foreground truncate">
-                {user?.email?.split("@")[0] ?? "trading view"}
+              <p className="text-[13px] font-semibold text-zinc-300 truncate">
+                {user?.email?.split("@")[0] ?? "trading ve..."}
               </p>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-border text-muted-foreground">FREE</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-white/[0.08] text-zinc-500 bg-white/[0.02]">FREE</span>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+            <p className="text-[11px] text-zinc-500 truncate">{user?.email ?? "tradingview47@gmail.com"}</p>
           </div>
-          <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-500" />
+          <ChevronRight className="w-4 h-4 text-zinc-500 absolute right-4 opacity-50 group-hover:opacity-100 transition-opacity" />
         </div>
       )}
 
@@ -172,7 +172,7 @@ export default function AppSidebar() {
             <div key={item.to}>
               <NavRow item={item} collapsed={collapsed} isActive={location.pathname === item.to} />
               {!collapsed && item.children && parentActive && (
-                <div className="ml-6 mt-0.5 mb-1 border-l border-border/50 pl-2 space-y-0.5">
+                <div className="ml-6 mt-0.5 mb-1 border-l border-white/[0.08]/50 pl-2 space-y-0.5">
                   {item.children.map((child) => {
                     const active = location.pathname === child.to;
                     return (
@@ -182,7 +182,7 @@ export default function AppSidebar() {
                         end
                         className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-all duration-150 ${active
                             ? "text-blue-600 dark:text-white bg-blue-500/5 dark:bg-white/5"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02]"
                           }`}
                       >
                         <child.icon className={`w-3.5 h-3.5 shrink-0 ${active ? "text-blue-500" : ""}`} />
@@ -210,7 +210,7 @@ export default function AppSidebar() {
       <div className={`p-3 border-t border-sidebar-border ${collapsed ? "items-center flex flex-col" : ""}`}>
         <button
           onClick={signOut}
-          className={`flex items-center ${collapsed ? "justify-center" : "gap-2"} px-4 py-2 rounded-xl text-[13px] text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all duration-200 w-full group`}
+          className={`flex items-center ${collapsed ? "justify-center" : "gap-2"} px-4 py-2 rounded-[20px] text-[13px] text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all duration-200 w-full group`}
         >
           <LogOut className="w-4 h-4" />
           {!collapsed && <span>Sign Out</span>}

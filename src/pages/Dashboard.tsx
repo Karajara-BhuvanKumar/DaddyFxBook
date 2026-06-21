@@ -95,26 +95,26 @@ export default function Dashboard() {
       label: "TOTAL P&L",
       value: totalPnl,
       icon: DollarSign,
-      iconBg: "bg-blue-500/10 text-blue-500",
-      pill: { label: "TOTAL", tone: "bg-blue-500/20 text-blue-500 text-[10px] px-2 py-0.5 rounded-full font-bold" },
-      sub: `${closedCount} trade${closedCount === 1 ? "" : "s"}`,
-      tone: totalPnl >= 0 ? "text-profit" : "text-loss",
+      iconBg: "bg-[#051020] text-[#3b82f6]",
+      pill: { label: "TOTAL", tone: "bg-[#051020] text-[#3b82f6] text-[10px] px-3 py-1 rounded-full font-bold" },
+      sub: `-> ${closedCount} trades`,
+      tone: "text-[#3b82f6]",
     },
     {
       label: "UNREALIZED",
       value: unrealized,
       icon: Clock,
-      iconBg: "bg-[#d8a400]/10 text-[#d8a400]",
+      iconBg: "bg-[#1a1505] text-[#d8a400]",
       sub: "0 open positions",
-      tone: "text-foreground",
+      tone: "text-white",
     },
     {
       label: "REALIZED",
       value: realized,
       icon: CheckCircle2,
-      iconBg: "bg-blue-500/10 text-blue-500",
+      iconBg: "bg-[#051020] text-[#3b82f6]",
       sub: `${closedCount} closed trades`,
-      tone: realized >= 0 ? "text-profit" : "text-loss",
+      tone: "text-[#3b82f6]",
     },
   ];
 
@@ -140,12 +140,11 @@ export default function Dashboard() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col justify-between rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
+            className="flex flex-col justify-between rounded-[20px] transition-colors"
             style={{
               height: 190,
               padding: 32,
-              background: "var(--card-bg)",
-              border: "1px solid var(--border-color)",
+              background: "#0B0B0B",
             }}
           >
             <div className="flex items-start justify-between">
@@ -157,15 +156,14 @@ export default function Dashboard() {
               )}
             </div>
             <div>
-              <p className="text-[11px] font-bold text-muted-foreground tracking-wider mb-2 uppercase">{stat.label}</p>
+              <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-2 uppercase">{stat.label}</p>
               <p
-                className={`${stat.tone} font-black tracking-tight leading-none drop-shadow-sm`}
-                style={{ fontSize: 32, letterSpacing: "-0.03em" }}
+                className={`${stat.tone} font-black tracking-tight leading-none`}
+                style={{ fontSize: 36, letterSpacing: "-0.03em" }}
               >
                 {stat.value >= 0 ? "+" : "-"}${Math.abs(stat.value).toFixed(2)}
               </p>
-              <p className="text-[12px] text-muted-foreground mt-2 font-medium flex items-center gap-1">
-                {stat.label === "TOTAL P&L" && <span className="text-blue-500">→</span>}
+              <p className="text-[12px] text-zinc-600 mt-3 font-medium flex items-center gap-1">
                 {stat.sub}
               </p>
             </div>
@@ -174,30 +172,29 @@ export default function Dashboard() {
 
         {/* Win Rate card */}
         <div
-          className="flex flex-col justify-between rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
+          className="flex flex-col justify-between rounded-[20px] transition-colors"
           style={{
             height: 190,
             padding: 32,
-            background: "var(--card-bg)",
-            border: "1px solid var(--border-color)",
+            background: "#0B0B0B",
           }}
         >
           <div className="flex items-start justify-between">
-            <div className="w-11 h-11 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-full bg-[#051020] text-[#3b82f6] flex items-center justify-center">
               <Target className="w-[18px] h-[18px]" />
             </div>
           </div>
           <div>
-            <p className="text-[11px] font-bold text-muted-foreground tracking-wider mb-2 uppercase">WIN RATE</p>
+            <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-2 uppercase">WIN RATE</p>
             <p
-              className="text-foreground font-black tracking-tight leading-none"
-              style={{ fontSize: 32, letterSpacing: "-0.03em" }}
+              className="text-white font-black tracking-tight leading-none"
+              style={{ fontSize: 36, letterSpacing: "-0.03em" }}
             >
               {winRate.toFixed(0)}%
             </p>
-            <div className="mt-3 h-1.5 rounded-full bg-secondary overflow-hidden">
+            <div className="mt-4 h-1.5 rounded-full bg-[#1A1A1A] overflow-hidden">
               <div
-                className="h-full rounded-full bg-blue-500 transition-all duration-700"
+                className="h-full rounded-full bg-[#3b82f6] transition-all duration-700"
                 style={{ width: `${Math.min(100, winRate)}%` }}
               />
             </div>
@@ -209,12 +206,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Performance */}
         <div
-          className="lg:col-span-3 rounded-3xl flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
+          className="lg:col-span-3 rounded-[20px] flex flex-col transition-colors"
           style={{
             height: 430,
             padding: 32,
-            background: "var(--card-bg)",
-            border: "1px solid var(--border-color)",
+            background: "#0B0B0B",
           }}
         >
           <div className="flex items-center justify-between mb-4">
@@ -233,14 +229,14 @@ export default function Dashboard() {
                 </span>
               </div>
             </div>
-            <div className="flex gap-1 bg-muted rounded-xl p-1 border border-border">
+            <div className="flex gap-1">
               {timeframes.map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
                   className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all duration-200 ${timeframe === tf
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-[#2A2A2A] text-white"
+                      : "text-zinc-500 hover:text-white"
                     }`}
                 >
                   {tf}
@@ -316,12 +312,11 @@ export default function Dashboard() {
 
         {/* Monthly P&L */}
         <div
-          className="lg:col-span-2 rounded-3xl flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
+          className="lg:col-span-2 rounded-[20px] flex flex-col justify-between transition-colors"
           style={{
             height: 430,
             padding: 20,
-            background: "var(--card-bg)",
-            border: "1px solid var(--border-color)",
+            background: "#0B0B0B",
           }}
         >
           <div className="flex items-center justify-between mb-4">
@@ -336,7 +331,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-border flex items-center justify-center transition-colors text-foreground"
+                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -345,7 +340,7 @@ export default function Dashboard() {
                 </span>
                 <button
                   onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-border flex items-center justify-center transition-colors text-foreground"
+                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -401,15 +396,15 @@ export default function Dashboard() {
                     const isProfit = hasData && data.pnl >= 0;
                     const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
 
-                    let cellClasses = "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-[14px] border ";
+                    let cellClasses = "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-xl ";
                     if (hasData) {
                       if (isProfit) {
-                        cellClasses += "bg-[#ECFDF5] dark:bg-[#0c1c36] border-emerald-500/20 dark:border-blue-500/20 text-emerald-600 dark:text-blue-500 hover:bg-[#D1FAE5] dark:hover:bg-[#0f244a] hover:border-emerald-500/40 dark:hover:border-blue-500/40";
+                        cellClasses += "bg-[#051020] text-[#3b82f6] hover:bg-[#081830]";
                       } else {
-                        cellClasses += "bg-[#FEF2F2] dark:bg-[#240d12] border-red-500/20 dark:border-red-500/20 text-red-600 dark:text-red-500 hover:bg-[#FEE2E2] dark:hover:bg-[#331118] hover:border-red-500/40 dark:hover:border-red-500/40";
+                        cellClasses += "bg-[#1a0505] text-[#ef4444] hover:bg-[#240a0a]";
                       }
                     } else {
-                      cellClasses += "bg-white dark:bg-[#0b0b0b] border-[#E5E7EB] dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-[#121212] hover:border-zinc-300 dark:hover:border-white/10";
+                      cellClasses += "bg-[#121212] hover:bg-[#1A1A1A]";
                     }
                     if (isToday) {
                       cellClasses += " ring-2 ring-blue-500/50";
@@ -466,11 +461,11 @@ export default function Dashboard() {
                   })}
                   {/* Weekly column — mini card */}
                   <div
-                    className={`relative flex flex-col items-center justify-center rounded-[14px] p-2 border transition-all duration-200 ${wt.trades > 0
+                    className={`relative flex flex-col items-center justify-center rounded-xl p-2 transition-all duration-200 ${wt.trades > 0
                         ? wPositive
-                          ? "bg-[#ECFDF5] dark:bg-[#0c1c36] border-emerald-500/20 dark:border-blue-500/20 text-emerald-600 dark:text-blue-500"
-                          : "bg-[#FEF2F2] dark:bg-[#240d12] border-red-500/20 dark:border-red-500/20 text-red-600 dark:text-red-500"
-                        : "bg-white dark:bg-[#0b0b0b] border-[#E5E7EB] dark:border-white/5 text-muted-foreground"
+                          ? "bg-[#051020] text-[#3b82f6]"
+                          : "bg-[#1a0505] text-[#ef4444]"
+                        : "bg-[#121212] text-zinc-600"
                       }`}
                     style={{
                       aspectRatio: "1/1",

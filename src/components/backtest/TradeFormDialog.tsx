@@ -320,7 +320,7 @@ export default function TradeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#080808] border-zinc-900 text-white">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0B0B0B] border-zinc-900 text-white">
         <DialogHeader>
           <DialogTitle className="text-white text-xl font-bold">{initial ? "Edit trade" : "Add backtest trade"}</DialogTitle>
         </DialogHeader>
@@ -333,10 +333,10 @@ export default function TradeFormDialog({
                 type="button"
                 onClick={() => setStep(s.n as 1 | 2 | 3)}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors w-full",
+                  "flex items-center gap-2 px-3 py-2 rounded-[20px] text-sm font-medium transition-colors w-full",
                   step === s.n
                     ? "bg-blue-600/10 text-blue-500 border border-blue-500/20"
-                    : "bg-[#0b0b0b] text-zinc-500 border border-zinc-900 hover:text-zinc-300 hover:border-zinc-800"
+                    : "bg-[#0b0b0b] text-zinc-500 border border-zinc-900 hover:text-zinc-300 hover:border-blue-600/[0.35]"
                 )}
               >
                 <span className={cn(
@@ -355,12 +355,12 @@ export default function TradeFormDialog({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Pair</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-white font-bold h-11 rounded-xl" value={form.pair} onChange={(e) => updateAndRecalc({ pair: e.target.value })} />
+                <Input className="bg-[#060606] border-zinc-900 text-white font-bold h-11 rounded-[20px]" value={form.pair} onChange={(e) => updateAndRecalc({ pair: e.target.value })} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Direction</Label>
                 <Select value={form.direction} onValueChange={(v) => updateAndRecalc({ direction: v as "long" | "short" })}>
-                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white font-bold h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white font-bold h-11 rounded-[20px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="long">Long</SelectItem>
                     <SelectItem value="short">Short</SelectItem>
@@ -369,32 +369,32 @@ export default function TradeFormDialog({
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Entry price</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.entry_price} onChange={(e) => updateAndRecalc({ entry_price: e.target.value })} />
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-[20px]" type="number" step="any" value={form.entry_price} onChange={(e) => updateAndRecalc({ entry_price: e.target.value })} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Stop loss</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.stop_loss} onChange={(e) => updateAndRecalc({ stop_loss: e.target.value })} />
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-[20px]" type="number" step="any" value={form.stop_loss} onChange={(e) => updateAndRecalc({ stop_loss: e.target.value })} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Take profit</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.take_profit} onChange={(e) => updateAndRecalc({ take_profit: e.target.value })} />
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-[20px]" type="number" step="any" value={form.take_profit} onChange={(e) => updateAndRecalc({ take_profit: e.target.value })} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Exit price</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.exit_price} onChange={(e) => updateAndRecalc({ exit_price: e.target.value })} />
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-[20px]" type="number" step="any" value={form.exit_price} onChange={(e) => updateAndRecalc({ exit_price: e.target.value })} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Risk : Reward</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-zinc-500 font-mono h-11 rounded-xl" type="number" step="any" readOnly value={form.rr} />
+                <Input className="bg-[#060606] border-zinc-900 text-zinc-500 font-mono h-11 rounded-[20px]" type="number" step="any" readOnly value={form.rr} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">R gained</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-zinc-500 font-mono h-11 rounded-xl" type="number" step="any" readOnly value={form.r_gained} />
+                <Input className="bg-[#060606] border-zinc-900 text-zinc-500 font-mono h-11 rounded-[20px]" type="number" step="any" readOnly value={form.r_gained} />
                 {invalidRisk && <p className="text-xs text-red-500 mt-1 font-bold">Invalid risk</p>}
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">P&L</Label>
-                <Input className={cn("bg-[#060606] border-zinc-900 font-mono h-11 rounded-xl font-bold", form.pnl ? (parseFloat(form.pnl) > 0 ? "text-blue-500" : "text-red-500") : "text-zinc-500")} type="number" step="any" readOnly value={form.pnl} />
+                <Input className={cn("bg-[#060606] border-zinc-900 font-mono h-11 rounded-[20px] font-bold", form.pnl ? (parseFloat(form.pnl) > 0 ? "text-blue-500" : "text-red-500") : "text-zinc-500")} type="number" step="any" readOnly value={form.pnl} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Outcome</Label>
@@ -413,12 +413,12 @@ export default function TradeFormDialog({
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Date</Label>
-                <Input className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl" type="date" value={form.trade_date} onChange={(e) => updateAndRecalc({ trade_date: e.target.value })} />
+                <Input className="bg-[#060606] border-zinc-900 text-white h-11 rounded-[20px]" type="date" value={form.trade_date} onChange={(e) => updateAndRecalc({ trade_date: e.target.value })} />
               </div>
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Session</Label>
                 <Select value={form.session} onValueChange={(v) => updateAndRecalc({ session: v })}>
-                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-[20px]"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -520,7 +520,7 @@ export default function TradeFormDialog({
               )}
             </StrategyCard>
 
-            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+            <div className="rounded-[20px] border border-blue-500/20 bg-blue-500/5 p-5">
               <div className="text-xs uppercase font-bold tracking-wider text-blue-500 mb-2">Setup Summary</div>
               {summary ? (
                 <pre className="text-sm text-zinc-300 whitespace-pre-wrap font-mono leading-relaxed font-semibold">{summary}</pre>
@@ -537,7 +537,7 @@ export default function TradeFormDialog({
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Market condition</Label>
                 <Select value={form.market_condition} onValueChange={(v) => updateAndRecalc({ market_condition: v })}>
-                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-[20px]"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {MARKET_CONDITIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -546,7 +546,7 @@ export default function TradeFormDialog({
               <div>
                 <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Emotion</Label>
                 <Select value={form.emotion} onValueChange={(v) => updateAndRecalc({ emotion: v })}>
-                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-[20px]"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {EMOTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -555,12 +555,12 @@ export default function TradeFormDialog({
             </div>
             <div>
               <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Notes</Label>
-              <Textarea className="bg-[#060606] border-zinc-900 text-white rounded-xl placeholder:text-zinc-600" rows={4} value={form.notes} onChange={(e) => updateAndRecalc({ notes: e.target.value })} />
+              <Textarea className="bg-[#060606] border-zinc-900 text-white rounded-[20px] placeholder:text-zinc-600" rows={4} value={form.notes} onChange={(e) => updateAndRecalc({ notes: e.target.value })} />
             </div>
             <div>
               <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Screenshot</Label>
               <Input
-                className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl file:text-white file:font-semibold"
+                className="bg-[#060606] border-zinc-900 text-white h-11 rounded-[20px] file:text-white file:font-semibold"
                 type="file"
                 accept="image/*"
                 disabled={uploading}
@@ -578,19 +578,19 @@ export default function TradeFormDialog({
         <DialogFooter className="flex sm:justify-between gap-2 mt-4 pt-4 border-t border-zinc-900/50">
           <div>
             {step > 1 && (
-              <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-900 h-11 rounded-xl font-bold" onClick={() => setStep((step - 1) as 1 | 2 | 3)}>
+              <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-900 h-11 rounded-[20px] font-bold" onClick={() => setStep((step - 1) as 1 | 2 | 3)}>
                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
               </Button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-900 h-11 rounded-xl font-bold" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-900 h-11 rounded-[20px] font-bold" onClick={() => onOpenChange(false)}>Cancel</Button>
             {step < 3 ? (
-              <Button className="bg-white text-black hover:bg-zinc-200 h-11 rounded-xl font-bold px-6" onClick={() => setStep((step + 1) as 1 | 2 | 3)}>
+              <Button className="bg-white text-black hover:bg-zinc-200 h-11 rounded-[20px] font-bold px-6" onClick={() => setStep((step + 1) as 1 | 2 | 3)}>
                 Next <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white h-11 rounded-xl font-bold px-6" onClick={submit} disabled={saving}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white h-11 rounded-[20px] font-bold px-6" onClick={submit} disabled={saving}>
                 {saving ? "Saving…" : initial ? "Save changes" : "Add trade"}
               </Button>
             )}
@@ -611,7 +611,7 @@ function StrategyCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-900 bg-[#0b0b0b] p-5">
+    <div className="rounded-[20px] border border-zinc-900 bg-[#0b0b0b] p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-white">{title}</h3>
         {example && <span className="text-[11px] font-mono font-semibold tracking-wider text-zinc-500 uppercase">{example}</span>}

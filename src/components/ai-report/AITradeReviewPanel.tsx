@@ -22,7 +22,7 @@ export function AITradeReviewPanel({ tradeId }: { tradeId: string }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/40 p-5">
+    <div className="rounded-[20px] border border-white/[0.08]/60 bg-[#0B0B0B]/40 p-5">
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
@@ -45,7 +45,7 @@ export function AITradeReviewPanel({ tradeId }: { tradeId: string }) {
           <button
             onClick={onGenerate}
             disabled={generate.isPending}
-            className="btn-premium text-primary-foreground px-4 py-2 rounded-xl font-semibold text-xs flex items-center gap-2 disabled:opacity-50"
+            className="btn-premium text-primary-foreground px-4 py-2 rounded-[20px] font-semibold text-xs flex items-center gap-2 disabled:opacity-50"
           >
             {generate.isPending ? (
               <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Reviewing...</>

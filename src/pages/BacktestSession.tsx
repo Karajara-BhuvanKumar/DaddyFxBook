@@ -95,7 +95,7 @@ export default function BacktestSession() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <Link to="/backtesting">
-            <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white bg-[#060606] border border-zinc-900 rounded-xl">
+            <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white bg-[#0B0B0B] border border-white/[0.06] rounded-[20px]">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
@@ -112,7 +112,7 @@ export default function BacktestSession() {
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 bg-[#060606] border-zinc-900 text-zinc-300 hover:text-white rounded-xl h-10" disabled={!!exporting || trades.length === 0}>
+              <Button variant="outline" className="gap-2 bg-[#0B0B0B] border-white/[0.06] text-zinc-300 hover:text-white rounded-[20px] h-10" disabled={!!exporting || trades.length === 0}>
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 {exporting ? "Generating…" : "Download"}
               </Button>
@@ -150,7 +150,7 @@ export default function BacktestSession() {
           </DropdownMenu>
           <Button
             onClick={() => { setEditing(null); setFormOpen(true); }}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-10 px-4"
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[20px] h-10 px-4"
           >
             <Plus className="w-4 h-4" /> Add trade
           </Button>
@@ -172,11 +172,11 @@ export default function BacktestSession() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search trades…"
-                className="pl-11 bg-[#060606] border-zinc-900 text-white placeholder:text-zinc-600 rounded-xl h-10"
+                className="pl-11 bg-[#0B0B0B] border-white/[0.06] text-white placeholder:text-zinc-600 rounded-[20px] h-10"
               />
             </div>
             <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-              <SelectTrigger className="w-[140px] bg-[#060606] border-zinc-900 text-zinc-300 rounded-xl h-10"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[140px] bg-[#0B0B0B] border-white/[0.06] text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All outcomes</SelectItem>
                 <SelectItem value="win">Wins</SelectItem>
@@ -185,7 +185,7 @@ export default function BacktestSession() {
               </SelectContent>
             </Select>
             <Select value={sessionFilter} onValueChange={setSessionFilter}>
-              <SelectTrigger className="w-[140px] bg-[#060606] border-zinc-900 text-zinc-300 rounded-xl h-10"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[140px] bg-[#0B0B0B] border-white/[0.06] text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All sessions</SelectItem>
                 {uniqueSessions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -193,10 +193,10 @@ export default function BacktestSession() {
             </Select>
           </div>
 
-          <div className="rounded-2xl border border-zinc-900 bg-[#080808] overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="rounded-[24px] border border-white/[0.06] bg-[#0B0B0B] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#0b0b0b] border-b border-zinc-900 text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
+                <thead className="bg-[#0B0B0B] border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
                   <tr>
                     <th className="text-left px-4 py-3">#</th>
                     <th className="text-left px-4 py-3">Pair</th>
@@ -211,9 +211,9 @@ export default function BacktestSession() {
                     <th className="text-right px-4 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-900/50">
+                <tbody className="divide-y divide-white/[0.06]">
                   {lt ? (
-                    <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Loading…</td></tr>
+                    <tr><td colSpan={11} className="p-6 text-center text-zinc-500 font-medium">Loading…</td></tr>
                   ) : filtered.length === 0 ? (
                     <tr>
                       <td colSpan={11} className="p-8 text-center text-muted-foreground">

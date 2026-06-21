@@ -57,10 +57,10 @@ export default function AITradeReviewsPage() {
   if (trades.length === 0) {
     return (
       <div className="p-6">
-        <Card className="p-12 text-center bg-card border-border/60">
-          <BookOpen className="w-7 h-7 mx-auto mb-3 text-muted-foreground" />
-          <h2 className="text-xl font-bold text-foreground mb-1">No trades yet</h2>
-          <p className="text-sm text-muted-foreground">Add trades to unlock AI insights.</p>
+        <Card className="p-12 text-center bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+          <BookOpen className="w-7 h-7 mx-auto mb-3 text-zinc-500" />
+          <h2 className="text-xl font-bold text-white mb-1">No trades yet</h2>
+          <p className="text-sm text-zinc-500 font-medium">Add trades to unlock AI insights.</p>
         </Card>
       </div>
     );
@@ -68,40 +68,44 @@ export default function AITradeReviewsPage() {
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
-      <Card className="p-5 bg-gradient-to-br from-primary/10 via-card to-card border-border/60">
+      <div className="p-6 bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
-              <BookOpen className="w-6 h-6" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-[20px] bg-blue-500/10 flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <h1 className="text-xl font-black text-white flex items-center gap-2">
                 AI Trade Reviews
-                <span className="badge-pill bg-primary/15 text-primary">PRO</span>
+                <span className="text-[10px] font-extrabold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">PRO</span>
               </h1>
-              <p className="text-[13px] text-muted-foreground">
+              <p className="text-[13px] text-zinc-500 font-medium mt-0.5">
                 {reviews.length} reviewed of {trades.length} trades · graded A+ through F
               </p>
             </div>
           </div>
-          <Button onClick={onGenerate} disabled={generate.isPending} className="gap-2">
+          <button 
+            onClick={onGenerate} 
+            disabled={generate.isPending} 
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 flex items-center gap-2"
+          >
             {generate.isPending ? (
               <><RefreshCw className="w-4 h-4 animate-spin" /> Reviewing...</>
             ) : (
               <><Sparkles className="w-4 h-4" /> {reviews.length ? "Re-review trades" : "Review trades"}</>
             )}
-          </Button>
+          </button>
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-3 bg-card border-border/60 flex items-center gap-3 flex-wrap">
+      <div className="p-4 bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search summary or symbol..."
-            className="pl-9"
+            className="pl-9 bg-[#121212] border-white/[0.08] text-white placeholder:text-zinc-500 focus-visible:ring-blue-500/50 rounded-xl"
           />
         </div>
         <div className="flex gap-1.5">
@@ -109,25 +113,25 @@ export default function AITradeReviewsPage() {
             <button
               key={g}
               onClick={() => setGrade(g)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                 grade === g
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                  ? "bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]"
+                  : "bg-[#121212] border border-white/[0.08] text-zinc-400 hover:text-white hover:bg-white/[0.05]"
               }`}
             >
               {g}
             </button>
           ))}
         </div>
-      </Card>
+      </div>
 
       {filtered.length === 0 ? (
-        <Card className="p-10 text-center bg-card border-border/60 border-dashed">
-          <BookOpen className="w-9 h-9 mx-auto mb-3 text-muted-foreground/60" />
-          <h3 className="font-semibold text-foreground mb-1">
+        <Card className="p-10 text-center bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+          <BookOpen className="w-9 h-9 mx-auto mb-3 text-zinc-600" />
+          <h3 className="font-semibold text-white mb-1">
             {reviews.length === 0 ? "No reviews yet" : "No reviews match your filters"}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-zinc-500 font-medium">
             {reviews.length === 0
               ? "Generate your first round of AI trade reviews."
               : "Try changing the grade filter or clearing the search."}

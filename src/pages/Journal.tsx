@@ -107,11 +107,11 @@ export default function Journal() {
 
       <div className="flex gap-6 min-h-[calc(100vh-12rem)]">
         {/* Trade list */}
-        <div className="w-80 shrink-0 rounded-2xl border border-border bg-card overflow-hidden flex flex-col shadow-sm">
-          <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="w-80 shrink-0 rounded-[20px] border border-white/[0.08] bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm">
+          <div className="p-4 border-b border-white/[0.05] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-bold text-foreground">Trade Journal</h3>
-              <button className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-border text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
+              <button className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/[0.08] text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" /> Live
               </button>
             </div>
@@ -120,8 +120,8 @@ export default function Journal() {
             </span>
           </div>
 
-          <div className="p-2 border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
-            <button className="px-2.5 py-1 rounded-lg bg-secondary text-foreground text-[10px] font-bold tracking-wider uppercase border border-border">
+          <div className="p-2 border-b border-white/[0.05] flex items-center gap-1.5 overflow-x-auto select-none">
+            <button className="px-2.5 py-1 rounded-lg bg-secondary text-foreground text-[10px] font-bold tracking-wider uppercase border border-white/[0.08]">
               AI {trades.length}
             </button>
             <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
@@ -142,12 +142,10 @@ export default function Journal() {
               trades.map(t => (
                 <button key={t.id} onClick={() => setSelectedId(t.id)}
                   className={cn(
-                    "w-full text-left p-4 rounded-xl border transition-all duration-200 flex flex-col",
+                    "w-full text-left p-4 rounded-[20px] border transition-all duration-200 flex flex-col",
                     selectedId === t.id
-                      ? Number(t.pnl) >= 0
-                        ? 'bg-blue-500/10 border-blue-500/30'
-                        : 'bg-red-500/10 border-red-500/30'
-                      : 'bg-card border-border hover:bg-[#F8FAFC] dark:hover:bg-zinc-900/10'
+                      ? 'bg-blue-600/[0.08] border-blue-600/[0.35]'
+                      : 'bg-[#0B0B0B] border-white/[0.06] hover:bg-white/[0.02]'
                   )}>
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
@@ -179,17 +177,15 @@ export default function Journal() {
         {/* Journal editor */}
         <div
           className={cn(
-            "flex-1 rounded-3xl border p-6 overflow-auto transition-all duration-300 shadow-xl dark:shadow-2xl relative",
+            "flex-1 rounded-3xl border p-6 overflow-auto transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
             selectedTrade
-              ? isWinner
-                ? "bg-gradient-to-b from-blue-500/5 dark:from-[#0b172a]/20 via-card to-card border-blue-500/20 dark:border-blue-500/10 shadow-[0_0_50px_-12px_rgba(59,130,246,0.06)] dark:shadow-[0_0_50px_-12px_rgba(59,130,246,0.12)]"
-                : "bg-gradient-to-b from-red-500/5 dark:from-[#2a0b0b]/20 via-card to-card border-red-500/20 dark:border-red-500/10 shadow-[0_0_50px_-12px_rgba(239,68,68,0.06)] dark:shadow-[0_0_50px_-12px_rgba(239,68,68,0.12)]"
-              : "bg-card border-border"
+              ? "bg-[#0B0B0B] border-white/[0.06]"
+              : "bg-[#0B0B0B] border-white/[0.06]"
           )}
         >
           {selectedTrade ? (
             <div className="space-y-6 animate-fade-up">
-              <div className="flex items-center justify-between border-b border-border pb-5">
+              <div className="flex items-center justify-between border-b border-white/[0.05] pb-5">
                 <div className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm">
                     <DollarSign className="w-4 h-4 text-black stroke-[3]" />
@@ -205,18 +201,18 @@ export default function Journal() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="border border-border p-2 rounded-xl text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  <button className="flex items-center gap-1.5 border border-border px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="flex items-center gap-1.5 border border-white/[0.08] px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <FileText className="w-3.5 h-3.5" /> Report
                   </button>
-                  <button className="flex items-center gap-1.5 border border-border px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="flex items-center gap-1.5 border border-white/[0.08] px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> Analytics
                   </button>
                   <button onClick={handleSave} disabled={saveJournal.isPending}
                     className={cn(
-                      "text-white font-bold px-6 py-2 rounded-xl text-xs transition-all disabled:opacity-50 shadow-sm",
+                      "text-white font-bold px-6 py-2 rounded-[20px] text-xs transition-all disabled:opacity-50 shadow-sm",
                       isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                     )}>
                     {saveJournal.isPending ? 'Saving...' : 'Save'}
@@ -242,10 +238,8 @@ export default function Journal() {
                 <textarea value={journal.pre_trade_notes} onChange={e => setJournal(j => ({ ...j, pre_trade_notes: e.target.value }))}
                   placeholder="What did you see? Plan, thesis, levels, risk..."
                   className={cn(
-                    "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
-                    isWinner
-                      ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                      : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                    "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                   )} />
               </div>
 
@@ -257,22 +251,17 @@ export default function Journal() {
                 <textarea value={journal.post_trade_notes} onChange={e => setJournal(j => ({ ...j, post_trade_notes: e.target.value }))}
                   placeholder="What happened? Execution, slippage, improvements..."
                   className={cn(
-                    "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
-                    isWinner
-                      ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                      : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                    "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                   )} />
               </div>
 
               {/* Risk Reward */}
               <div className={cn(
-                "border rounded-xl p-4 flex items-center justify-between transition-all duration-300",
-                isWinner
-                  ? "bg-blue-500/5 dark:bg-[#0b172a]/10 border-blue-500/20 dark:border-blue-500/10"
-                  : "bg-red-500/5 dark:bg-[#2a0b0b]/10 border-red-500/20 dark:border-red-500/10"
+                "rounded-[20px] p-4 flex items-center justify-between transition-all duration-300 bg-[#0B0B0B] border border-white/[0.06]"
               )}>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <SlidersHorizontal className={cn("w-3.5 h-3.5", iconColor)} /> Risk : Reward
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" /> Risk : Reward
                 </span>
                 <div className="flex items-center gap-2">
                   <input
@@ -280,10 +269,8 @@ export default function Journal() {
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${e.target.value}:${j.risk_reward.split(':')[1] ?? ''}` }))}
                     placeholder="1"
                     className={cn(
-                      "w-12 h-8 bg-card text-foreground border border-border rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
-                      isWinner
-                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                   <span className="text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
                   <input
@@ -291,10 +278,8 @@ export default function Journal() {
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${j.risk_reward.split(':')[0] ?? ''}:${e.target.value}` }))}
                     placeholder="2"
                     className={cn(
-                      "w-12 h-8 bg-card text-foreground border border-border rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
-                      isWinner
-                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
               </div>
@@ -307,10 +292,8 @@ export default function Journal() {
                   </label>
                   <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
                     className={cn(
-                      "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
-                      isWinner
-                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
                 <div>
@@ -319,10 +302,8 @@ export default function Journal() {
                   </label>
                   <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
                     className={cn(
-                      "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
-                      isWinner
-                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
               </div>
@@ -335,10 +316,8 @@ export default function Journal() {
                   </label>
                   <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
                     className={cn(
-                      "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
-                      isWinner
-                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
-                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
                 <div>
@@ -386,12 +365,12 @@ export default function Journal() {
                     <button key={item.key} type="button"
                       onClick={() => setChecklist(c => ({ ...c, [item.key]: !c[item.key as keyof typeof c] }))}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs text-left transition-all duration-200",
+                        "flex items-center gap-2 px-3 py-2 rounded-[20px] border text-xs text-left transition-all duration-200",
                         checklist[item.key as keyof typeof checklist]
                           ? isWinner
                             ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-white'
                             : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
-                          : 'bg-card border-border text-muted-foreground hover:bg-secondary'
+                          : 'bg-[#0B0B0B] border-white/[0.08] text-muted-foreground hover:bg-secondary'
                       )}>
                       <div className={cn(
                         "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
@@ -399,7 +378,7 @@ export default function Journal() {
                           ? isWinner
                             ? 'bg-blue-500 border-blue-500'
                             : 'bg-red-500 border-red-500'
-                          : 'border-border dark:border-zinc-700'
+                          : 'border-white/[0.08] dark:border-zinc-700'
                       )}>
                         {checklist[item.key as keyof typeof checklist] && <Check className="w-2.5 h-2.5 text-black stroke-[3]" />}
                       </div>
@@ -408,12 +387,12 @@ export default function Journal() {
                   ))}
                   {customChecklist.map(item => (
                     <div key={item.id} className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs text-left transition-all duration-200",
+                      "flex items-center gap-2 px-3 py-2 rounded-[20px] border text-xs text-left transition-all duration-200",
                       item.checked
                         ? isWinner
                           ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-white'
                           : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
-                        : 'bg-card border-border text-muted-foreground hover:bg-secondary'
+                        : 'bg-[#0B0B0B] border-white/[0.08] text-muted-foreground hover:bg-secondary'
                     )}>
                       <button type="button" onClick={() => toggleCustomChecklist(item.id)} className="flex items-center gap-2 text-left">
                         <div className={cn(
@@ -422,7 +401,7 @@ export default function Journal() {
                             ? isWinner
                               ? 'bg-blue-500 border-blue-500'
                               : 'bg-red-500 border-red-500'
-                            : 'border-border dark:border-zinc-700'
+                            : 'border-white/[0.08] dark:border-zinc-700'
                         )}>
                           {item.checked && <Check className="w-2.5 h-2.5 text-black stroke-[3]" />}
                         </div>
@@ -437,10 +416,8 @@ export default function Journal() {
                 <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 max-w-xs">
                   <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
                     className={cn(
-                      "flex-1 bg-card text-foreground border border-border rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
-                      isWinner
-                        ? "focus:border-blue-500/40"
-                        : "focus:border-red-500/40"
+                      "flex-1 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                   <button type="submit" className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center text-white transition-colors",
@@ -458,14 +435,14 @@ export default function Journal() {
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {screenshots.map(s => (
-                    <div key={s.id} className="w-36 h-24 rounded-xl overflow-hidden border border-border hover:border-blue-500/30 transition-all duration-200 group relative">
+                    <div key={s.id} className="w-36 h-24 rounded-[20px] overflow-hidden border border-white/[0.08] hover:border-blue-500/30 transition-all duration-200 group relative">
                       <img src={(s as { signed_url?: string }).signed_url || s.image_url} alt="Trade screenshot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   ))}
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "w-36 h-24 rounded-xl border border-dashed bg-card flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
-                      isWinner ? "border-border dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-border dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
+                      "w-36 h-24 rounded-[20px] border border-dashed bg-[#0B0B0B] flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
+                      isWinner ? "border-white/[0.08] dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-white/[0.08] dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
                     )}>
                     <Plus className="w-5 h-5 mb-1 text-muted-foreground group-hover:text-foreground transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wider">Add Image</span>

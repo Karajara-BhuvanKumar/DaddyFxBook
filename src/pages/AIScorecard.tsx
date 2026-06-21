@@ -23,17 +23,17 @@ const CATEGORIES: Array<{ key: CategoryKey; label: string; icon: React.Component
 ];
 
 function classColor(c: string) {
-  if (c === "Elite") return "text-profit border-profit/40 bg-profit/15";
-  if (c === "Advanced") return "text-primary border-primary/40 bg-primary/15";
-  if (c === "Developing") return "text-warning border-warning/40 bg-warning/15";
-  return "text-muted-foreground border-border bg-muted/40";
+  if (c === "Elite") return "text-blue-500 border-blue-500/40 bg-blue-500/15";
+  if (c === "Advanced") return "text-blue-400 border-blue-400/40 bg-blue-400/15";
+  if (c === "Developing") return "text-amber-500 border-amber-500/40 bg-amber-500/15";
+  return "text-zinc-500 border-white/[0.08] bg-[#121212]";
 }
 
 function scoreColor(score: number) {
-  if (score >= 85) return "hsl(var(--profit))";
-  if (score >= 70) return "hsl(var(--primary))";
-  if (score >= 50) return "hsl(var(--warning))";
-  return "hsl(var(--loss))";
+  if (score >= 85) return "#3B82F6"; // blue-500
+  if (score >= 70) return "#60A5FA"; // blue-400
+  if (score >= 50) return "#F59E0B"; // amber-500
+  return "#EF4444"; // red-500
 }
 
 export default function AIScorecard() {
@@ -107,52 +107,56 @@ export default function AIScorecard() {
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
-      <Card className="p-5 bg-gradient-to-br from-primary/10 via-card to-card border-border/60">
+      <div className="p-6 bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
-              <Award className="w-6 h-6" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-[20px] bg-blue-500/10 flex items-center justify-center">
+              <Award className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <h1 className="text-xl font-black text-white flex items-center gap-2">
                 AI Trader Scorecard
-                <span className="badge-pill bg-primary/15 text-primary">PRO</span>
+                <span className="text-[10px] font-extrabold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">PRO</span>
               </h1>
-              <p className="text-[13px] text-muted-foreground">
+              <p className="text-[13px] text-zinc-500 font-medium mt-0.5">
                 {latest ? `Last snapshot ${new Date(latest.created_at).toLocaleString()}` : "Live preview from current trades"}
               </p>
             </div>
           </div>
-          <Button onClick={onGenerate} disabled={generate.isPending || trades.length === 0} className="gap-2">
+          <button 
+            onClick={onGenerate} 
+            disabled={generate.isPending || trades.length === 0} 
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 flex items-center gap-2"
+          >
             {generate.isPending ? <><RefreshCw className="w-4 h-4 animate-spin" /> Scoring...</> : <><Sparkles className="w-4 h-4" /> {latest ? "Re-score with AI" : "Score with AI"}</>}
-          </Button>
+          </button>
         </div>
-      </Card>
+      </div>
 
       {trades.length === 0 ? (
-        <Card className="p-10 text-center bg-card border-border/60 border-dashed">
-          <Award className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
-          <h3 className="font-semibold text-foreground mb-1">No trades yet</h3>
-          <p className="text-sm text-muted-foreground">More trading history is required to generate meaningful AI reports.</p>
-        </Card>
+        <div className="p-10 text-center bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
+          <Award className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+          <h3 className="font-semibold text-white mb-1">No trades yet</h3>
+          <p className="text-sm text-zinc-500 font-medium">More trading history is required to generate meaningful AI reports.</p>
+        </div>
       ) : (
         <>
           {/* Overall */}
-          <Card className="p-6 bg-card border-border/60">
+          <Card className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
             <div className="flex items-center gap-6 flex-wrap">
               <Gauge value={display.overall} size={140} label="Overall" />
               <div className="flex-1 min-w-[200px]">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Trader classification</p>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className={`text-2xl font-extrabold px-3 py-1 rounded-lg border ${classColor(display.classification)}`}>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Trader classification</p>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className={`text-2xl font-extrabold px-4 py-1.5 rounded-xl border ${classColor(display.classification)}`}>
                     {display.classification}
                   </span>
-                  <span className="text-sm text-muted-foreground">Based on {display.trade_count} trades</span>
+                  <span className="text-sm text-zinc-500 font-medium">Based on {display.trade_count} trades</span>
                 </div>
                 {insights?.overall_summary ? (
-                  <p className="text-sm text-foreground/90 leading-relaxed mt-2">{insights.overall_summary}</p>
+                  <p className="text-sm text-zinc-300 font-medium leading-relaxed mt-2">{insights.overall_summary}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">Run AI scoring to get a personalized narrative.</p>
+                  <p className="text-sm text-zinc-500 italic font-medium mt-2">Run AI scoring to get a personalized narrative.</p>
                 )}
               </div>
             </div>
@@ -163,12 +167,12 @@ export default function AIScorecard() {
             {CATEGORIES.map((cat) => {
               const r = display[cat.key] as ScoreResult;
               return (
-                <Card key={cat.key} className="p-4 bg-card border-border/60">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <Card key={cat.key} className="p-5 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
                       <cat.icon className="w-4 h-4" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">{cat.label}</h3>
+                    <h3 className="font-bold text-white text-sm">{cat.label}</h3>
                   </div>
                   <Gauge value={r.score} size={110} label="" />
                 </Card>
@@ -185,40 +189,40 @@ export default function AIScorecard() {
               const r = display[cat.key] as ScoreResult;
               const aiCat = insights?.categories?.[cat.key];
               return (
-                <Card key={cat.key} className="p-5 bg-card border-border/60">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <cat.icon className="w-4 h-4 text-primary" />
-                      <h3 className="font-bold text-foreground text-sm">{cat.label}</h3>
+                <Card key={cat.key} className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <cat.icon className="w-4 h-4 text-blue-500" />
+                      <h3 className="font-bold text-white text-sm">{cat.label}</h3>
                     </div>
                     <span className="text-xl font-extrabold font-mono" style={{ color: scoreColor(r.score) }}>
                       {r.score.toFixed(0)}
                     </span>
                   </div>
 
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-3 mb-5">
                     {r.factors.map((f) => (
                       <div key={f.label}>
-                        <div className="flex items-center justify-between text-[12px] mb-1">
-                          <span className="text-foreground/90 font-medium">{f.label}</span>
-                          <span className="text-muted-foreground font-mono">{Math.round(f.value * 100)}</span>
+                        <div className="flex items-center justify-between text-[12px] mb-1.5">
+                          <span className="text-zinc-300 font-bold">{f.label}</span>
+                          <span className="text-zinc-400 font-mono">{Math.round(f.value * 100)}</span>
                         </div>
-                        <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-[#121212] rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${f.value * 100}%`, background: scoreColor(f.value * 100) }} />
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{f.detail}</p>
+                        <p className="text-[11px] text-zinc-500 font-medium mt-1">{f.detail}</p>
                       </div>
                     ))}
                   </div>
 
                   {aiCat ? (
-                    <div className="border-t border-border/60 pt-3 space-y-2">
-                      <p className="text-[12.5px] text-foreground/90 leading-relaxed">{aiCat.explanation}</p>
+                    <div className="border-t border-white/[0.05] pt-4 space-y-3">
+                      <p className="text-[13px] text-zinc-300 font-medium leading-relaxed">{aiCat.explanation}</p>
                       {aiCat.recommendations.length > 0 && (
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                           {aiCat.recommendations.map((rec, i) => (
-                            <li key={i} className="text-[12px] text-foreground/80 flex gap-2 leading-relaxed">
-                              <span className="text-primary mt-0.5">→</span>
+                            <li key={i} className="text-[12.5px] text-zinc-400 font-medium flex gap-2.5 leading-relaxed">
+                              <span className="text-blue-500 font-bold mt-0.5">→</span>
                               <span>{rec}</span>
                             </li>
                           ))}
@@ -226,7 +230,7 @@ export default function AIScorecard() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-[11.5px] text-muted-foreground italic border-t border-border/60 pt-3">
+                    <p className="text-[12px] text-zinc-500 font-medium italic border-t border-white/[0.05] pt-4">
                       Run AI scoring for personalized improvement recommendations.
                     </p>
                   )}
@@ -253,7 +257,7 @@ function Gauge({ value, size, label }: { value: number; size: number; label: str
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--muted))" strokeWidth={8} fill="none" opacity={0.3} />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#121212" strokeWidth={8} fill="none" opacity={1} />
         <circle
           cx={size / 2} cy={size / 2} r={r}
           stroke={color} strokeWidth={8} fill="none" strokeLinecap="round"
@@ -262,10 +266,10 @@ function Gauge({ value, size, label }: { value: number; size: number; label: str
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-extrabold font-mono text-foreground" style={{ fontSize: size * 0.22 }}>
+        <span className="font-extrabold font-mono text-white" style={{ fontSize: size * 0.22 }}>
           {value.toFixed(0)}
         </span>
-        {label && <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-0.5">{label}</span>}
+        {label && <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mt-0.5">{label}</span>}
       </div>
     </div>
   );
@@ -282,21 +286,21 @@ function HistoryChart({ history }: { history: ScorecardRecord[] }) {
     Consistency: Number(h.consistency_score),
   }));
   return (
-    <Card className="p-5 bg-card border-border/60">
-      <h3 className="font-bold text-foreground text-sm mb-4">Historical Scores</h3>
+    <Card className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+      <h3 className="font-bold text-white text-sm mb-5">Historical Scores</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-            <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={11} />
-            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-            <Line type="monotone" dataKey="Overall" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} />
-            <Line type="monotone" dataKey="Discipline" stroke="hsl(var(--profit))" strokeWidth={1.5} dot={false} opacity={0.6} />
-            <Line type="monotone" dataKey="Risk" stroke="hsl(var(--warning))" strokeWidth={1.5} dot={false} opacity={0.6} />
-            <Line type="monotone" dataKey="Execution" stroke="hsl(var(--loss))" strokeWidth={1.5} dot={false} opacity={0.6} />
-            <Line type="monotone" dataKey="Psychology" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} dot={false} opacity={0.6} />
-            <Line type="monotone" dataKey="Consistency" stroke="hsl(var(--accent-foreground))" strokeWidth={1.5} dot={false} opacity={0.6} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
+            <XAxis dataKey="date" stroke="#A1A1AA" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis domain={[0, 100]} stroke="#A1A1AA" fontSize={11} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={{ background: "#121212", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} itemStyle={{ color: "#fff" }} />
+            <Line type="monotone" dataKey="Overall" stroke="#3B82F6" strokeWidth={3} dot={false} />
+            <Line type="monotone" dataKey="Discipline" stroke="#10B981" strokeWidth={1.5} dot={false} opacity={0.5} />
+            <Line type="monotone" dataKey="Risk" stroke="#F59E0B" strokeWidth={1.5} dot={false} opacity={0.5} />
+            <Line type="monotone" dataKey="Execution" stroke="#EF4444" strokeWidth={1.5} dot={false} opacity={0.5} />
+            <Line type="monotone" dataKey="Psychology" stroke="#8B5CF6" strokeWidth={1.5} dot={false} opacity={0.5} />
+            <Line type="monotone" dataKey="Consistency" stroke="#A855F7" strokeWidth={1.5} dot={false} opacity={0.5} />
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -10,7 +10,7 @@ const sevColor: Record<Weakness["severity"], string> = {
 
 export function WeaknessCard({ item }: { item: Weakness }) {
   return (
-    <Card className="p-4 bg-card border-border/60 hover:border-loss/40 transition-colors">
+    <Card className="p-4 bg-[#0B0B0B] border-white/[0.08]/60 hover:border-loss/40 transition-colors">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-lg bg-loss/15 text-loss flex items-center justify-center shrink-0">
           <AlertTriangle className="w-5 h-5" />

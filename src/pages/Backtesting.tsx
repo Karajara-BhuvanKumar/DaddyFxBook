@@ -55,7 +55,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
 
   return (
     <div 
-      className="rounded-2xl flex flex-col group transition-all duration-200" 
+      className="rounded-[20px] flex flex-col group transition-all duration-200" 
       style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.05)", padding: 24 }}
     >
       <div className="flex items-start justify-between gap-2 mb-4">
@@ -160,7 +160,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
   return (
-    <div className="rounded-xl border border-zinc-900 bg-[#0b0b0b] px-3.5 py-3 transition-colors group-hover:border-zinc-800">
+    <div className="rounded-[20px] border border-zinc-900 bg-[#0b0b0b] px-3.5 py-3 transition-colors group-hover:border-blue-600/[0.35]">
       <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mb-1.5">{label}</div>
       <div
         className={`font-black text-[15px] ${
@@ -194,11 +194,11 @@ export default function Backtesting() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-10 px-4">
+            <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[20px] h-10 px-4">
               <Plus className="w-4 h-4" /> New session
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[#080808] border-zinc-900">
+          <DialogContent className="bg-[#0B0B0B] border-zinc-900">
             <DialogHeader><DialogTitle className="text-white">Create backtest session</DialogTitle></DialogHeader>
             <div className="space-y-4 py-2">
               <div>
@@ -262,7 +262,7 @@ export default function Backtesting() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-44 rounded-xl" />
+            <Skeleton key={i} className="h-44 rounded-[20px]" />
           ))}
         </div>
       ) : !sessions || sessions.length === 0 ? (
@@ -272,7 +272,7 @@ export default function Backtesting() {
           <p className="text-sm text-zinc-500 mb-6 font-medium max-w-md mx-auto">
             Create your first session to start journaling backtests from TradingView.
           </p>
-          <Button onClick={() => setOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-10 px-6 font-bold">
+          <Button onClick={() => setOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-[20px] h-10 px-6 font-bold">
             <Plus className="w-4 h-4" /> Create session
           </Button>
         </div>

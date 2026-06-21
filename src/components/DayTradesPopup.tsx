@@ -95,7 +95,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
         </div>
         <button
           onClick={handleClose}
-          className="rounded-full p-1.5 hover:bg-white/5 transition"
+          className="rounded-full p-1.5 hover:bg-white/[0.02] transition"
           style={{ color: "#94A3B8" }}
           aria-label="Close"
         >

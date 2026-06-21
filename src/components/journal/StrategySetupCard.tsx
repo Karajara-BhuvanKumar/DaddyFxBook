@@ -29,7 +29,7 @@ type Props = {
   onChange: (value: StrategySetup) => void;
 };
 
-const selectTriggerClass = "bg-[#060606] hover:bg-[#0c0c0c] border-zinc-900 hover:border-zinc-800 text-white h-11 rounded-xl transition-colors font-medium text-sm w-full";
+const selectTriggerClass = "bg-[#060606] hover:bg-[#0B0B0B] border-zinc-900 hover:border-blue-600/[0.35] text-white h-11 rounded-[20px] transition-colors font-medium text-sm w-full";
 
 function FieldSelect({
   label,
@@ -80,10 +80,10 @@ function ChipGroup({
             type="button"
             onClick={() => onToggle(opt)}
             className={cn(
-              "px-3.5 py-2 rounded-xl text-xs font-bold border transition-all duration-200 tracking-wide uppercase flex items-center gap-1.5",
+              "px-3.5 py-2 rounded-[20px] text-xs font-bold border transition-all duration-200 tracking-wide uppercase flex items-center gap-1.5",
               active
                 ? "bg-blue-600/10 text-blue-500 border-blue-500/30"
-                : "bg-[#060606] text-zinc-500 border-zinc-900 hover:text-zinc-300 hover:border-zinc-800"
+                : "bg-[#060606] text-zinc-500 border-zinc-900 hover:text-zinc-300 hover:border-blue-600/[0.35]"
             )}
           >
             {active && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
@@ -109,7 +109,7 @@ function SegmentedControl({
       type="single"
       value={value}
       onValueChange={(v) => v && onChange(v)}
-      className="grid grid-cols-2 bg-[#060606] p-1 rounded-xl border border-zinc-900 w-full gap-1"
+      className="grid grid-cols-2 bg-[#060606] p-1 rounded-[20px] border border-zinc-900 w-full gap-1"
     >
       {options.map((opt) => (
         <ToggleGroupItem
@@ -144,8 +144,8 @@ export function StrategySetupCard({ value, onChange }: Props) {
   };
 
   return (
-    <div className="rounded-3xl border border-white/5 bg-[#080808]/80 backdrop-blur-xl shadow-2xl p-6 space-y-6">
-      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+    <div className="rounded-3xl border border-white/[0.08] bg-[#0B0B0B]/80 backdrop-blur-xl shadow-2xl p-6 space-y-6">
+      <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
         <div className="flex items-center gap-2">
           <Layers className="w-5 h-5 text-blue-500" />
           <div>
@@ -158,8 +158,8 @@ export function StrategySetupCard({ value, onChange }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Market Structure */}
         <div className="space-y-4">
-          <div className="rounded-2xl border border-white/5 bg-[#0b0b0b] p-5 space-y-5">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 border-b border-white/5 pb-2">Market Structure</h4>
+          <div className="rounded-[20px] border border-white/[0.08] bg-[#0b0b0b] p-5 space-y-5">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 border-b border-white/[0.05] pb-2">Market Structure</h4>
             
             <div className="space-y-4">
               {/* HTF Structure */}
@@ -194,8 +194,8 @@ export function StrategySetupCard({ value, onChange }: Props) {
 
         {/* Right Column: Parameters & Confluences */}
         <div className="space-y-4 flex flex-col justify-between">
-          <div className="rounded-2xl border border-white/5 bg-[#0b0b0b] p-5 space-y-5">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 border-b border-white/5 pb-2">Parameters & Confluences</h4>
+          <div className="rounded-[20px] border border-white/[0.08] bg-[#0b0b0b] p-5 space-y-5">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 border-b border-white/[0.05] pb-2">Parameters & Confluences</h4>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -244,7 +244,7 @@ export function StrategySetupCard({ value, onChange }: Props) {
           </div>
 
           {/* Setup Summary */}
-          <div className="rounded-2xl border border-blue-500/15 bg-blue-950/10 p-5 mt-auto">
+          <div className="rounded-[20px] border border-blue-500/15 bg-blue-950/10 p-5 mt-auto">
             <div className="text-[10px] uppercase font-bold tracking-wider text-blue-400 mb-2.5">Setup Summary</div>
             {summary ? (
               <pre className="text-xs text-zinc-300 font-mono leading-relaxed whitespace-pre-wrap">{summary}</pre>

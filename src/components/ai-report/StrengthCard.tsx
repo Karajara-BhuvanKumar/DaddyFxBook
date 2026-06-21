@@ -4,7 +4,7 @@ import type { Strength } from "./types";
 
 export function StrengthCard({ item }: { item: Strength }) {
   return (
-    <Card className="p-4 bg-card border-border/60 hover:border-profit/40 transition-colors">
+    <Card className="p-4 bg-[#0B0B0B] border-white/[0.08]/60 hover:border-profit/40 transition-colors">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-lg bg-profit/15 text-profit flex items-center justify-center shrink-0">
           <TrendingUp className="w-5 h-5" />

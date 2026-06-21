@@ -266,7 +266,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-3 lg:grid-cols-9 h-auto gap-1 bg-card/40 p-1 border border-border">
+        <TabsList className="grid grid-cols-3 lg:grid-cols-9 h-auto gap-1 bg-[#0B0B0B]/40 p-1 border border-white/[0.08]">
           <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" />Profile</TabsTrigger>
           <TabsTrigger value="trading" className="gap-2"><SettingsIcon className="h-4 w-4" />Trading</TabsTrigger>
           <TabsTrigger value="rules" className="gap-2"><ShieldCheck className="h-4 w-4" />Rules</TabsTrigger>
@@ -382,7 +382,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground text-center py-6">No rules yet. Add your first one above.</p>
                 )}
                 {rules.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border">
+                  <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-white/[0.08]">
                     <Switch checked={r.active} onCheckedChange={(v) => updateRule.mutate({ id: r.id, patch: { active: v } })} />
                     <Input
                       defaultValue={r.rule}
@@ -408,11 +408,11 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="rounded-lg border border-white/[0.08] bg-muted/30 p-4">
                   <p className="text-label">UTC</p>
                   <p className="text-num text-lg mt-1">{utcNow}</p>
                 </div>
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="rounded-lg border border-white/[0.08] bg-muted/30 p-4">
                   <p className="text-label">IST (Asia/Kolkata)</p>
                   <p className="text-num text-lg mt-1">{istNow}</p>
                 </div>
@@ -457,7 +457,7 @@ export default function Settings() {
                   ))}
                 </div>
               </Field>
-              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-muted/30 p-4">
                 <div>
                   <p className="font-medium">Compact mode</p>
                   <p className="text-sm text-muted-foreground">Denser layouts and smaller spacing.</p>
@@ -573,7 +573,7 @@ function SelectInput({ value, onChange, options }: { value: string; onChange: (v
 
 function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
+    <div className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-muted/30 p-4">
       <div>
         <p className="font-medium">{label}</p>
         <p className="text-sm text-muted-foreground">{desc}</p>
@@ -585,7 +585,7 @@ function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: st
 
 function InfoTile({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-muted/30 p-4">
+    <div className="rounded-lg border border-white/[0.08] bg-muted/30 p-4">
       <p className="text-label">{label}</p>
       <div className="mt-2 text-lg font-semibold">{value}</div>
     </div>

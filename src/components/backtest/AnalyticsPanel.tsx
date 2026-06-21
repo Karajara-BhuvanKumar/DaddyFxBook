@@ -16,8 +16,8 @@ import type { BacktestAnalytics, BreakdownRow } from "@/lib/backtest";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/60 p-4">
-      <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
+    <div className="rounded-[24px] border border-white/[0.06] bg-[#0B0B0B] p-5">
+      <h3 className="text-sm font-bold text-white mb-4">{title}</h3>
       {children}
     </div>
   );
@@ -25,11 +25,11 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
   return (
-    <div className="rounded-lg bg-background/40 border border-border/40 px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="rounded-[20px] bg-[#0B0B0B] border border-white/[0.06] px-4 py-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{label}</div>
       <div
-        className={`font-mono text-base font-semibold ${
-          tone === "profit" ? "text-profit" : tone === "loss" ? "text-loss" : "text-foreground"
+        className={`font-mono text-base font-extrabold ${
+          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-500" : "text-white"
         }`}
       >
         {value}
@@ -39,19 +39,19 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
 }
 
 function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
-  if (rows.length === 0) return <p className="text-xs text-muted-foreground">No data</p>;
+  if (rows.length === 0) return <p className="text-xs text-zinc-500 font-medium">No data</p>;
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {rows.map((r) => (
         <div key={r.key} className="flex items-center justify-between text-xs gap-3">
-          <span className="text-foreground font-medium truncate flex-1">{r.key}</span>
-          <span className="text-muted-foreground tabular-nums">{r.trades}t</span>
-          <span className="text-muted-foreground tabular-nums w-12 text-right">
+          <span className="text-white font-bold truncate flex-1">{r.key}</span>
+          <span className="text-zinc-500 font-medium tabular-nums">{r.trades}t</span>
+          <span className="text-zinc-500 font-medium tabular-nums w-12 text-right">
             {(r.winRate * 100).toFixed(0)}%
           </span>
           <span
-            className={`font-mono font-semibold tabular-nums w-16 text-right ${
-              r.netR >= 0 ? "text-profit" : "text-loss"
+            className={`font-mono font-bold tabular-nums w-16 text-right ${
+              r.netR >= 0 ? "text-blue-500" : "text-red-500"
             }`}
           >
             {r.netR >= 0 ? "+" : ""}{r.netR.toFixed(2)}R
@@ -65,12 +65,12 @@ function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
 export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
   if (a.total === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border/60 p-10 text-center text-sm text-muted-foreground">
+      <div className="rounded-[24px] border border-white/[0.06] bg-[#0B0B0B] p-10 text-center text-sm text-zinc-500 font-medium">
         Add trades to unlock analytics.
       </div>
     );
   }
-  const distColors = ["hsl(var(--profit))", "hsl(var(--loss))", "hsl(var(--muted-foreground))"];
+  const distColors = ["#3B82F6", "#EF4444", "#71717A"];
 
   return (
     <div className="space-y-4">
@@ -100,22 +100,24 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
             <AreaChart data={a.equityCurve}>
               <defs>
                 <linearGradient id="eqg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="idx" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
+              <XAxis dataKey="idx" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
+                  background: "#121212",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
                   fontSize: 12,
+                  color: "#fff"
                 }}
+                itemStyle={{ color: "#fff" }}
               />
-              <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" fill="url(#eqg)" strokeWidth={2} />
+              <Area type="monotone" dataKey="equity" stroke="#3B82F6" fill="url(#eqg)" strokeWidth={3} />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
@@ -124,38 +126,43 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
             <AreaChart data={a.drawdownCurve}>
               <defs>
                 <linearGradient id="ddg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--loss))" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="hsl(var(--loss))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#EF4444" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="idx" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
+              <XAxis dataKey="idx" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
+                  background: "#121212",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
                   fontSize: 12,
+                  color: "#fff"
                 }}
+                itemStyle={{ color: "#fff" }}
               />
-              <Area type="monotone" dataKey="drawdown" stroke="hsl(var(--loss))" fill="url(#ddg)" strokeWidth={2} />
+              <Area type="monotone" dataKey="drawdown" stroke="#EF4444" fill="url(#ddg)" strokeWidth={3} />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
         <Card title="Win / Loss distribution">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={a.distribution}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
+              <XAxis dataKey="name" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
+                  background: "#121212",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
                   fontSize: 12,
+                  color: "#fff"
                 }}
+                itemStyle={{ color: "#fff" }}
+                cursor={{ fill: "rgba(255,255,255,0.02)" }}
               />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {a.distribution.map((_, i) => <Cell key={i} fill={distColors[i % distColors.length]} />)}
@@ -166,18 +173,20 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
         <Card title="Per-trade R">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={a.equityCurve}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="idx" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
+              <XAxis dataKey="idx" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
+                  background: "#121212",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
                   fontSize: 12,
+                  color: "#fff"
                 }}
+                itemStyle={{ color: "#fff" }}
               />
-              <Line type="monotone" dataKey="r" stroke="hsl(var(--primary))" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="r" stroke="#3B82F6" dot={false} strokeWidth={3} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

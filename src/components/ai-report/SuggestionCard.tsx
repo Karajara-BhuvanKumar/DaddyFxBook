@@ -10,7 +10,7 @@ const priColor: Record<Suggestion["priority"], string> = {
 
 export function SuggestionCard({ item }: { item: Suggestion }) {
   return (
-    <Card className="p-4 bg-card border-border/60 hover:border-primary/40 transition-colors">
+    <Card className="p-4 bg-[#0B0B0B] border-white/[0.08]/60 hover:border-primary/40 transition-colors">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
           <Lightbulb className="w-5 h-5" />

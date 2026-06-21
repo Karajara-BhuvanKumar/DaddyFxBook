@@ -310,26 +310,27 @@ export default function Analysis() {
   return (
     <div className="space-y-8">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-zinc-900 pb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/[0.05] pb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-[20px] bg-blue-500/10 flex items-center justify-center">
             <TrendingUp className="w-5 h-5 text-blue-500" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Performance Analytics</h1>
-            <p className="text-xs text-zinc-500 font-semibold mt-0.5">Analyze your trading patterns and improve your strategy</p>
+            <p className="text-[12px] text-zinc-500 font-semibold mt-0.5">Analyze your trading patterns and improve your strategy</p>
           </div>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex flex-col gap-1">
             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Time Period</span>
-            <div className="flex gap-1 bg-[#0A0A0A] rounded-xl p-1 border border-white/5">
+            <div className="flex items-center gap-1">
               {['Today', '7 Days', '30 Days', '3 Months', '1 Year', 'All Time'].map(tf => (
                 <button
                   key={tf}
                   onClick={() => setTimePeriod(tf as any)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 ${
-                    tf === timePeriod ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-500 hover:text-white'
+                  className={`px-3.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 ${
+                    tf === timePeriod ? 'bg-[#3B82F6] text-white shadow-sm' : 'bg-[#121212] text-zinc-500 hover:text-white hover:bg-[#1A1A1A]'
                   }`}
                 >
                   {tf}
@@ -339,13 +340,13 @@ export default function Analysis() {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Filter By</span>
-            <div className="flex gap-1 bg-[#0A0A0A] rounded-xl p-1 border border-white/5">
+            <div className="flex items-center gap-1">
               {['All Trades', 'Winners', 'Losers'].map(f => (
                 <button
                   key={f}
                   onClick={() => setFilterBy(f as any)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 ${
-                    f === filterBy ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-500 hover:text-white'
+                  className={`px-3.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 ${
+                    f === filterBy ? 'bg-[#3B82F6] text-white shadow-sm' : 'bg-[#121212] text-zinc-500 hover:text-white hover:bg-[#1A1A1A]'
                   }`}
                 >
                   {f}
@@ -359,55 +360,55 @@ export default function Analysis() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total P&L */}
-        <div className="bg-[#080808] border border-blue-500/20 rounded-2xl p-5 flex flex-col justify-between h-[160px]">
+        <div className="bg-[#0B0B0B] border-t border-t-[#3B82F6]/30 rounded-[20px] p-5 flex flex-col justify-between h-[160px]">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total P&L</span>
-            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#3B82F6]">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-blue-500 tracking-tight leading-none">{formatCompactVal(totalPnl)}</h3>
+            <h3 className={`text-2xl font-black tracking-tight leading-none ${totalPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(totalPnl)}</h3>
             <p className="text-[11px] text-zinc-500 font-semibold mt-2">From {filteredTrades.length} closed trades</p>
           </div>
           <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Your net profit/loss for the selected period</span>
         </div>
 
         {/* Win Rate */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[160px] hover:border-zinc-800 transition-colors">
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between h-[160px] hover:bg-[#0F0F0F] transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Win Rate</span>
-            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#3B82F6]">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-blue-500 tracking-tight leading-none">{winRate.toFixed(1)}%</h3>
+            <h3 className="text-2xl font-black text-[#3B82F6] tracking-tight leading-none">{winRate.toFixed(1)}%</h3>
             <p className="text-[11px] text-zinc-500 font-semibold mt-2">{winners.length} wins · {losers.length} losses</p>
             <div className="mt-2.5 h-1 rounded-full bg-zinc-800 overflow-hidden max-w-[150px]">
-              <div className="h-full bg-blue-500 transition-all" style={{ width: `${winRate}%` }} />
+              <div className="h-full bg-[#3B82F6] transition-all" style={{ width: `${winRate}%` }} />
             </div>
           </div>
           <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Percentage of profitable trades</span>
         </div>
 
         {/* Profit Factor */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[160px] hover:border-zinc-800 transition-colors">
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between h-[160px] hover:bg-[#0F0F0F] transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Profit Factor</span>
-            <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+            <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-[#A855F7]">
               <BarChart3 className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-blue-500 tracking-tight leading-none">{profitFactor.toFixed(2)}</h3>
+            <h3 className="text-2xl font-black text-[#3B82F6] tracking-tight leading-none">{profitFactor.toFixed(2)}</h3>
             <p className="text-[11px] text-zinc-500 font-semibold mt-2">{profitFactor >= 2 ? 'Excellent' : profitFactor >= 1.5 ? 'Good' : 'Needs Work'}</p>
           </div>
           <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Gross profit · Gross loss (above 1.5 is good)</span>
         </div>
 
         {/* Expectancy */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[160px] hover:border-zinc-800 transition-colors">
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between h-[160px] hover:bg-[#0F0F0F] transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Expectancy</span>
             <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
@@ -415,7 +416,7 @@ export default function Analysis() {
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-blue-500 tracking-tight leading-none">{formatCompactVal(expectancy)}</h3>
+            <h3 className={`text-2xl font-black tracking-tight leading-none ${expectancy >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(expectancy)}</h3>
             <p className="text-[11px] text-zinc-500 font-semibold mt-2">Average per trade</p>
           </div>
           <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Expected profit per trade based on stats</span>
@@ -425,22 +426,22 @@ export default function Analysis() {
       {/* Quick Stats + Equity Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Stats */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between" style={{ height: 420 }}>
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between" style={{ height: 420 }}>
           <h3 className="text-xs font-bold text-white mb-4 flex items-center gap-1.5 uppercase tracking-wider">
-            <SlidersHorizontal className="w-4 h-4 text-blue-500" /> Quick Stats
+            <SlidersHorizontal className="w-4 h-4 text-[#3B82F6]" /> Quick Stats
           </h3>
           <div className="grid grid-cols-2 gap-2.5 flex-1">
             {[
-              { label: 'Avg Winner', value: formatCompactVal(avgWin), color: 'text-blue-500' },
-              { label: 'Avg Loser', value: `-$${Math.abs(avgLoss).toFixed(2)}`, color: 'text-red-500' },
-              { label: 'Best Trade', value: formatCompactVal(bestTrade), color: 'text-blue-500' },
-              { label: 'Worst Trade', value: `-$${Math.abs(worstTrade).toFixed(2)}`, color: 'text-red-500' },
+              { label: 'Avg Winner', value: formatCompactVal(avgWin), color: 'text-[#3B82F6]' },
+              { label: 'Avg Loser', value: `-$${Math.abs(avgLoss).toFixed(2)}`, color: 'text-[#EF4444]' },
+              { label: 'Best Trade', value: formatCompactVal(bestTrade), color: bestTrade >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
+              { label: 'Worst Trade', value: worstTrade < 0 ? `-$${Math.abs(worstTrade).toFixed(2)}` : '$0.00', color: worstTrade < 0 ? 'text-[#EF4444]' : 'text-[#3B82F6]' },
               { label: 'Win Streak', value: `${winStreak} trades`, color: 'text-white' },
               { label: 'Loss Streak', value: `${lossStreak} trades`, color: 'text-white' },
-              { label: 'Risk:Reward', value: `1:${avgLoss !== 0 ? Math.abs(avgWin / avgLoss).toFixed(2) : '∞'}`, color: 'text-white' },
+              { label: 'Risk:Reward', value: `1:${avgLoss !== 0 ? Math.abs(avgWin / avgLoss).toFixed(2) : '∞'}`, color: 'text-[#3B82F6]' },
               { label: 'Open Trades', value: '0', color: 'text-white' },
             ].map(s => (
-              <div key={s.label} className="bg-[#0c0c0c] border border-white/5 rounded-xl p-3.5 flex flex-col justify-between">
+              <div key={s.label} className="bg-[#0B0B0B] rounded-[20px] p-3.5 flex flex-col justify-between hover:bg-[#0F0F0F] transition-colors">
                 <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">{s.label}</span>
                 <span className={`text-[14px] font-black mt-1.5 ${s.color}`}>{s.value}</span>
               </div>
@@ -449,20 +450,20 @@ export default function Analysis() {
         </div>
 
         {/* Equity Curve */}
-        <div className="lg:col-span-2 bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between" style={{ height: 420 }}>
+        <div className="lg:col-span-2 bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between" style={{ height: 420 }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-                <TrendingUp className="w-4 h-4 text-blue-500" /> Equity Curve
+                <TrendingUp className="w-4 h-4 text-[#3B82F6]" /> Equity Curve
               </h3>
               <p className="text-[11px] text-zinc-500 font-semibold mt-1">Cumulative P&L progression</p>
             </div>
-            <div className="flex gap-1 bg-[#0A0A0A] rounded-lg p-0.5 border border-white/5">
+            <div className="flex items-center gap-1">
               {['Equity', 'Drawdown'].map(b => (
                 <button
                   key={b}
-                  className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${
-                    b === 'Equity' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-500 hover:text-white'
+                  className={`px-3.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 ${
+                    b === 'Equity' ? 'bg-[#3B82F6] text-white shadow-sm' : 'bg-[#121212] text-zinc-500 hover:text-white hover:bg-[#1A1A1A]'
                   }`}
                 >
                   {b}
@@ -474,12 +475,6 @@ export default function Analysis() {
             {equityData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={equityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0077ff" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#0077ff" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
                   <XAxis
                     dataKey="date"
                     tick={{ fill: "#71717a", fontSize: 10, fontFamily: "Inter" }}
@@ -505,9 +500,9 @@ export default function Analysis() {
                   <Area
                     type="monotone"
                     dataKey="cumulative"
-                    stroke="#0077ff"
-                    fill="url(#equityGrad)"
-                    strokeWidth={2.5}
+                    stroke="#3B82F6"
+                    fill="none"
+                    strokeWidth={2}
                     dot={false}
                   />
                 </AreaChart>
@@ -524,15 +519,19 @@ export default function Analysis() {
       {/* Long vs Short + Day Perf + Top Symbols */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Long vs Short */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5">
-          <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-            <SlidersHorizontal className="w-4 h-4 text-blue-500" /> Long vs Short
-          </h3>
-          <p className="text-[11px] text-zinc-500 font-semibold mb-4">Performance by trade direction</p>
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
+              <SlidersHorizontal className="w-4 h-4 text-[#3B82F6]" /> Long vs Short
+            </h3>
+            <p className="text-[11px] text-zinc-500 font-semibold mb-4">Performance by trade direction</p>
+          </div>
           <div className="space-y-3">
             {/* Long Card */}
-            <div className="bg-[#0c0c0c] border border-white/5 border-l-2 border-l-blue-500 rounded-xl p-4">
-              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Long</span>
+            <div className="bg-[#0B0B0B] border-l-2 border-l-[#3B82F6] rounded-[20px] p-4 bg-gradient-to-r from-[#3B82F6]/5 to-transparent">
+              <span className="text-[10px] font-bold text-[#3B82F6] uppercase tracking-wider flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5" /> Long
+              </span>
               <div className="grid grid-cols-3 gap-2 text-center mt-3">
                 <div>
                   <p className="text-[9px] text-zinc-500 font-bold uppercase">Trades</p>
@@ -540,19 +539,21 @@ export default function Analysis() {
                 </div>
                 <div>
                   <p className="text-[9px] text-zinc-500 font-bold uppercase">P&L</p>
-                  <p className={`text-[14px] font-bold mt-1 ${longPnl >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                  <p className={`text-[14px] font-bold mt-1 ${longPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
                     ${longPnl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
                   <p className="text-[9px] text-zinc-500 font-bold uppercase">Win %</p>
-                  <p className="text-[14px] font-bold text-white mt-1">{longWinRate.toFixed(1)}%</p>
+                  <p className={`text-[14px] font-bold mt-1 ${longWinRate > 0 ? 'text-[#3B82F6]' : 'text-white'}`}>{longWinRate.toFixed(1)}%</p>
                 </div>
               </div>
             </div>
             {/* Short Card */}
-            <div className="bg-[#0c0c0c] border border-white/5 border-l-2 border-l-red-500 rounded-xl p-4">
-              <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Short</span>
+            <div className="bg-[#0B0B0B] border-l-2 border-l-[#EF4444] rounded-[20px] p-4 bg-gradient-to-r from-[#EF4444]/5 to-transparent">
+              <span className="text-[10px] font-bold text-[#EF4444] uppercase tracking-wider flex items-center gap-1">
+                <TrendingDown className="w-3.5 h-3.5" /> Short
+              </span>
               <div className="grid grid-cols-3 gap-2 text-center mt-3">
                 <div>
                   <p className="text-[9px] text-zinc-500 font-bold uppercase">Trades</p>
@@ -560,13 +561,13 @@ export default function Analysis() {
                 </div>
                 <div>
                   <p className="text-[9px] text-zinc-500 font-bold uppercase">P&L</p>
-                  <p className={`text-[14px] font-bold mt-1 ${shortPnl >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                  <p className={`text-[14px] font-bold mt-1 ${shortPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
                     ${shortPnl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
                   <p className="text-[9px] text-zinc-500 font-bold uppercase">Win %</p>
-                  <p className="text-[14px] font-bold text-white mt-1">{shortWinRate.toFixed(1)}%</p>
+                  <p className={`text-[14px] font-bold mt-1 ${shortWinRate > 0 ? 'text-[#3B82F6]' : 'text-white'}`}>{shortWinRate.toFixed(1)}%</p>
                 </div>
               </div>
             </div>
@@ -574,11 +575,13 @@ export default function Analysis() {
         </div>
 
         {/* Day Performance */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5">
-          <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-            <Calendar className="w-4 h-4 text-blue-500" /> Day Performance
-          </h3>
-          <p className="text-[11px] text-zinc-500 font-semibold mb-4">Find your best trading days</p>
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
+              <Calendar className="w-4 h-4 text-[#3B82F6]" /> Day Performance
+            </h3>
+            <p className="text-[11px] text-zinc-500 font-semibold mb-4">Find your best trading days</p>
+          </div>
           <div className="space-y-3">
             {dayPerf.map(d => {
               const maxPnl = Math.max(...dayPerf.map(x => Math.abs(x.pnl)), 1);
@@ -586,16 +589,16 @@ export default function Analysis() {
               return (
                 <div key={d.day} className="flex items-center gap-3">
                   <span className="text-xs text-zinc-500 font-semibold w-8">{d.day}</span>
-                  <div className="flex-1 h-3.5 bg-zinc-950 rounded-full overflow-hidden relative border border-white/5">
+                  <div className="flex-1 h-[22px] bg-[#121212] rounded-md overflow-hidden relative border border-white/[0.02]">
                     {d.count > 0 && (
                       <div 
-                        className={`h-full rounded-full transition-all duration-500 ${d.pnl >= 0 ? 'bg-blue-500' : 'bg-red-500'}`}
+                        className={`h-full transition-all duration-500 rounded-md ${d.pnl >= 0 ? 'bg-[#3B82F6]' : 'bg-[#EF4444]'}`}
                         style={{ width: `${percentage}%` }} 
                       />
                     )}
                   </div>
-                  <span className={`text-[11.5px] font-bold w-20 text-right ${d.count > 0 ? (d.pnl >= 0 ? 'text-blue-500' : 'text-red-500') : 'text-zinc-600'}`}>
-                    {d.count > 0 ? `${d.pnl >= 0 ? '+' : '-'}$${Math.abs(d.pnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
+                  <span className={`text-[12px] font-bold w-16 text-right ${d.count > 0 ? (d.pnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]') : 'text-zinc-600'}`}>
+                    {d.count > 0 ? `${d.pnl >= 0 ? '' : '-'}$${Math.abs(d.pnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
                   </span>
                 </div>
               );
@@ -604,11 +607,13 @@ export default function Analysis() {
         </div>
 
         {/* Top Symbols */}
-        <div className="bg-[#080808] border border-white/5 rounded-2xl p-5">
-          <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-            <Star className="w-4 h-4 text-blue-500" /> Top Symbols
-          </h3>
-          <p className="text-[11px] text-zinc-500 font-semibold mb-4">Best performing assets</p>
+        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
+              <Star className="w-4 h-4 text-[#3B82F6]" /> Top Symbols
+            </h3>
+            <p className="text-[11px] text-zinc-500 font-semibold mb-4">Best performing assets</p>
+          </div>
           <div className="space-y-2.5">
             {Object.entries(
               filteredTrades.reduce((acc, t) => {
@@ -622,9 +627,9 @@ export default function Analysis() {
               .sort(([, a], [, b]) => b.pnl - a.pnl)
               .slice(0, 3)
               .map(([sym, data], idx) => (
-                <div key={sym} className="bg-[#0c0c0c] border border-white/5 rounded-xl p-3.5 flex items-center justify-between">
+                <div key={sym} className="bg-[#0B0B0B] rounded-[20px] p-3.5 flex items-center justify-between hover:bg-[#0F0F0F] transition-colors group">
                   <div className="flex items-center gap-3">
-                    <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black flex items-center justify-center">{idx + 1}</span>
+                    <span className="w-6 h-6 rounded-lg bg-blue-500/10 text-[#3B82F6] text-[10px] font-black flex items-center justify-center">{idx + 1}</span>
                     <div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center scale-90">
@@ -637,7 +642,7 @@ export default function Analysis() {
                       </p>
                     </div>
                   </div>
-                  <span className={`text-[13px] font-black ${data.pnl >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                  <span className={`text-[13px] font-black ${data.pnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
                     ${data.pnl.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
@@ -647,17 +652,17 @@ export default function Analysis() {
       </div>
 
       {/* Session Performance */}
-      <div className="bg-[#080808] border border-white/5 rounded-2xl p-5">
+      <div className="bg-[#0B0B0B] rounded-[20px] p-5">
         <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-          <Globe className="w-4 h-4 text-blue-500" /> Session Performance
+          <Globe className="w-4 h-4 text-[#3B82F6]" /> Session Performance
         </h3>
         <p className="text-[11px] text-zinc-500 font-semibold">Breakdown by trading session - Asian, London & New York</p>
 
         {/* Timeline */}
         <div className="w-full h-7 rounded-lg overflow-hidden flex text-[9px] font-black text-white select-none mt-5">
-          <div className="bg-[#8b6508]/30 border-r border-zinc-900/40 flex items-center justify-center tracking-wider" style={{ width: '41.6%' }}>ASIAN</div>
-          <div className="bg-[#1e3a8a]/30 border-r border-zinc-900/40 flex items-center justify-center tracking-wider" style={{ width: '20.8%' }}>LONDON</div>
-          <div className="bg-[#064e3b]/30 flex items-center justify-center tracking-wider" style={{ width: '37.6%' }}>NEW YORK</div>
+          <div className="bg-[#5c4004] border-r border-[#0B0B0B] flex items-center justify-center tracking-wider" style={{ width: '41.6%' }}>ASIAN</div>
+          <div className="bg-[#102a5c] border-r border-[#0B0B0B] flex items-center justify-center tracking-wider" style={{ width: '20.8%' }}>LONDON</div>
+          <div className="bg-[#064e3b] flex items-center justify-center tracking-wider" style={{ width: '37.6%' }}>NEW YORK</div>
         </div>
         <div className="relative w-full text-[9px] text-zinc-600 font-bold select-none h-4 mt-1.5">
           <span className="absolute left-0">00:00</span>
@@ -677,7 +682,7 @@ export default function Analysis() {
             let iconColor = "text-amber-500 bg-amber-500/10";
             let Icon = Moon;
             if (s.name === 'London') {
-              iconColor = "text-blue-500 bg-blue-500/10";
+              iconColor = "text-[#3B82F6] bg-blue-500/10";
               Icon = Coffee;
             } else if (s.name === 'New York') {
               iconColor = "text-emerald-500 bg-[#064e3b]/20";
@@ -685,7 +690,7 @@ export default function Analysis() {
             }
 
             return (
-              <div key={s.name} className="bg-[#0c0c0c] border border-white/5 rounded-xl p-5 flex flex-col justify-between">
+              <div key={s.name} className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between hover:bg-[#0F0F0F] transition-colors">
                 <div>
                   <div className="flex items-start justify-between">
                     <div>
@@ -699,28 +704,28 @@ export default function Analysis() {
 
                   {hasData && (
                     <div className="mt-4">
-                      <span className={`text-base font-black ${s.pnl >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                      <span className={`text-base font-black ${s.pnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
                         {s.pnl >= 0 ? '+' : '-'}${Math.abs(s.pnl).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                       <div className="mt-2.5 h-1 rounded-full bg-zinc-800 overflow-hidden w-full">
-                        <div className={`h-full transition-all ${s.pnl >= 0 ? 'bg-blue-500' : 'bg-red-500'}`} style={{ width: `${winRate}%` }} />
+                        <div className={`h-full transition-all ${s.pnl >= 0 ? 'bg-[#3B82F6]' : 'bg-[#EF4444]'}`} style={{ width: `${winRate}%` }} />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-6 border-t border-zinc-900 pt-4 text-left">
+                <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-6 border-t border-white/[0.05] pt-4 text-left">
                   <div>
                     <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Trades</span>
                     <p className="text-xs font-bold text-white mt-1">{s.count}</p>
                   </div>
                   <div>
                     <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Win Rate</span>
-                    <p className="text-xs font-bold text-white mt-1">{hasData ? `${winRate.toFixed(1)}%` : '—'}</p>
+                    <p className={`text-xs font-bold mt-1 ${winRate > 0 ? 'text-[#3B82F6]' : 'text-white'}`}>{hasData ? `${winRate.toFixed(1)}%` : '—'}</p>
                   </div>
                   <div>
                     <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Avg Trade</span>
-                    <p className={`text-xs font-bold mt-1 ${hasData ? (avgTradeVal >= 0 ? 'text-blue-500' : 'text-red-500') : 'text-white'}`}>
+                    <p className={`text-xs font-bold mt-1 ${hasData ? (avgTradeVal >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]') : 'text-white'}`}>
                       {hasData ? `${avgTradeVal >= 0 ? '+' : '-'}$${Math.abs(avgTradeVal).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
                     </p>
                   </div>
@@ -738,18 +743,18 @@ export default function Analysis() {
       {/* Trading Calendar + Day Trades */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
         {/* Trading Calendar */}
-        <div className="lg:col-span-7 bg-[#080808] border border-white/5 rounded-2xl p-6 flex flex-col">
+        <div className="lg:col-span-7 bg-[#0B0B0B] rounded-[20px] p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-                <Calendar className="w-4 h-4 text-blue-500" /> Trading Calendar
+                <Calendar className="w-4 h-4 text-[#3B82F6]" /> Trading Calendar
               </h3>
               <p className="text-[11px] text-zinc-500 font-semibold mt-1">Daily P&L heatmap - Click on days to see trades</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-full bg-[#121212] hover:bg-[#1A1A1A] flex items-center justify-center transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5 text-zinc-400" />
               </button>
@@ -758,7 +763,7 @@ export default function Analysis() {
               </span>
               <button
                 onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-full bg-[#121212] hover:bg-[#1A1A1A] flex items-center justify-center transition-colors"
               >
                 <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
               </button>
@@ -788,7 +793,7 @@ export default function Analysis() {
                       return (
                         <div
                           key={d}
-                          className="bg-[#0b0b0b] border border-white/5 opacity-0"
+                          className="bg-[#0b0b0b] border border-white/[0.02] opacity-0"
                           style={{ aspectRatio: "1/1", borderRadius: 10 }}
                         />
                       );
@@ -802,12 +807,12 @@ export default function Analysis() {
                     let cellClasses = "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-[10px] border ";
                     if (hasData) {
                       if (isProfit) {
-                        cellClasses += "bg-[#0c1c36] border-blue-500/20 text-blue-500 hover:bg-[#0f244a] hover:border-blue-500/40";
+                        cellClasses += "bg-[#0A1224] border-[#3B82F6]/20 text-[#3B82F6] hover:bg-[#0F1A3A] hover:border-[#3B82F6]/40";
                       } else {
-                        cellClasses += "bg-[#240d12] border-red-500/20 text-red-500 hover:bg-[#331118] hover:border-red-500/40";
+                        cellClasses += "bg-[#240A0A] border-[#EF4444]/20 text-[#EF4444] hover:bg-[#330F0F] hover:border-[#EF4444]/40";
                       }
                     } else {
-                      cellClasses += "bg-[#0b0b0b] border-white/5 hover:bg-[#121212] hover:border-white/10";
+                      cellClasses += "bg-[#0B0B0B] border-white/[0.05] hover:bg-[#0F0F0F] hover:border-white/[0.1]";
                     }
                     if (isToday && !hasData) {
                       cellClasses += " ring-1 ring-white/10";
@@ -820,11 +825,11 @@ export default function Analysis() {
                         style={{ aspectRatio: "1/1" }}
                         onClick={() => setSelectedCalendarDay(dateStr)}
                       >
-                        <span className={`absolute top-2.5 left-3 text-[12px] font-bold ${isToday ? "text-blue-500" : "text-zinc-500"}`}>
+                        <span className={`absolute top-2.5 left-3 text-[12px] font-bold ${isToday ? "text-[#3B82F6]" : "text-zinc-500"}`}>
                           {dayNum}
                         </span>
                         {hasData && (
-                          <span className={`font-bold text-[15px] ${isProfit ? "text-blue-500" : "text-red-500"}`}>
+                          <span className={`font-bold text-[15px] ${isProfit ? "text-[#3B82F6]" : "text-[#EF4444]"}`}>
                             {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(0)}
                           </span>
                         )}
@@ -841,9 +846,9 @@ export default function Analysis() {
                     className={`relative flex flex-col items-center justify-center rounded-[10px] p-2 border transition-all duration-200 ${
                       wt.trades > 0
                         ? wPositive
-                          ? "bg-[#0c1c36] border-blue-500/20 text-blue-500"
-                          : "bg-[#240d12] border-red-500/20 text-red-500"
-                        : "bg-[#0b0b0b] border-white/5 text-zinc-500"
+                          ? "bg-[#0A1224] border-[#3B82F6]/20 text-[#3B82F6]"
+                          : "bg-[#240A0A] border-[#EF4444]/20 text-[#EF4444]"
+                        : "bg-[#0B0B0B] border-white/[0.05] text-zinc-500"
                     }`}
                     style={{ aspectRatio: "1/1" }}
                   >
@@ -870,10 +875,10 @@ export default function Analysis() {
 
           <div className="flex gap-6 justify-center mt-6" style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700 }}>
             <span className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" /> Profitable Day
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3B82F6]" /> Profitable Day
             </span>
             <span className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" /> Losing Day
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> Losing Day
             </span>
             <span className="flex items-center gap-2">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" /> No Trades
@@ -882,9 +887,9 @@ export default function Analysis() {
         </div>
 
         {/* Day Trades (Right Panel) */}
-        <div className="lg:col-span-3 bg-[#080808] border border-white/5 rounded-2xl p-6 flex flex-col">
+        <div className="lg:col-span-3 bg-[#0B0B0B] rounded-[20px] p-6 flex flex-col">
           <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-            <FileText className="w-4 h-4 text-blue-500" /> Day Trades
+            <FileText className="w-4 h-4 text-[#3B82F6]" /> Day Trades
           </h3>
           <div className="flex-1 overflow-auto mt-4 space-y-2" style={{ maxHeight: "340px" }}>
             {selectedDayTrades.length === 0 ? (
@@ -894,7 +899,7 @@ export default function Analysis() {
               </div>
             ) : (
               selectedDayTrades.map(t => (
-                <div key={t.id} className="bg-[#0c0c0c] border border-white/5 rounded-xl p-3.5 flex items-center justify-between">
+                <div key={t.id} className="bg-[#0B0B0B] border border-white/[0.05] rounded-[20px] p-3.5 flex items-center justify-between hover:bg-[#0F0F0F] transition-colors">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center scale-90">
@@ -902,14 +907,14 @@ export default function Analysis() {
                       </div>
                       <span className="font-bold text-white text-xs">{t.symbol}</span>
                       <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                        t.direction === 'Long' ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'
+                        t.direction === 'Long' ? 'bg-[#0A1224] text-[#3B82F6]' : 'bg-[#240A0A] text-[#EF4444]'
                       }`}>{t.direction}</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 font-semibold mt-1">
                       Size: {t.lot_size} · Entry: ${Number(t.entry_price).toFixed(2)}
                     </p>
                   </div>
-                  <span className={`text-[13px] font-black ${Number(t.pnl) >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                  <span className={`text-[13px] font-black ${Number(t.pnl) >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
                     {Number(t.pnl) >= 0 ? '+' : '-'}${Math.abs(Number(t.pnl)).toFixed(2)}
                   </span>
                 </div>
@@ -922,20 +927,20 @@ export default function Analysis() {
       {/* Win/Loss Distribution & Recent Trades */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
         {/* Win/Loss Distribution */}
-        <div className="lg:col-span-4 bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-              <BarChart3 className="w-4 h-4 text-blue-500" /> Win/Loss Distribution
+              <BarChart3 className="w-4 h-4 text-[#3B82F6]" /> Win/Loss Distribution
             </h3>
             {/* Dual Bar */}
             <div className="w-full h-8 rounded-lg overflow-hidden flex text-[10px] font-black text-white select-none mt-5">
               {winCount > 0 && (
-                <div className="bg-blue-600 flex items-center justify-center transition-all" style={{ width: `${winPct}%` }}>
+                <div className="bg-[#3B82F6] flex items-center justify-center transition-all" style={{ width: `${winPct}%` }}>
                   {winCount}W
                 </div>
               )}
               {lossCount > 0 && (
-                <div className="bg-red-600 flex items-center justify-center transition-all" style={{ width: `${lossPct}%` }}>
+                <div className="bg-[#EF4444] flex items-center justify-center transition-all" style={{ width: `${lossPct}%` }}>
                   {lossCount}L
                 </div>
               )}
@@ -944,38 +949,38 @@ export default function Analysis() {
             <div className="space-y-4 mt-6">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="flex items-center gap-2 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> Gross Profit
+                  <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Gross Profit
                 </span>
-                <span className="text-blue-500 font-bold">{formatK(grossProfit)}</span>
+                <span className="text-[#3B82F6] font-bold">{formatK(grossProfit)}</span>
               </div>
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="flex items-center gap-2 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-red-500" /> Gross Loss
+                  <span className="w-2 h-2 rounded-full bg-[#EF4444]" /> Gross Loss
                 </span>
-                <span className="text-red-500 font-bold">-${Math.abs(grossLoss).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="text-[#EF4444] font-bold">-${Math.abs(grossLoss).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
-              <div className="flex items-center justify-between text-xs font-semibold border-t border-zinc-900 pt-4">
+              <div className="flex items-center justify-between text-xs font-semibold border-t border-white/[0.05] pt-4">
                 <span className="flex items-center gap-2 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> Net Result
+                  <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Net Result
                 </span>
-                <span className={`font-bold ${totalPnl >= 0 ? 'text-blue-500' : 'text-red-500'}`}>{formatK(totalPnl)}</span>
+                <span className={`font-bold ${totalPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatK(totalPnl)}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Recent Trades */}
-        <div className="lg:col-span-6 bg-[#080808] border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-              <Activity className="w-4 h-4 text-blue-500" /> Recent Trades
+              <Activity className="w-4 h-4 text-[#3B82F6]" /> Recent Trades
             </h3>
             <p className="text-[11px] text-zinc-500 font-semibold mt-0.5">Your last 10 trades</p>
             <div className="space-y-2 mt-4">
               {filteredTrades.slice(0, 10).map(t => (
-                <div key={t.id} className="bg-[#0c0c0c] border border-white/5 rounded-xl p-3 flex items-center justify-between hover:border-zinc-800 transition-colors">
+                <div key={t.id} className="bg-[#0B0B0B] rounded-[20px] p-3 flex items-center justify-between hover:bg-[#0F0F0F] transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-[#3B82F6] flex items-center justify-center">
                       <Activity className="w-4 h-4" />
                     </div>
                     <div>
@@ -985,7 +990,7 @@ export default function Analysis() {
                       </p>
                     </div>
                   </div>
-                  <span className={`font-black text-sm ${Number(t.pnl) >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                  <span className={`font-black text-sm ${Number(t.pnl) >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
                     {Number(t.pnl) >= 0 ? '+' : '-'}${Math.abs(Number(t.pnl)).toFixed(2)}
                   </span>
                 </div>
@@ -996,54 +1001,54 @@ export default function Analysis() {
       </div>
 
       {/* Detailed Statistics */}
-      <div className="bg-[#080808] border border-white/5 rounded-2xl p-5">
+      <div className="bg-[#0B0B0B] rounded-[20px] p-5">
         <div className="flex items-center gap-2 mb-6">
           <h3 className="text-[15px] font-bold text-white tracking-tight uppercase">Your Stats</h3>
-          <span className="text-[10px] font-extrabold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">{timePeriod}</span>
+          <span className="text-[10px] font-extrabold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded uppercase tracking-wider">{timePeriod}</span>
         </div>
 
         {/* Large Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-[#0c0c0c] border border-white/5 rounded-xl p-5">
+          <div className="bg-[#0B0B0B] rounded-[20px] p-5 hover:bg-[#0F0F0F] transition-colors">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Best Month</span>
-            <h4 className="text-xl font-black text-blue-500 mt-2">{formatCompactVal(bestMonthStr.value)}</h4>
+            <h4 className="text-xl font-black text-[#3B82F6] mt-2">{formatCompactVal(bestMonthStr.value)}</h4>
             <p className="text-[11px] text-zinc-500 font-semibold mt-1">{bestMonthStr.label}</p>
           </div>
-          <div className="bg-[#0c0c0c] border border-white/5 rounded-xl p-5">
+          <div className="bg-[#0B0B0B] rounded-[20px] p-5 hover:bg-[#0F0F0F] transition-colors">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Worst Month</span>
-            <h4 className="text-xl font-black text-blue-500 mt-2">{formatCompactVal(worstMonthStr.value)}</h4>
+            <h4 className={`text-xl font-black mt-2 ${worstMonthStr.value >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(worstMonthStr.value)}</h4>
             <p className="text-[11px] text-zinc-500 font-semibold mt-1">{worstMonthStr.label}</p>
           </div>
-          <div className="bg-[#0c0c0c] border border-white/5 rounded-xl p-5">
+          <div className="bg-[#0B0B0B] rounded-[20px] p-5 hover:bg-[#0F0F0F] transition-colors">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Average</span>
-            <h4 className="text-xl font-black text-blue-500 mt-2">{formatCompactVal(avgMonthPnl)}</h4>
+            <h4 className={`text-xl font-black mt-2 ${avgMonthPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(avgMonthPnl)}</h4>
             <p className="text-[11px] text-zinc-500 font-semibold mt-1">per Month</p>
           </div>
         </div>
 
         {/* Two-Column Stats List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 border-t border-zinc-900/60 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 border-t border-white/[0.05] pt-6">
           <div className="space-y-3.5">
             {[
-              { l: 'Total P&L', v: formatCompactVal(totalPnl), c: totalPnl >= 0 ? 'text-blue-500' : 'text-red-500' },
+              { l: 'Total P&L', v: formatCompactVal(totalPnl), c: totalPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
               { l: 'Average daily volume', v: dailyPnl.length ? (filteredTrades.length / dailyPnl.length).toFixed(2) : '0.00' },
-              { l: 'Average winning trade', v: formatCompactVal(avgWin), c: 'text-blue-500' },
-              { l: 'Average losing trade', v: avgLoss < 0 ? `-${formatCompactVal(Math.abs(avgLoss))}` : '$0.00', c: 'text-red-500' },
+              { l: 'Average winning trade', v: formatCompactVal(avgWin), c: 'text-[#3B82F6]' },
+              { l: 'Average losing trade', v: avgLoss < 0 ? `-${formatCompactVal(Math.abs(avgLoss))}` : '$0.00', c: 'text-[#EF4444]' },
               { l: 'Total number of trades', v: `${filteredTrades.length}` },
-              { l: 'Number of winning trades', v: `${winners.length}`, c: 'text-blue-500' },
-              { l: 'Number of losing trades', v: `${losers.length}`, c: 'text-red-500' },
+              { l: 'Number of winning trades', v: `${winners.length}`, c: 'text-[#3B82F6]' },
+              { l: 'Number of losing trades', v: `${losers.length}`, c: 'text-[#EF4444]' },
               { l: 'Number of break even trades', v: `${filteredTrades.length - winners.length - losers.length}` },
               { l: 'Max consecutive wins', v: `${winStreak}` },
               { l: 'Max consecutive losses', v: `${lossStreak}` },
               { l: 'Total commissions', v: '$0.00' },
               { l: 'Total swap', v: '$0.00' },
-              { l: 'Largest profit', v: formatCompactVal(bestTrade), c: 'text-blue-500' },
-              { l: 'Largest loss', v: worstTrade < 0 ? `-${formatCompactVal(Math.abs(worstTrade))}` : '$0.00', c: 'text-red-500' },
+              { l: 'Largest profit', v: formatCompactVal(bestTrade), c: 'text-[#3B82F6]' },
+              { l: 'Largest loss', v: worstTrade < 0 ? `-${formatCompactVal(Math.abs(worstTrade))}` : '$0.00', c: 'text-[#EF4444]' },
               { l: 'Avg hold time (All)', v: formatDuration(avgHoldAll) },
               { l: 'Avg hold time (Winners)', v: formatDuration(avgHoldWinners) },
               { l: 'Avg hold time (Losers)', v: formatDuration(avgHoldLosers) },
             ].map(s => (
-              <div key={s.l} className="flex justify-between py-1.5 border-b border-zinc-900 last:border-0 text-xs font-semibold">
+              <div key={s.l} className="flex justify-between py-1.5 border-b border-white/[0.02] last:border-0 text-xs font-semibold">
                 <span className="text-zinc-500">{s.l}</span>
                 <span className={s.c || 'text-white'}>{s.v}</span>
               </div>
@@ -1053,21 +1058,21 @@ export default function Analysis() {
             {[
               { l: 'Open trades', v: '0' },
               { l: 'Total trading days', v: `${dailyPnl.length}` },
-              { l: 'Winning days', v: `${winningDays}`, c: 'text-blue-500' },
-              { l: 'Losing days', v: `${losingDays}`, c: 'text-red-500' },
+              { l: 'Winning days', v: `${winningDays}`, c: 'text-[#3B82F6]' },
+              { l: 'Losing days', v: `${losingDays}`, c: 'text-[#EF4444]' },
               { l: 'Breakeven days', v: `${dailyPnl.length - winningDays - losingDays}` },
               { l: 'Max consecutive winning days', v: `${winDayStreak}` },
               { l: 'Max consecutive losing days', v: `${lossDayStreak}` },
-              { l: 'Average daily P&L', v: formatCompactVal(avgDailyPnl), c: avgDailyPnl >= 0 ? 'text-blue-500' : 'text-red-500' },
-              { l: 'Average winning day P&L', v: formatCompactVal(avgWinningDayPnl), c: 'text-blue-500' },
-              { l: 'Average losing day P&L', v: avgLosingDayPnl < 0 ? `-${formatCompactVal(Math.abs(avgLosingDayPnl))}` : '$0.00', c: 'text-red-500' },
-              { l: 'Largest profitable day', v: formatCompactVal(largestProfitableDay), c: 'text-blue-500' },
-              { l: 'Largest losing day', v: largestLosingDay < 0 ? `-${formatCompactVal(Math.abs(largestLosingDay))}` : '$0.00', c: 'text-red-500' },
-              { l: 'Trade expectancy', v: formatCompactVal(expectancy), c: expectancy >= 0 ? 'text-blue-500' : 'text-red-500' },
-              { l: 'Max drawdown', v: maxDD < 0 ? `-${formatCompactVal(Math.abs(maxDD))}` : '$0.00', c: 'text-red-500' },
-              { l: 'Max drawdown %', v: peak > 0 ? `-${(maxDD / peak * 100).toFixed(2)}%` : '0%', c: 'text-red-500' },
+              { l: 'Average daily P&L', v: formatCompactVal(avgDailyPnl), c: avgDailyPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
+              { l: 'Average winning day P&L', v: formatCompactVal(avgWinningDayPnl), c: 'text-[#3B82F6]' },
+              { l: 'Average losing day P&L', v: avgLosingDayPnl < 0 ? `-${formatCompactVal(Math.abs(avgLosingDayPnl))}` : '$0.00', c: 'text-[#EF4444]' },
+              { l: 'Largest profitable day', v: formatCompactVal(largestProfitableDay), c: 'text-[#3B82F6]' },
+              { l: 'Largest losing day', v: largestLosingDay < 0 ? `-${formatCompactVal(Math.abs(largestLosingDay))}` : '$0.00', c: 'text-[#EF4444]' },
+              { l: 'Trade expectancy', v: formatCompactVal(expectancy), c: expectancy >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
+              { l: 'Max drawdown', v: maxDD < 0 ? `-${formatCompactVal(Math.abs(maxDD))}` : '$0.00', c: 'text-[#EF4444]' },
+              { l: 'Max drawdown %', v: peak > 0 ? `-${(maxDD / peak * 100).toFixed(2)}%` : '0%', c: 'text-[#EF4444]' },
             ].map(s => (
-              <div key={s.l} className="flex justify-between py-1.5 border-b border-zinc-900 last:border-0 text-xs font-semibold">
+              <div key={s.l} className="flex justify-between py-1.5 border-b border-white/[0.02] last:border-0 text-xs font-semibold">
                 <span className="text-zinc-500">{s.l}</span>
                 <span className={s.c || 'text-white'}>{s.v}</span>
               </div>
