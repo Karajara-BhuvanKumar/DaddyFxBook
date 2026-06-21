@@ -78,7 +78,6 @@ export default function AIPeriodReportPage({ period, title, description }: Props
               <p className="text-[13px] text-zinc-500 font-medium mt-0.5">{description}</p>
             </div>
           </div>
-          </div>
           <div className="flex items-center gap-2">
             <button onClick={() => shiftPeriod(-1)} className="w-9 h-9 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
               <ChevronLeft className="w-4 h-4" />

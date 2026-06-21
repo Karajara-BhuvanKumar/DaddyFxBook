@@ -4,6 +4,7 @@ import { BookOpen, Save, Star, Check, Activity, ArrowUpRight, ArrowDownRight, Re
 import { toast } from "sonner";
 import { AITradeReviewPanel } from "@/components/ai-report/AITradeReviewPanel";
 import { StrategySetupCard } from "@/components/journal/StrategySetupCard";
+import { ExportJournalDialog } from "@/components/journal/ExportJournalDialog";
 import { emptyStrategySetup, parseStrategySetup, serializeStrategySetup, type StrategySetup } from "@/lib/strategySetup";
 import { cn } from "@/lib/utils";
 
@@ -97,12 +98,15 @@ export default function Journal() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Journal</h1>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Sun, Jun 21</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Journal</h1>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Sun, Jun 21</span>
+          </div>
         </div>
+        <ExportJournalDialog />
       </div>
 
       <div className="flex gap-6 min-h-[calc(100vh-12rem)]">
