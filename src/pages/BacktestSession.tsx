@@ -91,28 +91,28 @@ export default function BacktestSession() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0">
+    <div className="space-y-6 md:space-y-8 overflow-guard">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link to="/backtesting">
-            <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white bg-[#0B0B0B] border border-white/[0.06] rounded-[20px]">
+            <Button size="icon" variant="ghost" className="h-10 w-10 shrink-0 text-zinc-400 hover:text-white bg-[#0B0B0B] border border-white/[0.06] rounded-[20px]">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
-            <FlaskConical className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+            <FlaskConical className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-white tracking-tight truncate">{session.name}</h1>
-            <p className="text-[13px] text-zinc-500 font-semibold truncate mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{session.name}</h1>
+            <p className="text-xs sm:text-[13px] text-zinc-500 font-semibold truncate mt-0.5">
               {session.pair ?? "—"} <span className="mx-1.5 opacity-50">•</span> {session.strategy ?? "No strategy"} <span className="mx-1.5 opacity-50">•</span> {trades.length} trades
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 bg-[#0B0B0B] border-white/[0.06] text-zinc-300 hover:text-white rounded-[20px] h-10" disabled={!!exporting || trades.length === 0}>
+              <Button variant="outline" className="gap-2 w-full sm:w-auto bg-[#0B0B0B] border-white/[0.06] text-zinc-300 hover:text-white rounded-[20px] h-11 min-h-[44px]" disabled={!!exporting || trades.length === 0}>
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 {exporting ? "Generating…" : "Download"}
               </Button>
@@ -150,7 +150,7 @@ export default function BacktestSession() {
           </DropdownMenu>
           <Button
             onClick={() => { setEditing(null); setFormOpen(true); }}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[20px] h-10 px-4"
+            className="gap-2 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[20px] h-11 min-h-[44px] px-4"
           >
             <Plus className="w-4 h-4" /> Add trade
           </Button>
@@ -158,15 +158,15 @@ export default function BacktestSession() {
       </div>
 
       <Tabs defaultValue="trades">
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto flex-nowrap justify-start scrollbar-none">
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="ai">AI Report</TabsTrigger>
         </TabsList>
 
         <TabsContent value="trades" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[200px]">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
+            <div className="relative flex-1 min-w-0 w-full sm:min-w-[200px]">
               <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
               <Input
                 value={search}
@@ -176,7 +176,7 @@ export default function BacktestSession() {
               />
             </div>
             <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-              <SelectTrigger className="w-[140px] bg-[#0B0B0B] border-white/[0.06] text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[140px] bg-[#0B0B0B] border-white/[0.06] text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All outcomes</SelectItem>
                 <SelectItem value="win">Wins</SelectItem>
@@ -185,7 +185,7 @@ export default function BacktestSession() {
               </SelectContent>
             </Select>
             <Select value={sessionFilter} onValueChange={setSessionFilter}>
-              <SelectTrigger className="w-[140px] bg-[#0B0B0B] border-white/[0.06] text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[140px] bg-[#0B0B0B] border-white/[0.06] text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All sessions</SelectItem>
                 {uniqueSessions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}

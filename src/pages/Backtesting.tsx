@@ -181,10 +181,10 @@ export default function Backtesting() {
   const [form, setForm] = useState({ name: "", pair: "XAUUSD", strategy: "", description: "" });
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
+    <div className="space-y-6 md:space-y-8 overflow-guard">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="page-title text-foreground flex flex-wrap items-center gap-2 sm:gap-3">
             Strategy Lab
             <span className="text-[10px] bg-warning/15 text-warning font-bold px-2 py-0.5 rounded-md tracking-wider uppercase border border-warning/20">Elite</span>
           </h1>
@@ -194,7 +194,7 @@ export default function Backtesting() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[20px] h-10 px-4">
+            <Button className="gap-2 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[20px] h-11 min-h-[44px] px-4">
               <Plus className="w-4 h-4" /> New session
             </Button>
           </DialogTrigger>
@@ -204,13 +204,13 @@ export default function Backtesting() {
               <div>
                 <Label className="text-zinc-400">Session name</Label>
                 <Input
-                  className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600"
+                  className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600 w-full"
                   placeholder="e.g. XAUUSD London Breakout 2024"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-zinc-400">Pair</Label>
                   <Input className="bg-[#060606] border-zinc-800 text-white" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
@@ -235,10 +235,10 @@ export default function Backtesting() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setOpen(false)}>Cancel</Button>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="ghost" className="w-full sm:w-auto text-zinc-400 hover:text-white" onClick={() => setOpen(false)}>Cancel</Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
                 disabled={!form.name.trim() || create.isPending}
                 onClick={() =>
                   create.mutate(form, {
@@ -266,7 +266,7 @@ export default function Backtesting() {
           ))}
         </div>
       ) : !sessions || sessions.length === 0 ? (
-        <div className="rounded-3xl border border-zinc-900 border-dashed bg-[#040404] p-16 text-center">
+        <div className="rounded-3xl border border-zinc-900 border-dashed bg-[#040404] p-8 sm:p-16 text-center">
           <Sparkles className="w-10 h-10 text-zinc-600 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-white mb-1.5">No backtest sessions yet</h3>
           <p className="text-sm text-zinc-500 mb-6 font-medium max-w-md mx-auto">

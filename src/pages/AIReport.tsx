@@ -346,24 +346,24 @@ export default function AIReportPage() {
   // Render
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6">
+    <div className="overflow-guard space-y-4 md:space-y-6">
 
       {/* ── Page Header ── */}
-      <div className="flex items-start justify-between mb-2 flex-wrap gap-3">
-        <div>
-          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-blue-500" />
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
             </div>
-            AI Report
+            <span className="truncate">AI Report</span>
           </h1>
-          <p className="text-sm text-zinc-500 mt-1 font-medium ml-[52px]">
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium sm:ml-[52px]">
             Elite coaching powered by OpenRouter — Claude, GPT-4o, Gemini, and more.
           </p>
         </div>
 
         {report && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 flex-wrap w-full sm:w-auto">
             <button onClick={generateReport} disabled={generating}
               className="px-3 py-1.5 rounded-lg bg-[#121212] hover:bg-white/5 border border-white/[0.08] text-xs font-bold text-zinc-300 transition-colors flex items-center gap-1.5 disabled:opacity-40">
               <RefreshCw className="w-3.5 h-3.5" /> Regenerate
@@ -508,7 +508,7 @@ export default function AIReportPage() {
             {/* Include Data */}
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Include Data</label>
-              <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-y-2.5 gap-x-4">
                 {(Object.keys(toggles) as (keyof DataToggles)[]).map((key) => (
                   <label key={key} className="flex items-center gap-2 cursor-pointer group"
                     onClick={() => setToggles((p) => ({ ...p, [key]: !p[key] }))}>
@@ -562,7 +562,7 @@ export default function AIReportPage() {
 
           {/* Empty state */}
           {!generating && !report && !error && (
-            <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] p-16 flex flex-col items-center justify-center text-center min-h-[480px]">
+            <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] p-8 sm:p-16 flex flex-col items-center justify-center text-center min-h-[320px] sm:min-h-[480px]">
               <div className="w-20 h-20 rounded-3xl bg-blue-500/5 flex items-center justify-center mb-6 relative">
                 <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />
                 <Sparkles className="w-10 h-10 text-blue-500 relative z-10" />
@@ -622,7 +622,7 @@ export default function AIReportPage() {
 
           {/* ══ Report ══ */}
           {report && !generating && (
-            <div className="space-y-4 animate-in fade-in duration-500">
+            <div className="space-y-4 animate-in fade-in duration-500 report-content">
 
               {/* Meta banner */}
               <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[20px] px-5 py-3 flex items-center justify-between flex-wrap gap-2">

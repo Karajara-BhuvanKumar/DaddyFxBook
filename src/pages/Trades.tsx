@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useTrades, useAddTrade, useDeleteTrade, calculatePnl } from "@/hooks/useTrades";
 import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X, SlidersHorizontal, DollarSign, Share2, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import TradeCard from "@/components/TradeCard";
 
 export default function Trades() {
   const { data: trades = [], isLoading } = useTrades();
@@ -71,23 +72,23 @@ export default function Trades() {
   );
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 md:space-y-8 overflow-guard">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Trades</h1>
-          <div className="flex items-center gap-2 mt-1.5">
+          <h1 className="page-title text-foreground hidden lg:block">Trades</h1>
+          <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
             <span className="w-2 h-2 rounded-full bg-zinc-600" />
             <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Not connected</span>
           </div>
         </div>
-        <div className="flex gap-3">
-          <button className="bg-[#3B82F6] hover:bg-blue-600 text-white px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
+          <button className="touch-target w-full sm:w-auto bg-[#3B82F6] hover:bg-blue-600 text-white px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
             Connect MT4/MT5
           </button>
-          <button onClick={handleClearAll} className="flex items-center gap-2 border border-red-500/20 bg-[#0B0B0B] text-[#EF4444] hover:bg-red-500/10 px-5 py-2.5 rounded-[20px] font-semibold text-[13px] transition-all duration-200">
+          <button onClick={handleClearAll} className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 border border-red-500/20 bg-[#0B0B0B] text-[#EF4444] hover:bg-red-500/10 px-5 py-2.5 rounded-[20px] font-semibold text-[13px] transition-all duration-200">
             <Trash2 className="w-4 h-4" /> Clear All
           </button>
-          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1.5 bg-[#3B82F6] hover:bg-blue-600 text-white px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
+          <button onClick={() => setShowForm(!showForm)} className="touch-target w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#3B82F6] hover:bg-blue-600 text-white px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
             <Plus className="w-4 h-4" /> Add Trade
           </button>
         </div>
@@ -111,7 +112,7 @@ export default function Trades() {
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               { label: 'Entry Price', key: 'entryPrice', placeholder: '2650.00' },
               { label: 'Exit Price', key: 'exitPrice', placeholder: '2660.00' },
@@ -141,33 +142,48 @@ export default function Trades() {
               )}
             </div>
           </div>
-          <div className="flex gap-3 pt-1">
-            <button type="submit" disabled={addTrade.isPending} className="btn-premium text-primary-foreground px-6 py-3 rounded-[20px] font-semibold text-base transition-all duration-200 disabled:opacity-50">
+          <div className="flex flex-col sm:flex-row gap-3 pt-1">
+            <button type="submit" disabled={addTrade.isPending} className="touch-target w-full sm:w-auto btn-premium text-primary-foreground px-6 py-3 rounded-[20px] font-semibold text-base transition-all duration-200 disabled:opacity-50">
               {addTrade.isPending ? 'Saving...' : 'Save Trade'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="bg-secondary hover:bg-muted text-foreground px-6 py-3 rounded-[20px] font-semibold text-base border border-white/[0.08] transition-all duration-200">Cancel</button>
+            <button type="button" onClick={() => setShowForm(false)} className="touch-target w-full sm:w-auto bg-secondary hover:bg-muted text-foreground px-6 py-3 rounded-[20px] font-semibold text-base border border-white/[0.08] transition-all duration-200">Cancel</button>
           </div>
         </form>
       )}
 
-      {/* Trades Table */}
-      <div className="bg-[#0B0B0B] rounded-[20px] overflow-hidden p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h3 className="text-[18px] font-bold text-white tracking-tight">Trade History</h3>
+      {/* Trades Table / Cards */}
+      <div className="surface-card overflow-hidden p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h3 className="text-base sm:text-[18px] font-bold text-white tracking-tight">Trade History</h3>
             <span className="text-[13px] text-[#71717A] font-medium">{trades.length} of {trades.length} trades</span>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-[20px] border border-white/[0.05] text-[#71717A] hover:text-white text-[13px] font-semibold bg-[#121212] hover:bg-[#1A1A1A] transition-all">
+          <button className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[20px] border border-white/[0.05] text-[#71717A] hover:text-white text-[13px] font-semibold bg-[#121212] hover:bg-[#1A1A1A] transition-all">
             <SlidersHorizontal className="w-3.5 h-3.5" /> Filters <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] ml-1" />
           </button>
         </div>
 
         {/* Pro Banner */}
-        <div className="bg-[#0A1224] text-[#E2E8F0] text-[13px] px-5 py-3.5 rounded-xl flex items-center justify-between mb-8">
+        <div className="bg-[#0A1224] text-[#E2E8F0] text-xs sm:text-[13px] px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl flex items-center justify-between mb-6 md:mb-8">
           <span>Free plan loads <strong className="text-white font-bold">your last 15 trades.</strong> Upgrade to Pro to unlock full history and longer timeframes.</span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {trades.length === 0 ? (
+            <div className="text-center text-[#71717A] py-16">
+              <Activity className="w-10 h-10 mx-auto mb-3 opacity-20" />
+              <p className="text-sm font-medium">No trades yet. Click "+ Add Trade" to get started.</p>
+            </div>
+          ) : (
+            trades.map(t => (
+              <TradeCard key={t.id} trade={t} formatDate={formatDate} onDelete={handleDelete} />
+            ))
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr>

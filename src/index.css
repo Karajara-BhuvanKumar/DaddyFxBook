@@ -129,12 +129,14 @@
 
   html {
     font-feature-settings: 'cv11';
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 14px;
+    font-size: clamp(0.8125rem, 0.75rem + 0.25vw, 0.875rem);
+    overflow-x: hidden;
     line-height: 1.55;
     letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
@@ -152,6 +154,10 @@
     font-weight: 700;
     color: hsl(var(--foreground));
   }
+
+  h1 { font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2.25rem); }
+  h2 { font-size: clamp(1.25rem, 1.1rem + 0.75vw, 1.75rem); }
+  h3 { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); }
 
   /* Premium scrollbar */
   ::-webkit-scrollbar {
@@ -325,5 +331,75 @@
   .btn-premium:hover {
     background: hsl(217, 91%, 55%);
     box-shadow: none;
+  }
+
+  /* Responsive page shell */
+  .page-container {
+    @apply w-full max-w-[1600px] mx-auto;
+    padding-left: clamp(0.75rem, 2vw, 2rem);
+    padding-right: clamp(0.75rem, 2vw, 2rem);
+    padding-top: clamp(1rem, 2vw, 2rem);
+    padding-bottom: clamp(1rem, 2vw, 2rem);
+  }
+
+  .page-title {
+    font-size: clamp(1.5rem, 1.25rem + 1vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+
+  .stat-card {
+    @apply flex flex-col justify-between rounded-[20px] transition-colors w-full;
+    min-height: clamp(140px, 28vw, 190px);
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: #0B0B0B;
+  }
+
+  .stat-value {
+    font-size: clamp(1.75rem, 1.25rem + 2vw, 2.25rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .surface-card {
+    @apply rounded-[20px] w-full min-w-0;
+    background: #0B0B0B;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Prevent horizontal overflow from charts/tables */
+  .overflow-guard {
+    @apply w-full min-w-0 max-w-full overflow-x-hidden;
+  }
+
+  /* Markdown / code blocks in AI reports */
+  .report-content pre {
+    @apply overflow-x-auto max-w-full rounded-xl p-4 text-xs;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .report-content code {
+    @apply break-words;
+  }
+
+  .report-content p,
+  .report-content li {
+    @apply break-words;
   }
 }

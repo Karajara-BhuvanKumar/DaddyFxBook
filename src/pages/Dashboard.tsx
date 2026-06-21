@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useTrades } from "@/hooks/useTrades";
-import { DollarSign, Clock, CheckCircle2, Target, Activity, BarChart3, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
+import { DollarSign, Clock, CheckCircle2, Target, Activity, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { DayTradesPopup } from "@/components/DayTradesPopup";
+import { cn } from "@/lib/utils";
 
 const timeframes = ["1D", "1W", "1M", "3M", "ALL"] as const;
 type TF = typeof timeframes[number];
@@ -136,21 +137,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8 overflow-guard">
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="flex flex-col justify-between rounded-[20px] transition-colors"
-            style={{
-              height: 190,
-              padding: 32,
-              background: "#0B0B0B",
-            }}
-          >
+          <div key={stat.label} className="stat-card">
             <div className="flex items-start justify-between">
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center ${stat.iconBg}`}>
+              <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center ${stat.iconBg}`}>
                 <stat.icon className="w-[18px] h-[18px]" />
               </div>
               {stat.pill && (
@@ -159,10 +152,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-2 uppercase">{stat.label}</p>
-              <p
-                className={`${stat.tone} font-black tracking-tight leading-none`}
-                style={{ fontSize: 36, letterSpacing: "-0.03em" }}
-              >
+              <p className={cn("stat-value", stat.tone)}>
                 {stat.value >= 0 ? "+" : "-"}${Math.abs(stat.value).toFixed(2)}
               </p>
               <p className="text-[12px] text-zinc-600 mt-3 font-medium flex items-center gap-1">
@@ -173,25 +163,15 @@ export default function Dashboard() {
         ))}
 
         {/* Win Rate card */}
-        <div
-          className="flex flex-col justify-between rounded-[20px] transition-colors"
-          style={{
-            height: 190,
-            padding: 32,
-            background: "#0B0B0B",
-          }}
-        >
+        <div className="stat-card">
           <div className="flex items-start justify-between">
-            <div className="w-11 h-11 rounded-full bg-[#051020] text-[#3b82f6] flex items-center justify-center">
+            <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#051020] text-[#3b82f6] flex items-center justify-center">
               <Target className="w-[18px] h-[18px]" />
             </div>
           </div>
           <div>
             <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-2 uppercase">WIN RATE</p>
-            <p
-              className="text-white font-black tracking-tight leading-none"
-              style={{ fontSize: 36, letterSpacing: "-0.03em" }}
-            >
+            <p className="stat-value text-white">
               {winRate.toFixed(0)}%
             </p>
             <div className="mt-4 h-1.5 rounded-full bg-[#1A1A1A] overflow-hidden">
@@ -205,38 +185,34 @@ export default function Dashboard() {
       </div>
 
       {/* Performance + Calendar */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Performance */}
         <div
-          className="lg:col-span-3 rounded-2xl flex flex-col transition-colors border border-white/[0.05] relative overflow-hidden"
-          style={{
-            height: 480,
-            padding: "32px 32px 16px 32px",
-            background: "#080808",
-          }}
+          className="lg:col-span-3 rounded-2xl flex flex-col transition-colors border border-white/[0.05] relative overflow-hidden min-h-[320px] md:min-h-[400px] lg:min-h-[480px] p-4 sm:p-6 lg:p-8 pb-4"
+          style={{ background: "#080808" }}
         >
-          <div className="flex items-start justify-between mb-8 z-10">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-zinc-500" />
-                <span className="text-[12px] font-bold text-zinc-500 tracking-widest uppercase">PERFORMANCE</span>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 md:mb-8 z-10">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-2 md:mb-3">
+                <TrendingUp className="w-4 h-4 text-zinc-500 shrink-0" />
+                <span className="text-[11px] md:text-[12px] font-bold text-zinc-500 tracking-widest uppercase">PERFORMANCE</span>
               </div>
-              <div className="flex items-center gap-4">
-                <p className={`font-black leading-none tracking-tight ${totalPnl >= 0 ? "text-[#3b82f6]" : "text-[#ef4444]"}`} style={{ fontSize: 44 }}>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                <p className={cn("font-black leading-none tracking-tight text-3xl sm:text-4xl lg:text-[44px]", totalPnl >= 0 ? "text-[#3b82f6]" : "text-[#ef4444]")}>
                   {totalPnl >= 0 ? "+" : "-"}${Math.abs(totalPnl).toFixed(2)}
                 </p>
-                <span className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[14px] font-bold border ${totalPnl >= 0 ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
+                <span className={`flex items-center gap-1 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-[14px] font-bold border ${totalPnl >= 0 ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
                   <TrendingUp className="w-3.5 h-3.5" />
                   200.0%
                 </span>
               </div>
             </div>
-            <div className="flex gap-1 bg-[#121212] p-1 rounded-xl border border-white/[0.05]">
+            <div className="flex flex-wrap gap-1 bg-[#121212] p-1 rounded-xl border border-white/[0.05] shrink-0 self-start">
               {timeframes.map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all duration-200 ${timeframe === tf
+                  className={`px-2.5 sm:px-4 py-1.5 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-200 min-h-[36px] ${timeframe === tf
                       ? "bg-[#2A2A2A] text-white shadow-sm"
                       : "text-zinc-500 hover:text-white"
                     }`}
@@ -247,8 +223,8 @@ export default function Dashboard() {
             </div>
           </div>
           {chartData.length > 0 ? (
-            <div className="flex-1 -mx-4 -mb-2 relative z-10">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-1 min-h-[200px] md:min-h-[280px] -mx-2 sm:-mx-4 -mb-2 relative z-10">
+              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                 <AreaChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
@@ -266,11 +242,12 @@ export default function Dashboard() {
                   <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fill: "#64748B", fontSize: 11, fontFamily: "Inter", fontWeight: 600 }}
+                    tick={{ fill: "#64748B", fontSize: 10, fontFamily: "Inter", fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                     dy={16}
-                    minTickGap={30}
+                    minTickGap={20}
+                    interval="preserveStartEnd"
                   />
                   <YAxis
                     orientation="right"
@@ -365,30 +342,26 @@ export default function Dashboard() {
 
         {/* Monthly P&L */}
         <div
-          className="lg:col-span-2 rounded-[20px] flex flex-col justify-between transition-colors"
-          style={{
-            height: 430,
-            padding: 20,
-            background: "#0B0B0B",
-          }}
+          className="lg:col-span-2 rounded-[20px] flex flex-col transition-colors min-h-[360px] md:min-h-[430px] p-3 sm:p-5 overflow-hidden"
+          style={{ background: "#0B0B0B" }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-foreground text-xl font-bold tracking-tight">Monthly P&L</h2>
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 md:mb-4">
+            <h2 className="text-foreground text-lg md:text-xl font-bold tracking-tight">Monthly P&L</h2>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-semibold text-muted-foreground">Monthly:</span>
-                <span className={`text-[13px] font-bold ${monthlyPnl >= 0 ? "text-profit" : "text-loss"}`}>
+                <span className="text-xs sm:text-[13px] font-semibold text-muted-foreground">Monthly:</span>
+                <span className={`text-xs sm:text-[13px] font-bold ${monthlyPnl >= 0 ? "text-profit" : "text-loss"}`}>
                   {monthlyPnl >= 0 ? "+" : "-"}${Math.abs(monthlyPnl).toFixed(2)}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
                   className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <span className="text-foreground font-bold text-[13px] min-w-[90px] text-center">
+                <span className="text-foreground font-bold text-xs sm:text-[13px] min-w-[80px] sm:min-w-[90px] text-center">
                   {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </span>
                 <button
@@ -401,8 +374,34 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Mobile: scrollable weekly summary cards */}
+          <div className="md:hidden -mx-1 mb-3">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+              {weeklyTotals.map((wt, w) => {
+                const wPositive = wt.pnl >= 0;
+                return (
+                  <div
+                    key={w}
+                    className={cn(
+                      "snap-start shrink-0 w-[120px] rounded-xl p-3 flex flex-col items-center justify-center min-h-[88px]",
+                      wt.trades > 0
+                        ? wPositive ? "bg-[#051020] text-[#3b82f6]" : "bg-[#1a0505] text-[#ef4444]"
+                        : "bg-[#121212] text-zinc-600",
+                    )}
+                  >
+                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-70">Week {w + 1}</span>
+                    <span className="font-bold text-sm mt-1">
+                      {wt.trades === 0 ? "$0" : `${wPositive ? "+" : "-"}$${Math.abs(wt.pnl).toFixed(0)}`}
+                    </span>
+                    <span className="text-[10px] opacity-60 mt-0.5">{wt.trades} trades</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Header row: M T W T F S S + Weekly */}
-          <div className="grid grid-cols-8 gap-1.5 text-center mb-2">
+          <div className="hidden md:grid grid-cols-8 gap-1 sm:gap-1.5 text-center mb-2">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
               <div
                 key={i}
@@ -418,8 +417,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Week rows */}
-          <div className="space-y-1.5 flex-1 flex flex-col justify-between">
+          {/* Week rows — compact on mobile */}
+          <div className="space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-between min-h-0 overflow-hidden">
             {Array.from({ length: weeks }).map((_, w) => {
               const wt = weeklyTotals[w];
               const wPositive = wt.pnl >= 0;
@@ -429,7 +428,7 @@ export default function Dashboard() {
                   ? "text-emerald-600 dark:text-blue-500"
                   : "text-red-600 dark:text-red-500";
               return (
-                <div key={w} className="grid grid-cols-8 gap-1.5">
+                <div key={w} className="grid grid-cols-8 gap-0.5 sm:gap-1 md:gap-1.5">
                   {Array.from({ length: 7 }).map((__, d) => {
                     const cellIdx = w * 7 + d;
                     const dayNum = cellIdx - startDow + 1;
@@ -473,7 +472,7 @@ export default function Dashboard() {
                           setSelectedDay({ date: dateStr, rect });
                         }}
                       >
-                        <span className={`absolute top-2.5 left-3 text-[11px] font-medium ${isToday ? "text-blue-600 dark:text-blue-500 font-bold" : "text-muted-foreground"} flex flex-col items-center gap-0.5`}>
+                        <span className={`absolute top-1 sm:top-2.5 left-1.5 sm:left-3 text-[9px] sm:text-[11px] font-medium ${isToday ? "text-blue-600 dark:text-blue-500 font-bold" : "text-muted-foreground"} flex flex-col items-center gap-0.5`}>
                           {dayNum}
                           {isToday && (
                             <span className="w-1 h-1 rounded-full bg-blue-500" />
@@ -481,7 +480,7 @@ export default function Dashboard() {
                         </span>
                         {hasData && (
                           <span
-                            className={`font-bold text-[13px] ${isProfit ? "text-emerald-600 dark:text-blue-500" : "text-red-600 dark:text-red-500"}`}
+                            className={`font-bold text-[9px] sm:text-[11px] md:text-[13px] ${isProfit ? "text-emerald-600 dark:text-blue-500" : "text-red-600 dark:text-red-500"}`}
                           >
                             {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2).replace(/\.00$/, '')}{!isProfit && Number.isInteger(data.pnl) ? ".00" : ""}
                           </span>
@@ -512,17 +511,15 @@ export default function Dashboard() {
                       </div>
                     );
                   })}
-                  {/* Weekly column — mini card */}
+                  {/* Weekly column — hidden on smallest screens (shown in scroll above) */}
                   <div
-                    className={`relative flex flex-col items-center justify-center rounded-xl p-2 transition-all duration-200 ${wt.trades > 0
-                        ? wPositive
-                          ? "bg-[#051020] text-[#3b82f6]"
-                          : "bg-[#1a0505] text-[#ef4444]"
-                        : "bg-[#121212] text-zinc-600"
-                      }`}
-                    style={{
-                      aspectRatio: "1/1",
-                    }}
+                    className={cn(
+                      "relative hidden sm:flex flex-col items-center justify-center rounded-xl p-1 sm:p-2 transition-all duration-200",
+                      wt.trades > 0
+                        ? wPositive ? "bg-[#051020] text-[#3b82f6]" : "bg-[#1a0505] text-[#ef4444]"
+                        : "bg-[#121212] text-zinc-600",
+                    )}
+                    style={{ aspectRatio: "1/1" }}
                   >
                     <span
                       className={`absolute top-2.5 uppercase font-bold text-[9px] tracking-wider ${weeklyColorClass}`}

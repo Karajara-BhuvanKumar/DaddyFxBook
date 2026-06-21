@@ -145,18 +145,18 @@ export default function Settings() {
   ];
 
   return (
-    <div className="mt-6 pb-12 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="overflow-guard space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 md:pb-12">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <h1 className="page-title font-bold tracking-tight">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your workspace preferences, identity, and security.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <ThemeToggle />
           <Button 
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-6 font-medium rounded-xl h-11"
+            className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-6 font-medium rounded-xl h-11 min-h-[44px]"
             onClick={() => toast({ title: "Settings automatically saved" })}
           >
             All changes saved
@@ -291,17 +291,17 @@ export default function Settings() {
         {/* RULES */}
         {activeTab === "rules" && (
           <SettingsCard title="Trading Rules" description="Your personal commandments. AI reports check trades against active rules.">
-            <div className="flex gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <Input 
                 placeholder="e.g. Only trade London session..." 
                 value={newRule}
                 onChange={(e) => setNewRule(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && newRule.trim() && addRule.mutate(newRule.trim())} 
-                className="bg-input border-border/60 h-11 rounded-xl flex-1 focus-visible:ring-primary"
+                className="bg-input border-border/60 h-11 rounded-xl flex-1 focus-visible:ring-primary min-h-[44px]"
               />
               <Button 
                 onClick={() => newRule.trim() && addRule.mutate(newRule.trim())}
-                className="h-11 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                className="h-11 min-h-[44px] px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-2" /> Add Rule
               </Button>
@@ -503,7 +503,7 @@ export default function Settings() {
 
 function SettingsCard({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+    <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm overflow-hidden">
       <div className="mb-8">
         <h2 className="text-xl font-bold text-foreground tracking-tight">{title}</h2>
         <p className="text-sm text-muted-foreground mt-1.5">{description}</p>
@@ -537,12 +537,12 @@ function SelectInput({ value, onChange, options }: { value: string; onChange: (v
 
 function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/10 p-5 hover:bg-muted/20 transition-colors">
-      <div className="pr-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-border/50 bg-muted/10 p-4 sm:p-5 hover:bg-muted/20 transition-colors">
+      <div className="sm:pr-6">
         <p className="font-semibold text-foreground">{label}</p>
         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} className="data-[state=checked]:bg-primary shrink-0" />
+      <Switch checked={checked} onCheckedChange={onChange} className="data-[state=checked]:bg-primary shrink-0 self-start sm:self-center" />
     </div>
   );
 }

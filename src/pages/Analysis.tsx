@@ -308,23 +308,22 @@ export default function Analysis() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8 overflow-guard">
       {/* Top Header */}
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/[0.05] pb-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[20px] bg-blue-500/10 flex items-center justify-center">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-white/[0.05] pb-4 md:pb-5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-[20px] bg-blue-500/10 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5 text-blue-500" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Performance Analytics</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Performance Analytics</h1>
             <p className="text-[12px] text-zinc-500 font-semibold mt-0.5">Analyze your trading patterns and improve your strategy</p>
           </div>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-4 sm:gap-6">
+          <div className="flex flex-col gap-1 min-w-0">
             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Time Period</span>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               {['Today', '7 Days', '30 Days', '3 Months', '1 Year', 'All Time'].map(tf => (
                 <button
                   key={tf}
@@ -340,7 +339,7 @@ export default function Analysis() {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Filter By</span>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               {['All Trades', 'Winners', 'Losers'].map(f => (
                 <button
                   key={f}
@@ -360,7 +359,7 @@ export default function Analysis() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total P&L */}
-        <div className="bg-[#0B0B0B] border-t border-t-[#3B82F6]/30 rounded-[20px] p-5 flex flex-col justify-between h-[160px]">
+        <div className="bg-[#0B0B0B] border-t border-t-[#3B82F6]/30 rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total P&L</span>
             <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#3B82F6]">
@@ -375,7 +374,7 @@ export default function Analysis() {
         </div>
 
         {/* Win Rate */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between h-[160px] hover:bg-[#0F0F0F] transition-colors">
+        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] hover:bg-[#0F0F0F] transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Win Rate</span>
             <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#3B82F6]">
@@ -393,7 +392,7 @@ export default function Analysis() {
         </div>
 
         {/* Profit Factor */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between h-[160px] hover:bg-[#0F0F0F] transition-colors">
+        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] hover:bg-[#0F0F0F] transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Profit Factor</span>
             <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-[#A855F7]">
@@ -408,7 +407,7 @@ export default function Analysis() {
         </div>
 
         {/* Expectancy */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between h-[160px] hover:bg-[#0F0F0F] transition-colors">
+        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] hover:bg-[#0F0F0F] transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Expectancy</span>
             <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
@@ -426,7 +425,7 @@ export default function Analysis() {
       {/* Quick Stats + Equity Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Stats */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between" style={{ height: 420 }}>
+        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[280px] sm:min-h-[420px]">
           <h3 className="text-xs font-bold text-white mb-4 flex items-center gap-1.5 uppercase tracking-wider">
             <SlidersHorizontal className="w-4 h-4 text-[#3B82F6]" /> Quick Stats
           </h3>
@@ -450,7 +449,7 @@ export default function Analysis() {
         </div>
 
         {/* Equity Curve */}
-        <div className="lg:col-span-2 bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between" style={{ height: 420 }}>
+        <div className="lg:col-span-2 bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[280px] sm:min-h-[420px]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">

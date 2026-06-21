@@ -97,11 +97,11 @@ export default function Journal() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8 overflow-guard">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Journal</h1>
-          <div className="flex items-center gap-2 mt-1.5">
+          <h1 className="page-title text-foreground hidden lg:block">Journal</h1>
+          <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
             <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Sun, Jun 21</span>
           </div>
@@ -109,9 +109,9 @@ export default function Journal() {
         <ExportJournalDialog />
       </div>
 
-      <div className="flex gap-6 min-h-[calc(100vh-12rem)]">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 min-h-0 lg:min-h-[calc(100vh-12rem)]">
         {/* Trade list */}
-        <div className="w-80 shrink-0 rounded-[20px] border border-white/[0.08] bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm">
+        <div className="w-full lg:w-[40%] xl:w-80 shrink-0 rounded-[20px] border border-white/[0.08] bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm max-h-[420px] lg:max-h-none">
           <div className="p-4 border-b border-white/[0.05] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-bold text-foreground">Trade Journal</h3>
@@ -181,22 +181,20 @@ export default function Journal() {
         {/* Journal editor */}
         <div
           className={cn(
-            "flex-1 rounded-3xl border p-6 overflow-auto transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
-            selectedTrade
-              ? "bg-[#0B0B0B] border-white/[0.06]"
-              : "bg-[#0B0B0B] border-white/[0.06]"
+            "flex-1 min-w-0 rounded-3xl border p-4 sm:p-6 overflow-auto transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
+            "bg-[#0B0B0B] border-white/[0.06]",
           )}
         >
           {selectedTrade ? (
-            <div className="space-y-6 animate-fade-up">
-              <div className="flex items-center justify-between border-b border-white/[0.05] pb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm">
+            <div className="space-y-5 md:space-y-6 animate-fade-up">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.05] pb-4 md:pb-5">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm shrink-0">
                     <DollarSign className="w-4 h-4 text-black stroke-[3]" />
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground tracking-tight">{selectedTrade.symbol}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">{selectedTrade.symbol}</h2>
                   <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-md border",
+                    "text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0",
                     isWinner
                       ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-500/20'
                       : 'bg-red-500/10 text-red-600 dark:text-red-500 border-red-500/20'
@@ -204,19 +202,19 @@ export default function Journal() {
                     {isWinner ? 'WINNER' : 'LOSER'}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button className="touch-target border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  <button className="flex items-center gap-1.5 border border-white/[0.08] px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
-                    <FileText className="w-3.5 h-3.5" /> Report
+                  <button className="touch-target flex items-center gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                    <FileText className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Report</span>
                   </button>
-                  <button className="flex items-center gap-1.5 border border-white/[0.08] px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
-                    <SlidersHorizontal className="w-3.5 h-3.5" /> Analytics
+                  <button className="touch-target flex items-center gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                    <SlidersHorizontal className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Analytics</span>
                   </button>
                   <button onClick={handleSave} disabled={saveJournal.isPending}
                     className={cn(
-                      "text-white font-bold px-6 py-2 rounded-[20px] text-xs transition-all disabled:opacity-50 shadow-sm",
+                      "touch-target w-full sm:w-auto text-white font-bold px-6 py-2 rounded-[20px] text-xs transition-all disabled:opacity-50 shadow-sm min-h-[44px]",
                       isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                     )}>
                     {saveJournal.isPending ? 'Saving...' : 'Save'}
@@ -224,7 +222,7 @@ export default function Journal() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground font-semibold mb-6">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground font-semibold mb-4 md:mb-6">
                 <span className={selectedTrade.direction === 'Long' ? 'text-blue-500' : 'text-red-500'}>{selectedTrade.direction}</span>
                 <span>·</span>
                 <span>Entry ${Number(selectedTrade.entry_price).toFixed(2)}</span>
@@ -417,7 +415,7 @@ export default function Journal() {
                     </div>
                   ))}
                 </div>
-                <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 max-w-xs">
+                <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 w-full max-w-xs">
                   <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
                     className={cn(
                       "flex-1 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
@@ -439,13 +437,13 @@ export default function Journal() {
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {screenshots.map(s => (
-                    <div key={s.id} className="w-36 h-24 rounded-[20px] overflow-hidden border border-white/[0.08] hover:border-blue-500/30 transition-all duration-200 group relative">
+                    <div key={s.id} className="w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] overflow-hidden border border-white/[0.08] hover:border-blue-500/30 transition-all duration-200 group relative">
                       <img src={(s as { signed_url?: string }).signed_url || s.image_url} alt="Trade screenshot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   ))}
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "w-36 h-24 rounded-[20px] border border-dashed bg-[#0B0B0B] flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
+                      "w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] border border-dashed bg-[#0B0B0B] flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
                       isWinner ? "border-white/[0.08] dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-white/[0.08] dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
                     )}>
                     <Plus className="w-5 h-5 mb-1 text-muted-foreground group-hover:text-foreground transition-colors" />
