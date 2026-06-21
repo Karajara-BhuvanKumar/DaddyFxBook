@@ -1,7 +1,8 @@
+
 // AI Insights edge function — generates AI commentary for Phase 2 (Daily/Weekly/Monthly reports)
-// and Phase 3 (Trader Scorecard). Persists results so they show up across sessions.
+// and Phase 3 (Trader Scorecard). Returns JSON directly without persistence.
 //
-// Client computes deterministic stats and scores; server adds AI narrative and persists.
+// Client computes deterministic stats and scores; server adds AI narrative.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -56,16 +57,12 @@ const periodTool = (periodType: "daily" | "weekly" | "monthly") => {
   }
 
   return {
-    type: "function" as const,
-    function: {
-      name: "submit_period_report",
-      description: `Submit the structured ${periodType} AI report.`,
-      parameters: {
-        type: "object",
-        additionalProperties: false,
-        properties: baseProps,
-        required,
-      },
+    name: "submit_period_report",
+    description: `Submit the structured ${periodType} AI report.`,
+    parameters: {
+      type: "object",
+      properties: baseProps,
+      required,
     },
   };
 };
@@ -78,37 +75,31 @@ Tie advice to the factor numbers. Never invent data. Be concise and concrete.
 You MUST call the tool "submit_scorecard_insights" exactly once.`;
 
 const scorecardTool = {
-  type: "function" as const,
-  function: {
-    name: "submit_scorecard_insights",
-    description: "Submit AI explanations and recommendations for each scorecard category.",
-    parameters: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        overall_summary: { type: "string" },
-        categories: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            discipline: catSchema(),
-            risk: catSchema(),
-            execution: catSchema(),
-            psychology: catSchema(),
-            consistency: catSchema(),
-          },
-          required: ["discipline", "risk", "execution", "psychology", "consistency"],
+  name: "submit_scorecard_insights",
+  description: "Submit AI explanations and recommendations for each scorecard category.",
+  parameters: {
+    type: "object",
+    properties: {
+      overall_summary: { type: "string" },
+      categories: {
+        type: "object",
+        properties: {
+          discipline: catSchema(),
+          risk: catSchema(),
+          execution: catSchema(),
+          psychology: catSchema(),
+          consistency: catSchema(),
         },
+        required: ["discipline", "risk", "execution", "psychology", "consistency"],
       },
-      required: ["overall_summary", "categories"],
     },
+    required: ["overall_summary", "categories"],
   },
 };
 
 function catSchema() {
   return {
     type: "object",
-    additionalProperties: false,
     properties: {
       explanation: { type: "string" },
       recommendations: { type: "array", items: { type: "string" } },
@@ -117,32 +108,62 @@ function catSchema() {
   };
 }
 
-async function callAI(
+async function callGemini(
   apiKey: string,
   system: string,
   user: string,
   tool: ReturnType<typeof periodTool> | typeof scorecardTool,
 ): Promise<Record<string, unknown>> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      tools: [tool],
-      tool_choice: { type: "function", function: { name: tool.function.name } },
-    }),
-  });
-  if (res.status === 429) throw new Response(JSON.stringify({ error: "Rate limit exceeded. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  if (res.status === 402) throw new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in workspace settings." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  if (!res.ok) throw new Response(JSON.stringify({ error: "AI gateway error", detail: await res.text() }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    {
+      method: "POST",
+      headers: {
+        "x-goog-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            { text: system },
+          ],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: user }],
+          },
+        ],
+        tools: [
+          {
+            functionDeclarations: [
+              tool
+            ],
+          },
+        ],
+        toolConfig: {
+          functionCallingConfig: {
+            mode: "ANY",
+            allowedFunctionNames: [tool.name],
+          },
+        },
+      }),
+    },
+  );
+  
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Response(JSON.stringify({ error: "Gemini API error", detail: text }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  
   const data = await res.json();
-  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call?.function?.arguments) throw new Response(JSON.stringify({ error: "Model did not return a structured response." }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  return JSON.parse(call.function.arguments);
+  const call = data.candidates?.[0]?.content?.parts?.[0]?.functionCall;
+  
+  if (!call?.args) {
+    throw new Response(JSON.stringify({ error: "Model did not return a structured response." }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  
+  return call.args;
 }
 
 Deno.serve(async (req) => {
@@ -155,8 +176,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return json(500, { error: "Missing LOVABLE_API_KEY" });
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -166,14 +185,26 @@ Deno.serve(async (req) => {
     );
     if (claimsErr || !claimsData?.claims?.sub) return json(401, { error: "Unauthorized" });
     const userId = claimsData.claims.sub as string;
+    
     const admin = createClient(supabaseUrl, serviceKey);
+
+    // Fetch user's Gemini API key
+    const { data: userSettings, error: settingsErr } = await admin
+      .from("user_settings")
+      .select("gemini_api_key")
+      .eq("user_id", userId)
+      .single();
+    if (settingsErr || !userSettings?.gemini_api_key)
+      return json(400, { error: "Please add your Gemini API key in settings" });
+
+    const apiKey = userSettings.gemini_api_key;
 
     const body = await req.json();
     const mode = body.mode as "period" | "scorecard";
 
     if (mode === "period") {
       const periodType = body.period_type as "daily" | "weekly" | "monthly";
-      const periodStart = body.period_start as string; // YYYY-MM-DD
+      const periodStart = body.period_start as string;
       const periodEnd = body.period_end as string;
       const stats = body.stats as Record<string, unknown>;
       const trades = body.trades as unknown[];
@@ -184,29 +215,12 @@ Deno.serve(async (req) => {
       }
 
       const tool = periodTool(periodType);
-      const report = await callAI(
+      const report = await callGemini(
         apiKey,
         PERIOD_SYSTEM,
         `Period: ${periodType} (${periodStart} → ${periodEnd})\n\nStats:\n${JSON.stringify(stats)}\n\nTrades:\n${JSON.stringify(trades)}`,
         tool,
       );
-
-      const { error: upErr } = await admin
-        .from("ai_period_reports")
-        .upsert(
-          {
-            user_id: userId,
-            period_type: periodType,
-            period_start: periodStart,
-            period_end: periodEnd,
-            trade_count: trades.length,
-            stats,
-            report,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,period_type,period_start" },
-        );
-      if (upErr) return json(500, { error: upErr.message });
 
       return json(200, { report });
     }
@@ -218,35 +232,12 @@ Deno.serve(async (req) => {
       if (!body.trade_count || body.trade_count === 0)
         return json(400, { error: "More trading history is required to generate meaningful AI reports." });
 
-      const insights = await callAI(
+      const insights = await callGemini(
         apiKey,
         SCORECARD_SYSTEM,
         `Scorecard snapshot:\n${JSON.stringify(snapshot)}\n\nTrades summary:\n${JSON.stringify(tradesSummary)}`,
         scorecardTool,
       );
-
-      const overall = snapshot.overall as number;
-      const classification = snapshot.classification as string;
-      const discipline = snapshot.discipline as { score: number };
-      const risk = snapshot.risk as { score: number };
-      const execution = snapshot.execution as { score: number };
-      const psychology = snapshot.psychology as { score: number };
-      const consistency = snapshot.consistency as { score: number };
-
-      const { error: insErr } = await admin.from("ai_scorecards").insert({
-        user_id: userId,
-        discipline_score: discipline.score,
-        risk_score: risk.score,
-        execution_score: execution.score,
-        psychology_score: psychology.score,
-        consistency_score: consistency.score,
-        overall_score: overall,
-        classification,
-        trade_count: body.trade_count,
-        breakdown: snapshot,
-        ai_insights: insights,
-      });
-      if (insErr) return json(500, { error: insErr.message });
 
       return json(200, { insights });
     }
