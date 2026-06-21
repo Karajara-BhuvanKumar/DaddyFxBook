@@ -1,6 +1,6 @@
-// AI Report edge function — runs the AI Performance Coach + per-trade Trade Reviews.
-// Authenticated via JWT. Fetches the user's trades server-side, calls Lovable AI,
-// then persists the report and trade reviews so they are visible everywhere.
+
+// AI Report edge function - generates AI reports using user's Gemini API key
+// Authenticated via JWT, fetches user's key from user_settings
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -34,103 +34,8 @@ interface Trade {
 const SYSTEM_PROMPT = `You are an elite XAUUSD (Gold) trading performance coach.
 Analyze the trader's historical trades and produce an honest, structured performance report.
 
-Identify real patterns — do not invent data. Base every claim on the provided trades.
-Be concise, specific, and actionable. Use trader language. Avoid generic platitudes.
-
-For each individual trade you also produce a "trade review" with a grade (A+, A, B, C, F),
-what went right, what went wrong, improvements, and a one-sentence summary.
-
-You MUST call the tool "submit_report" exactly once with the full structured analysis,
-and the trade_reviews array MUST contain one entry per provided trade using the trade id verbatim.`;
-
-const tool = {
-  type: "function" as const,
-  function: {
-    name: "submit_report",
-    description: "Submit the structured AI performance report and per-trade reviews.",
-    parameters: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        strengths: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              title: { type: "string" },
-              description: { type: "string" },
-              evidence: { type: "string" },
-              category: {
-                type: "string",
-                enum: ["setup", "session", "winrate", "day", "instrument", "risk_reward", "execution"],
-              },
-            },
-            required: ["title", "description", "evidence", "category"],
-          },
-        },
-        weaknesses: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              title: { type: "string" },
-              description: { type: "string" },
-              evidence: { type: "string" },
-              severity: { type: "string", enum: ["low", "medium", "high"] },
-              category: {
-                type: "string",
-                enum: [
-                  "overtrading",
-                  "revenge_trading",
-                  "fomo",
-                  "early_exit",
-                  "late_exit",
-                  "risk_management",
-                  "session_discipline",
-                  "rule_break",
-                ],
-              },
-            },
-            required: ["title", "description", "evidence", "severity", "category"],
-          },
-        },
-        suggestions: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              title: { type: "string" },
-              action: { type: "string" },
-              rationale: { type: "string" },
-              priority: { type: "string", enum: ["low", "medium", "high"] },
-            },
-            required: ["title", "action", "rationale", "priority"],
-          },
-        },
-        trade_reviews: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              trade_id: { type: "string" },
-              grade: { type: "string", enum: ["A+", "A", "B", "C", "F"] },
-              went_right: { type: "array", items: { type: "string" } },
-              went_wrong: { type: "array", items: { type: "string" } },
-              improvements: { type: "array", items: { type: "string" } },
-              summary: { type: "string" },
-            },
-            required: ["trade_id", "grade", "went_right", "went_wrong", "improvements", "summary"],
-          },
-        },
-      },
-      required: ["strengths", "weaknesses", "suggestions", "trade_reviews"],
-    },
-  },
-};
+Identify real patterns - do not invent data. Base every claim on the provided trades.
+Be concise, specific, and actionable. Use trader language. Avoid generic platitudes.`;
 
 function summarize(trades: Trade[]) {
   const wins = trades.filter((t) => Number(t.pnl) > 0);
@@ -176,13 +81,24 @@ Deno.serve(async (req) => {
     if (claimsErr || !claimsData?.claims?.sub) return json(401, { error: "Unauthorized" });
     const userId = claimsData.claims.sub as string;
 
+    const admin = createClient(supabaseUrl, serviceKey);
+
+    // Fetch user's Gemini API key
+    const { data: userSettings, error: settingsErr } = await admin
+      .from("user_settings")
+      .select("gemini_api_key")
+      .eq("user_id", userId)
+      .single();
+    if (settingsErr || !userSettings?.gemini_api_key)
+      return json(400, { error: "Please add your Gemini API key in settings" });
+
+    const apiKey = userSettings.gemini_api_key;
+
     const body = (await req.json().catch(() => ({}))) as {
       mode?: "full" | "single";
       trade_id?: string;
     };
     const mode = body.mode ?? "full";
-
-    const admin = createClient(supabaseUrl, serviceKey);
 
     let query = admin
       .from("trades")
@@ -197,108 +113,65 @@ Deno.serve(async (req) => {
     }
     const { data: trades, error: tradesErr } = await query;
     if (tradesErr) return json(500, { error: tradesErr.message });
-    if (!trades || trades.length === 0) return json(400, { error: "No trades found." });
+    if (!trades || trades.length === 0) return json(400, { error: "No trades found" });
 
     const stats = summarize(trades as Trade[]);
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return json(500, { error: "Missing LOVABLE_API_KEY" });
-
-    const userPayload = {
-      mode,
-      aggregate_stats: stats,
-      trades: (trades as Trade[]).map((t) => ({
-        id: t.id,
-        symbol: t.symbol,
-        direction: t.direction,
-        entry: t.entry_price,
-        exit: t.exit_price,
-        sl: t.stop_loss,
-        tp: t.take_profit,
-        lot: t.lot_size,
-        pnl: t.pnl,
-        session: t.session,
-        opened: t.open_time,
-        closed: t.close_time,
-      })),
-    };
-
     const userPrompt =
       mode === "single"
-        ? "Review this single XAUUSD trade. Strengths/weaknesses/suggestions can be brief but the trade_reviews array MUST contain this trade. Submit via submit_report.\n\n"
-        : "Analyze these XAUUSD trades and submit the report via the submit_report tool.\n\n";
+        ? "Review this single XAUUSD trade. Provide a brief analysis and 1-3 actionable recommendations."
+        : "Analyze these XAUUSD trades and provide a structured performance report with strengths, weaknesses, and recommendations.";
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt + JSON.stringify(userPayload) },
-        ],
-        tools: [tool],
-        tool_choice: { type: "function", function: { name: "submit_report" } },
-      }),
-    });
+    // Call Gemini API directly
+    const aiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: SYSTEM_PROMPT },
+                { text: userPrompt },
+                {
+                  text: JSON.stringify({
+                    stats,
+                    trades: (trades as Trade[]).map((t) => ({
+                      id: t.id,
+                      symbol: t.symbol,
+                      direction: t.direction,
+                      entry: t.entry_price,
+                      exit: t.exit_price,
+                      sl: t.stop_loss,
+                      tp: t.take_profit,
+                      lot: t.lot_size,
+                      pnl: t.pnl,
+                      session: t.session,
+                      opened: t.open_time,
+                      closed: t.close_time,
+                    })),
+                  }),
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          },
+        }),
+      },
+    );
 
-    if (aiRes.status === 429) return json(429, { error: "Rate limit exceeded. Try again shortly." });
-    if (aiRes.status === 402)
-      return json(402, { error: "AI credits exhausted. Add credits in workspace settings." });
     if (!aiRes.ok) {
       const text = await aiRes.text();
-      return json(502, { error: "AI gateway error", detail: text });
+      return json(502, { error: "Gemini API error", detail: text });
     }
 
-    const data = await aiRes.json();
-    const call = data?.choices?.[0]?.message?.tool_calls?.[0];
-    if (!call?.function?.arguments)
-      return json(502, { error: "Model did not return a structured report." });
-
-    const report = JSON.parse(call.function.arguments) as {
-      strengths: unknown[];
-      weaknesses: unknown[];
-      suggestions: unknown[];
-      trade_reviews: Array<{
-        trade_id: string;
-        grade: string;
-        went_right: string[];
-        went_wrong: string[];
-        improvements: string[];
-        summary: string;
-      }>;
-    };
-
-    // Persist per-trade reviews (upsert on user_id+trade_id).
-    const tradeIds = new Set((trades as Trade[]).map((t) => t.id));
-    const validReviews = (report.trade_reviews ?? []).filter((r) => tradeIds.has(r.trade_id));
-    if (validReviews.length > 0) {
-      const rows = validReviews.map((r) => ({
-        user_id: userId,
-        trade_id: r.trade_id,
-        grade: r.grade,
-        went_right: r.went_right ?? [],
-        went_wrong: r.went_wrong ?? [],
-        improvements: r.improvements ?? [],
-        summary: r.summary ?? "",
-        updated_at: new Date().toISOString(),
-      }));
-      const { error: upErr } = await admin
-        .from("ai_trade_reviews")
-        .upsert(rows, { onConflict: "user_id,trade_id" });
-      if (upErr) console.error("upsert reviews failed", upErr.message);
-    }
-
-    // Persist the full Performance Coach report (only on full runs).
-    if (mode === "full") {
-      const { error: repErr } = await admin.from("ai_performance_reports").insert({
-        user_id: userId,
-        report,
-        stats,
-        trade_count: trades.length,
-      });
-      if (repErr) console.error("insert report failed", repErr.message);
-    }
+    const aiData = await aiRes.json();
+    const report = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "No report generated";
 
     return json(200, { report, stats });
   } catch (e) {

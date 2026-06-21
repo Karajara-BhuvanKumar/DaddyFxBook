@@ -29,6 +29,7 @@ CREATE TABLE public.user_settings (
   notify_weekly BOOLEAN DEFAULT true,
   notify_monthly BOOLEAN DEFAULT false,
   notify_news BOOLEAN DEFAULT true,
+  gemini_api_key TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
