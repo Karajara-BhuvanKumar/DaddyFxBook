@@ -91,26 +91,28 @@ export default function BacktestSession() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3 min-w-0">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           <Link to="/backtesting">
-            <Button size="icon" variant="ghost"><ArrowLeft className="w-4 h-4" /></Button>
+            <Button size="icon" variant="ghost" className="h-10 w-10 text-zinc-400 hover:text-white bg-[#060606] border border-zinc-900 rounded-xl">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
           </Link>
-          <div className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
-            <FlaskConical className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <FlaskConical className="w-6 h-6" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-foreground truncate">{session.name}</h1>
-            <p className="text-xs text-muted-foreground truncate">
-              {session.pair ?? "—"} · {session.strategy ?? "No strategy"} · {trades.length} trades
+            <h1 className="text-2xl font-bold text-white tracking-tight truncate">{session.name}</h1>
+            <p className="text-[13px] text-zinc-500 font-semibold truncate mt-0.5">
+              {session.pair ?? "—"} <span className="mx-1.5 opacity-50">•</span> {session.strategy ?? "No strategy"} <span className="mx-1.5 opacity-50">•</span> {trades.length} trades
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2" disabled={!!exporting || trades.length === 0}>
+              <Button variant="outline" className="gap-2 bg-[#060606] border-zinc-900 text-zinc-300 hover:text-white rounded-xl h-10" disabled={!!exporting || trades.length === 0}>
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 {exporting ? "Generating…" : "Download"}
               </Button>
@@ -148,7 +150,7 @@ export default function BacktestSession() {
           </DropdownMenu>
           <Button
             onClick={() => { setEditing(null); setFormOpen(true); }}
-            className="gap-2"
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-10 px-4"
           >
             <Plus className="w-4 h-4" /> Add trade
           </Button>
@@ -165,16 +167,16 @@ export default function BacktestSession() {
         <TabsContent value="trades" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search trades…"
-                className="pl-9"
+                className="pl-11 bg-[#060606] border-zinc-900 text-white placeholder:text-zinc-600 rounded-xl h-10"
               />
             </div>
             <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[140px] bg-[#060606] border-zinc-900 text-zinc-300 rounded-xl h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All outcomes</SelectItem>
                 <SelectItem value="win">Wins</SelectItem>
@@ -183,7 +185,7 @@ export default function BacktestSession() {
               </SelectContent>
             </Select>
             <Select value={sessionFilter} onValueChange={setSessionFilter}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[140px] bg-[#060606] border-zinc-900 text-zinc-300 rounded-xl h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All sessions</SelectItem>
                 {uniqueSessions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -191,25 +193,25 @@ export default function BacktestSession() {
             </Select>
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-card/60 overflow-hidden">
+          <div className="rounded-2xl border border-zinc-900 bg-[#080808] overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-background/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-[#0b0b0b] border-b border-zinc-900 text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
                   <tr>
-                    <th className="text-left px-3 py-2.5">#</th>
-                    <th className="text-left px-3 py-2.5">Pair</th>
-                    <th className="text-left px-3 py-2.5">Dir</th>
-                    <th className="text-right px-3 py-2.5">Entry</th>
-                    <th className="text-right px-3 py-2.5">Exit</th>
-                    <th className="text-right px-3 py-2.5">RR</th>
-                    <th className="text-left px-3 py-2.5">Result</th>
-                    <th className="text-right px-3 py-2.5">R gained</th>
-                    <th className="text-left px-3 py-2.5">Setup</th>
-                    <th className="text-left px-3 py-2.5">Session</th>
-                    <th className="text-right px-3 py-2.5">Actions</th>
+                    <th className="text-left px-4 py-3">#</th>
+                    <th className="text-left px-4 py-3">Pair</th>
+                    <th className="text-left px-4 py-3">Dir</th>
+                    <th className="text-right px-4 py-3">Entry</th>
+                    <th className="text-right px-4 py-3">Exit</th>
+                    <th className="text-right px-4 py-3">RR</th>
+                    <th className="text-left px-4 py-3">Result</th>
+                    <th className="text-right px-4 py-3">R gained</th>
+                    <th className="text-left px-4 py-3">Setup</th>
+                    <th className="text-left px-4 py-3">Session</th>
+                    <th className="text-right px-4 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-zinc-900/50">
                   {lt ? (
                     <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Loading…</td></tr>
                   ) : filtered.length === 0 ? (
@@ -220,44 +222,44 @@ export default function BacktestSession() {
                     </tr>
                   ) : (
                     filtered.map((t, i) => (
-                      <tr key={t.id} className="border-t border-border/40 hover:bg-background/30">
-                        <td className="px-3 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-2 font-medium text-foreground">{t.pair}</td>
-                        <td className="px-3 py-2">
+                      <tr key={t.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-4 py-3 text-zinc-500 font-medium tabular-nums">{i + 1}</td>
+                        <td className="px-4 py-3 font-bold text-white">{t.pair}</td>
+                        <td className="px-4 py-3">
                           <span
-                            className={`badge-pill ${
-                              t.direction === "long" ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss"
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              t.direction === "long" ? "bg-blue-500/10 text-blue-500 border border-blue-500/10" : "bg-red-500/10 text-red-500 border border-red-500/10"
                             }`}
                           >
                             {t.direction}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right font-mono">{t.entry_price ?? "—"}</td>
-                        <td className="px-3 py-2 text-right font-mono">{t.exit_price ?? "—"}</td>
-                        <td className="px-3 py-2 text-right font-mono">{t.rr?.toFixed(2) ?? "—"}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-4 py-3 text-right font-mono font-medium text-zinc-300">{t.entry_price ?? "—"}</td>
+                        <td className="px-4 py-3 text-right font-mono font-medium text-zinc-300">{t.exit_price ?? "—"}</td>
+                        <td className="px-4 py-3 text-right font-mono font-medium text-zinc-400">{t.rr?.toFixed(2) ?? "—"}</td>
+                        <td className="px-4 py-3">
                           <span
-                            className={`badge-pill ${
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                               t.outcome === "win"
-                                ? "bg-profit/15 text-profit"
+                                ? "bg-blue-500/10 text-blue-500 border border-blue-500/10"
                                 : t.outcome === "loss"
-                                  ? "bg-loss/15 text-loss"
-                                  : "bg-muted/40 text-muted-foreground"
+                                  ? "bg-red-500/10 text-red-500 border border-red-500/10"
+                                  : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                             }`}
                           >
                             {t.outcome}
                           </span>
                         </td>
                         <td
-                          className={`px-3 py-2 text-right font-mono font-semibold ${
-                            (t.r_gained ?? 0) >= 0 ? "text-profit" : "text-loss"
+                          className={`px-4 py-3 text-right font-mono font-bold ${
+                            (t.r_gained ?? 0) >= 0 ? "text-blue-500" : "text-red-500"
                           }`}
                         >
                           {(t.r_gained ?? 0) >= 0 ? "+" : ""}{(t.r_gained ?? 0).toFixed(2)}R
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">{t.setup ?? "—"}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{t.session ?? "—"}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-4 py-3 text-zinc-400 font-medium">{t.setup ?? "—"}</td>
+                        <td className="px-4 py-3 text-zinc-400 font-medium">{t.session ?? "—"}</td>
+                        <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
                             {t.screenshot_url && (
                               <a href={t.screenshot_url} target="_blank" rel="noreferrer">

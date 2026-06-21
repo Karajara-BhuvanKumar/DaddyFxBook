@@ -6,24 +6,115 @@
 
 @layer base {
   :root {
-    /* TradeFXBook-clone palette — flat, dark, institutional */
-    --background: 225 47% 4%;          /* #05070F */
-    --foreground: 210 40% 98%;         /* #F8FAFC */
+    /* Light Mode palette */
+    --background: 210 24% 96%;
+    /* #F5F7FA */
+    --foreground: 221.2 39.3% 11%;
+    /* #111827 */
 
-    --card: 224 38% 9%;                /* #0E1220 */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    /* #FFFFFF */
+    --card-foreground: 221.2 39.3% 11%;
+    /* #111827 */
 
-    --popover: 224 38% 9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    /* #FFFFFF */
+    --popover-foreground: 221.2 39.3% 11%;
 
-    --primary: 217 91% 60%;            /* #3B82F6 */
+    --primary: 221.2 83.2% 53.3%;
+    /* #2563EB */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 40% 10%;
+    --secondary: 210 40% 96.1%;
+    /* #F1F5F9 */
+    --secondary-foreground: 221.2 39.3% 11%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 220 8.9% 46.3%;
+    /* #6B7280 */
+
+    --accent: 210 40% 96.1%;
+    /* #F1F5F9 */
+    --accent-foreground: 221.2 39.3% 11%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 90%;
+    /* #E5E7EB */
+    --input: 220 14% 90%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 1.5rem;
+
+    --profit: 162.2 75.9% 40.6%;
+    /* #10B981 */
+    --loss: 0 84.3% 60.2%;
+    /* #EF4444 */
+    --warning: 37.7 92.9% 50.2%;
+    /* #F59E0B */
+
+    --card-gradient: none;
+    --card-border: #E5E7EB;
+    --card-glow: none;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: #E5E7EB;
+
+    --sidebar-background: 0 0% 100%;
+    /* White sidebar in Light Mode */
+    --sidebar-foreground: 220 8.9% 46.3%;
+    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 221.2 39.3% 11%;
+    --sidebar-border: 220 14% 90%;
+    --sidebar-ring: 221.2 83.2% 53.3%;
+
+    /* Calendar cells - Light mode */
+    --calendar-cell-bg: #ffffff;
+    --calendar-cell-border: #E5E7EB;
+    --calendar-cell-hover-bg: #f1f5f9;
+    --weekly-cell-bg: #f1f5f9;
+    --weekly-cell-border: #E5E7EB;
+
+    /* Custom Theme variables */
+    --bg-primary: #F5F7FA;
+    --bg-secondary: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border-color: #E5E7EB;
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --profit-color: #10B981;
+    --loss-color: #EF4444;
+    --chart-profit: #2563EB;
+    --chart-loss: #EF4444;
+    --chart-opacity: 0.15;
+  }
+
+  .dark {
+    /* Premium Funded Trader Dashboard palette */
+    --background: 0 0% 2%;
+    /* #050505 */
+    --foreground: 210 40% 98%;
+    /* #F8FAFC */
+
+    --card: 0 0% 3%;
+    /* #080808 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 212 100% 50%;
+    /* #0077ff */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 5%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 222 40% 9%;
-    --muted-foreground: 215 20% 65%;   /* #94A3B8 */
+    --muted-foreground: 215 20% 65%;
+    /* #94A3B8 */
 
     --accent: 222 40% 12%;
     --accent-foreground: 210 40% 98%;
@@ -31,30 +122,55 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 30% 11%;
-    --input: 220 30% 11%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 100%;
+    /* Will use alpha like border-white/10 */
+    --input: 0 0% 10%;
+    --ring: 212 100% 50%;
 
     --radius: 1.5rem;
 
-    --profit: 217 91% 60%;
-    --loss: 0 84% 60%;
-    --warning: 38 92% 50%;
+    --profit: 212 100% 50%;
+    /* #0077ff */
+    --loss: 0 100% 65%;
+    /* #ff4d4d */
+    --warning: 45 100% 42%;
+    /* #d8a400 */
 
-    --card-gradient: linear-gradient(180deg, rgba(14, 18, 32, 0.96) 0%, rgba(9, 12, 22, 0.96) 100%);
-    --card-border: rgba(255, 255, 255, 0.04);
+    --card-gradient: none;
+    --card-border: rgba(255, 255, 255, 0.05);
     --card-glow: none;
-    --glass-bg: rgba(11, 18, 32, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-bg: rgba(0, 0, 0, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.1);
 
-    --sidebar-background: 222 41% 7%;  /* #090E18 */
+    --sidebar-background: 0 0% 2%;
+    /* #050505 */
     --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 212 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 91% 60%;
+    --sidebar-accent: 212 100% 50%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 30% 8%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-ring: 212 100% 50%;
+
+    /* Calendar cells - Dark mode */
+    --calendar-cell-bg: #080808;
+    --calendar-cell-border: rgba(255, 255, 255, 0.05);
+    --calendar-cell-hover-bg: rgba(255, 255, 255, 0.05);
+    --weekly-cell-bg: rgba(255, 255, 255, 0.04);
+    --weekly-cell-border: rgba(255, 255, 255, 0.04);
+
+    /* Custom Theme variables */
+    --bg-primary: #050505;
+    --bg-secondary: #050505;
+    --card-bg: #080808;
+    --border-color: rgba(255, 255, 255, 0.05);
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --profit-color: #0077ff;
+    --loss-color: #ff4d4d;
+    --chart-profit: #0077ff;
+    --chart-loss: #ff4d4d;
+    --chart-opacity: 0.25;
   }
 }
 
@@ -77,7 +193,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Inter', sans-serif;
     letter-spacing: -0.02em;
     font-weight: 700;
@@ -89,52 +210,80 @@
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     background: hsl(220, 25%, 16%);
     border-radius: 3px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(220, 25%, 22%);
   }
 }
 
 @layer utilities {
-  .text-profit { color: hsl(var(--profit)); }
-  .text-loss   { color: hsl(var(--loss)); }
-  .bg-profit   { background-color: hsl(var(--profit)); }
-  .bg-loss     { background-color: hsl(var(--loss)); }
-  .border-profit { border-color: hsl(var(--profit)); }
-  .border-loss   { border-color: hsl(var(--loss)); }
+  .text-profit {
+    color: hsl(var(--profit));
+  }
 
-  /* Card surface — flat, soft glassmorphism, no shadow halo */
+  .text-loss {
+    color: hsl(var(--loss));
+  }
+
+  .bg-profit {
+    background-color: hsl(var(--profit));
+  }
+
+  .bg-loss {
+    background-color: hsl(var(--loss));
+  }
+
+  .border-profit {
+    border-color: hsl(var(--profit));
+  }
+
+  .border-loss {
+    border-color: hsl(var(--loss));
+  }
+
+  /* Card surface */
   .glass-card {
-    background: var(--card-gradient);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: none;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
     border-radius: 1.5rem;
   }
 
   /* Calendar cell — softer, more spacious */
   .calendar-cell {
-    background: #0C1324;
+    background: var(--calendar-cell-bg, #0C1324);
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--calendar-cell-border, rgba(255, 255, 255, 0.04));
     transition: background-color 200ms ease, border-color 200ms ease;
   }
-  .calendar-cell:hover { background: #111B31; }
-  .calendar-cell-profit { border-color: rgba(59, 130, 246, 0.5); }
-  .calendar-cell-loss   { border-color: rgba(239, 68, 68, 0.5); }
+
+  .calendar-cell:hover {
+    background: var(--calendar-cell-hover-bg, #111B31);
+  }
+
+  .calendar-cell-profit {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+
+  .calendar-cell-loss {
+    border-color: rgba(239, 68, 68, 0.5);
+  }
 
 
   /* Hover lift — kept subtle, no glow */
   .hover-lift {
     @apply transition-colors duration-200 ease-out;
   }
+
   .hover-lift:hover {
     border-color: rgba(255, 255, 255, 0.08);
   }
@@ -188,7 +337,10 @@
     font-size: 1.0625rem;
     color: hsl(var(--foreground));
   }
-  .brand-wordmark .accent { color: hsl(var(--primary)); }
+
+  .brand-wordmark .accent {
+    color: hsl(var(--primary));
+  }
 
   .badge-pill {
     display: inline-flex;
@@ -221,6 +373,7 @@
     background: hsl(var(--primary));
     box-shadow: none;
   }
+
   .btn-premium:hover {
     background: hsl(217, 91%, 55%);
     box-shadow: none;

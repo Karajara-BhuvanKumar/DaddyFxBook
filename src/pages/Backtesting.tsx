@@ -54,19 +54,22 @@ function SessionCard({ s }: { s: BacktestSession }) {
   });
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card/60 p-5 hover:border-primary/40 transition-all group">
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <Link to={`/backtesting/${s.id}`} className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
-              <FlaskConical className="w-4 h-4" />
+    <div 
+      className="rounded-2xl flex flex-col group transition-all duration-200" 
+      style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.05)", padding: 24 }}
+    >
+      <div className="flex items-start justify-between gap-2 mb-4">
+        <Link to={`/backtesting/${s.id}`} className="flex-1 min-w-0 block">
+          <div className="flex items-center gap-3 mb-1.5">
+            <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <FlaskConical className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+              <h3 className="font-bold text-white text-base truncate group-hover:text-blue-400 transition-colors">
                 {s.name}
               </h3>
-              <p className="text-xs text-muted-foreground truncate">
-                {s.pair ?? "—"} · {s.strategy ?? "No strategy"}
+              <p className="text-xs text-zinc-500 font-semibold truncate">
+                {s.pair ?? "—"} <span className="mx-1.5 opacity-50">•</span> {s.strategy ?? "No strategy"}
               </p>
             </div>
           </div>
@@ -107,8 +110,8 @@ function SessionCard({ s }: { s: BacktestSession }) {
         </DropdownMenu>
       </div>
 
-      <Link to={`/backtesting/${s.id}`} className="block">
-        <div className="grid grid-cols-2 gap-2 text-xs">
+      <Link to={`/backtesting/${s.id}`} className="block mt-2">
+        <div className="grid grid-cols-2 gap-2 mb-4">
           <Stat label="Trades" value={stats ? String(stats.total) : "—"} />
           <Stat label="Win rate" value={stats ? `${(stats.winRate * 100).toFixed(1)}%` : "—"} />
           <Stat
@@ -122,7 +125,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
             tone={stats ? (stats.totalPnl >= 0 ? "profit" : "loss") : undefined}
           />
         </div>
-        <p className="text-[11px] text-muted-foreground mt-3">
+        <p className="text-[11px] font-semibold text-zinc-600">
           Created {new Date(s.created_at).toLocaleDateString()}
         </p>
       </Link>
@@ -157,11 +160,11 @@ function SessionCard({ s }: { s: BacktestSession }) {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
   return (
-    <div className="rounded-md bg-background/40 border border-border/40 px-2.5 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="rounded-xl border border-zinc-900 bg-[#0b0b0b] px-3.5 py-3 transition-colors group-hover:border-zinc-800">
+      <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mb-1.5">{label}</div>
       <div
-        className={`font-mono text-sm font-semibold ${
-          tone === "profit" ? "text-profit" : tone === "loss" ? "text-loss" : "text-foreground"
+        className={`font-black text-[15px] ${
+          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-500" : "text-white"
         }`}
       >
         {value}
@@ -178,30 +181,30 @@ export default function Backtesting() {
   const [form, setForm] = useState({ name: "", pair: "XAUUSD", strategy: "", description: "" });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-start justify-between mb-6 gap-4">
+    <div className="space-y-8">
+      <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <FlaskConical className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Strategy Lab</h1>
-            <span className="badge-pill bg-warning/15 text-warning">ELITE</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
+            Strategy Lab
+            <span className="text-[10px] bg-warning/15 text-warning font-bold px-2 py-0.5 rounded-md tracking-wider uppercase border border-warning/20">Elite</span>
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1.5 font-medium tracking-wide">
             Manually backtest strategies. Each session is permanently saved with full analytics and AI strategy reports.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-10 px-4">
               <Plus className="w-4 h-4" /> New session
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create backtest session</DialogTitle></DialogHeader>
-            <div className="space-y-3">
+          <DialogContent className="bg-[#080808] border-zinc-900">
+            <DialogHeader><DialogTitle className="text-white">Create backtest session</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
               <div>
-                <Label>Session name</Label>
+                <Label className="text-zinc-400">Session name</Label>
                 <Input
+                  className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600"
                   placeholder="e.g. XAUUSD London Breakout 2024"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -209,12 +212,13 @@ export default function Backtesting() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Pair</Label>
-                  <Input value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
+                  <Label className="text-zinc-400">Pair</Label>
+                  <Input className="bg-[#060606] border-zinc-800 text-white" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Strategy</Label>
+                  <Label className="text-zinc-400">Strategy</Label>
                   <Input
+                    className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600"
                     placeholder="e.g. SMC, Trend Following"
                     value={form.strategy}
                     onChange={(e) => setForm({ ...form, strategy: e.target.value })}
@@ -222,8 +226,9 @@ export default function Backtesting() {
                 </div>
               </div>
               <div>
-                <Label>Description</Label>
+                <Label className="text-zinc-400">Description</Label>
                 <Textarea
+                  className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600"
                   rows={3}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -231,8 +236,9 @@ export default function Backtesting() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setOpen(false)}>Cancel</Button>
               <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={!form.name.trim() || create.isPending}
                 onClick={() =>
                   create.mutate(form, {
@@ -260,13 +266,13 @@ export default function Backtesting() {
           ))}
         </div>
       ) : !sessions || sessions.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border/60 p-12 text-center">
-          <Sparkles className="w-10 h-10 text-primary mx-auto mb-3" />
-          <h3 className="font-semibold text-foreground mb-1">No backtest sessions yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="rounded-3xl border border-zinc-900 border-dashed bg-[#040404] p-16 text-center">
+          <Sparkles className="w-10 h-10 text-zinc-600 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-white mb-1.5">No backtest sessions yet</h3>
+          <p className="text-sm text-zinc-500 mb-6 font-medium max-w-md mx-auto">
             Create your first session to start journaling backtests from TradingView.
           </p>
-          <Button onClick={() => setOpen(true)} className="gap-2">
+          <Button onClick={() => setOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-10 px-6 font-bold">
             <Plus className="w-4 h-4" /> Create session
           </Button>
         </div>

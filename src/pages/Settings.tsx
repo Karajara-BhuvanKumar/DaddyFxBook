@@ -17,6 +17,8 @@ import {
   User, Settings as SettingsIcon, ShieldCheck, Clock, Palette, Bell, Database, Lock, Info,
   Upload, Plus, Trash2, Download, LogOut, KeyRound,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "next-themes";
 
 const TIMEZONES = [
   "UTC", "Asia/Kolkata", "America/New_York", "America/Chicago", "America/Los_Angeles",
@@ -57,7 +59,6 @@ type Settings = {
   notify_daily: boolean;
   notify_weekly: boolean;
   notify_monthly: boolean;
-  notify_news: boolean;
 };
 
 type Rule = { id: string; rule: string; active: boolean; position: number };
@@ -83,7 +84,6 @@ const DEFAULTS = (uid: string): Settings => ({
   notify_daily: true,
   notify_weekly: true,
   notify_monthly: false,
-  notify_news: true,
 });
 
 function applyAppearance(theme: string, accent: string, compact: boolean) {
@@ -155,11 +155,15 @@ export default function Settings() {
     },
   });
 
+  const { setTheme } = useTheme();
   const [local, setLocal] = useState<Settings | null>(null);
   useEffect(() => { if (settings) setLocal(settings); }, [settings]);
   useEffect(() => {
-    if (local) applyAppearance(local.theme, local.accent_color, local.compact_mode);
-  }, [local?.theme, local?.accent_color, local?.compact_mode]);
+    if (local) {
+      applyAppearance(local.theme, local.accent_color, local.compact_mode);
+      setTheme(local.theme);
+    }
+  }, [local?.theme, local?.accent_color, local?.compact_mode, setTheme]);
 
   const saveMutation = useMutation({
     mutationFn: async (patch: Partial<Settings>) => {
@@ -253,9 +257,12 @@ export default function Settings() {
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Configure your trading workspace.</p>
         </div>
-        <Button onClick={saveAll} disabled={saveMutation.isPending} className="btn-premium text-primary-foreground">
-          {saveMutation.isPending ? "Saving…" : "Save changes"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Button onClick={saveAll} disabled={saveMutation.isPending} className="btn-premium text-primary-foreground">
+            {saveMutation.isPending ? "Saving…" : "Save changes"}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
@@ -472,7 +479,6 @@ export default function Settings() {
               <ToggleRow label="Daily reminder" desc="A nudge to log today's trades." checked={local.notify_daily} onChange={(v) => update({ notify_daily: v })} />
               <ToggleRow label="Weekly review" desc="Weekly AI report and reflection." checked={local.notify_weekly} onChange={(v) => update({ notify_weekly: v })} />
               <ToggleRow label="Monthly review" desc="Monthly performance recap." checked={local.notify_monthly} onChange={(v) => update({ notify_monthly: v })} />
-              <ToggleRow label="High-impact news warning" desc="Alert before red-folder events." checked={local.notify_news} onChange={(v) => update({ notify_news: v })} />
             </CardContent>
           </Card>
         </TabsContent>

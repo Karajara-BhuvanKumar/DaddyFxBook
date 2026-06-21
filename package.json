@@ -50,6 +50,7 @@
     "docx": "^9.7.1",
     "embla-carousel-react": "^8.6.0",
     "file-saver": "^2.0.5",
+    "framer-motion": "^12.40.0",
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",

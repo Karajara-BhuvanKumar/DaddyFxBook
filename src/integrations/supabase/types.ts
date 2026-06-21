@@ -190,6 +190,7 @@ export type Database = {
           tags: string | null
           rating: number | null
           risk_reward: string | null
+          strategy_setup: string | null
           created_at: string
           updated_at: string
         }
@@ -204,6 +205,7 @@ export type Database = {
           tags?: string | null
           rating?: number | null
           risk_reward?: string | null
+          strategy_setup?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -218,6 +220,7 @@ export type Database = {
           tags?: string | null
           rating?: number | null
           risk_reward?: string | null
+          strategy_setup?: string | null
           created_at?: string
           updated_at?: string
         }

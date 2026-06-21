@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTrades } from "@/hooks/useTrades";
-import { DollarSign, Clock, CheckCircle2, Target, Activity, BarChart3 } from "lucide-react";
+import { DollarSign, Clock, CheckCircle2, Target, Activity, BarChart3, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { DayTradesPopup } from "@/components/DayTradesPopup";
 
@@ -11,6 +11,7 @@ export default function Dashboard() {
   const { data: trades = [], isLoading } = useTrades();
   const [timeframe, setTimeframe] = useState<TF>("1W");
   const [selectedDay, setSelectedDay] = useState<{ date: string; rect: DOMRect } | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const filteredTrades = useMemo(() => {
     if (timeframe === "ALL") return trades;
@@ -59,8 +60,8 @@ export default function Dashboard() {
   }, [trades]);
 
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
@@ -91,31 +92,35 @@ export default function Dashboard() {
 
   const stats = [
     {
-      label: "Total P&L",
+      label: "TOTAL P&L",
       value: totalPnl,
       icon: DollarSign,
-      iconBg: "bg-primary/15 text-primary",
-      pill: { label: "Total", tone: "bg-primary/15 text-primary" },
+      iconBg: "bg-blue-500/10 text-blue-500",
+      pill: { label: "TOTAL", tone: "bg-blue-500/20 text-blue-500 text-[10px] px-2 py-0.5 rounded-full font-bold" },
       sub: `${closedCount} trade${closedCount === 1 ? "" : "s"}`,
       tone: totalPnl >= 0 ? "text-profit" : "text-loss",
     },
     {
-      label: "Unrealized",
+      label: "UNREALIZED",
       value: unrealized,
       icon: Clock,
-      iconBg: "bg-warning/15 text-warning",
+      iconBg: "bg-[#d8a400]/10 text-[#d8a400]",
       sub: "0 open positions",
       tone: "text-foreground",
     },
     {
-      label: "Realized",
+      label: "REALIZED",
       value: realized,
       icon: CheckCircle2,
-      iconBg: "bg-primary/15 text-primary",
+      iconBg: "bg-blue-500/10 text-blue-500",
       sub: `${closedCount} closed trades`,
       tone: realized >= 0 ? "text-profit" : "text-loss",
     },
   ];
+
+  const dataMax = Math.max(...chartData.map((i) => i.cumulative), 0);
+  const dataMin = Math.min(...chartData.map((i) => i.cumulative), 0);
+  const gradientOffset = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
 
   if (isLoading) {
     return (
@@ -135,63 +140,64 @@ export default function Dashboard() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="hover-lift flex flex-col justify-between"
+            className="flex flex-col justify-between rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
             style={{
               height: 190,
-              borderRadius: 28,
               padding: 32,
-              background: "var(--card-gradient)",
-              border: "1px solid rgba(255,255,255,0.04)",
+              background: "var(--card-bg)",
+              border: "1px solid var(--border-color)",
             }}
           >
             <div className="flex items-start justify-between">
-              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${stat.iconBg}`}>
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center ${stat.iconBg}`}>
                 <stat.icon className="w-[18px] h-[18px]" />
               </div>
               {stat.pill && (
-                <span className={`badge-pill ${stat.pill.tone}`}>{stat.pill.label}</span>
+                <span className={stat.pill.tone}>{stat.pill.label}</span>
               )}
             </div>
             <div>
-              <p className="text-label mb-2">{stat.label}</p>
+              <p className="text-[11px] font-bold text-muted-foreground tracking-wider mb-2 uppercase">{stat.label}</p>
               <p
-                className={`${stat.tone} font-bold tracking-tight leading-none`}
-                style={{ fontSize: 36, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em" }}
+                className={`${stat.tone} font-black tracking-tight leading-none drop-shadow-sm`}
+                style={{ fontSize: 32, letterSpacing: "-0.03em" }}
               >
                 {stat.value >= 0 ? "+" : "-"}${Math.abs(stat.value).toFixed(2)}
               </p>
-              <p className="text-[12px] text-muted-foreground mt-2 font-medium">{stat.sub}</p>
+              <p className="text-[12px] text-muted-foreground mt-2 font-medium flex items-center gap-1">
+                {stat.label === "TOTAL P&L" && <span className="text-blue-500">→</span>}
+                {stat.sub}
+              </p>
             </div>
           </div>
         ))}
 
         {/* Win Rate card */}
         <div
-          className="hover-lift flex flex-col justify-between"
+          className="flex flex-col justify-between rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
           style={{
             height: 190,
-            borderRadius: 28,
             padding: 32,
-            background: "var(--card-gradient)",
-            border: "1px solid rgba(255,255,255,0.04)",
+            background: "var(--card-bg)",
+            border: "1px solid var(--border-color)",
           }}
         >
           <div className="flex items-start justify-between">
-            <div className="w-11 h-11 rounded-2xl bg-primary/15 text-primary flex items-center justify-center">
+            <div className="w-11 h-11 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <Target className="w-[18px] h-[18px]" />
             </div>
           </div>
           <div>
-            <p className="text-label mb-2">Win Rate</p>
+            <p className="text-[11px] font-bold text-muted-foreground tracking-wider mb-2 uppercase">WIN RATE</p>
             <p
-              className="text-foreground font-bold tracking-tight leading-none"
-              style={{ fontSize: 36, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.03em" }}
+              className="text-foreground font-black tracking-tight leading-none"
+              style={{ fontSize: 32, letterSpacing: "-0.03em" }}
             >
               {winRate.toFixed(0)}%
             </p>
             <div className="mt-3 h-1.5 rounded-full bg-secondary overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-700"
+                className="h-full rounded-full bg-blue-500 transition-all duration-700"
                 style={{ width: `${Math.min(100, winRate)}%` }}
               />
             </div>
@@ -203,35 +209,39 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Performance */}
         <div
-          className="lg:col-span-3"
+          className="lg:col-span-3 rounded-3xl flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
           style={{
             height: 430,
-            borderRadius: 30,
             padding: 32,
-            background: "var(--card-gradient)",
-            border: "1px solid rgba(255,255,255,0.04)",
+            background: "var(--card-bg)",
+            border: "1px solid var(--border-color)",
           }}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-label">Performance</span>
+                <span className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">PERFORMANCE</span>
               </div>
-              <p className={`text-metric ${totalPnl >= 0 ? "text-profit" : "text-loss"}`}>
-                {totalPnl >= 0 ? "+" : "-"}${Math.abs(totalPnl).toFixed(2)}
-              </p>
+              <div className="flex items-center gap-3">
+                <p className={`font-black leading-none ${totalPnl >= 0 ? "text-profit" : "text-loss"}`} style={{ fontSize: 32 }}>
+                  {totalPnl >= 0 ? "+" : "-"}${Math.abs(totalPnl).toFixed(2)}
+                </p>
+                <span className="flex items-center gap-1 bg-blue-500/10 text-blue-500 px-2.5 py-1 rounded-full text-[13px] font-bold border border-blue-500/20">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  200.0%
+                </span>
+              </div>
             </div>
-            <div className="flex gap-1 bg-secondary/60 rounded-lg p-1 border border-border/40">
+            <div className="flex gap-1 bg-muted rounded-xl p-1 border border-border">
               {timeframes.map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all duration-200 ${
-                    timeframe === tf
-                      ? "bg-primary text-primary-foreground shadow-sm"
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all duration-200 ${timeframe === tf
+                      ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   {tf}
                 </button>
@@ -242,22 +252,26 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                  <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset={gradientOffset} stopColor="var(--chart-profit)" stopOpacity={1} />
+                    <stop offset={gradientOffset} stopColor="var(--chart-loss)" stopOpacity={1} />
+                  </linearGradient>
+                  <linearGradient id="splitFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset={gradientOffset} stopColor="var(--chart-profit)" stopOpacity={gradientOffset > 0 ? 0.15 : 0} />
+                    <stop offset={gradientOffset} stopColor="var(--chart-loss)" stopOpacity={gradientOffset < 1 ? 0.15 : 0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 25%, 16%)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fill: "hsl(220, 9%, 46%)", fontSize: 11, fontFamily: "Plus Jakarta Sans" }}
+                  tick={{ fill: "var(--text-secondary)", fontSize: 11, fontFamily: "Inter" }}
                   axisLine={false}
                   tickLine={false}
                   dy={8}
                 />
                 <YAxis
                   orientation="right"
-                  tick={{ fill: "hsl(220, 9%, 46%)", fontSize: 11, fontFamily: "Plus Jakarta Sans" }}
+                  tick={{ fill: "var(--text-secondary)", fontSize: 11, fontFamily: "Inter" }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v) => `$${v}`}
@@ -266,32 +280,32 @@ export default function Dashboard() {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "hsl(222, 25%, 11%)",
-                    border: "1px solid hsl(222, 25%, 16%)",
-                    borderRadius: "10px",
-                    color: "hsl(210, 20%, 98%)",
-                    boxShadow: "0 8px 30px -8px rgba(0,0,0,0.5)",
+                    background: "var(--card-bg)",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "12px",
+                    color: "var(--text-primary)",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                     padding: "10px 14px",
-                    fontFamily: "Plus Jakarta Sans",
+                    fontFamily: "Inter",
                     fontSize: "12px",
                   }}
                   formatter={(value: number) => [`$${value.toFixed(2)}`, "P&L"]}
-                  labelStyle={{ color: "hsl(220, 9%, 46%)", fontSize: "11px", marginBottom: "4px" }}
+                  labelStyle={{ color: "var(--text-secondary)", fontSize: "11px", marginBottom: "4px" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="cumulative"
-                  stroke="hsl(217, 91%, 60%)"
-                  fill="url(#perfFill)"
-                  strokeWidth={2.5}
+                  stroke="url(#splitColor)"
+                  fill="url(#splitFill)"
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 5, fill: "hsl(217, 91%, 60%)", stroke: "hsl(222, 25%, 11%)", strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: "var(--chart-profit)", stroke: "var(--card-bg)", strokeWidth: 2 }}
                   animationDuration={900}
                 />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            <div className="flex-1 flex items-center justify-center text-zinc-500">
               <div className="text-center">
                 <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-20" />
                 <p className="text-sm font-medium">Add trades to see your performance</p>
@@ -302,53 +316,72 @@ export default function Dashboard() {
 
         {/* Monthly P&L */}
         <div
-          className="lg:col-span-2"
+          className="lg:col-span-2 rounded-3xl flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors"
           style={{
             height: 430,
-            padding: 24,
-            background: "var(--card-gradient)",
-            border: "1px solid rgba(255,255,255,0.04)",
-            borderRadius: 30,
+            padding: 20,
+            background: "var(--card-bg)",
+            border: "1px solid var(--border-color)",
           }}
         >
-          <div className="flex items-start justify-between mb-7">
-            <h2 className="text-[26px] font-bold tracking-tight" style={{ color: "#F8FAFC" }}>Monthly P&L</h2>
-            <div className="text-right">
-              <p className="text-[18px] font-bold leading-tight" style={{ color: monthlyPnl >= 0 ? "#3B82F6" : "#EF4444" }}>
-                {monthlyPnl >= 0 ? "+" : "-"}${Math.abs(monthlyPnl).toFixed(2)}
-              </p>
-              <p className="text-[14px] font-medium mt-1" style={{ color: "#94A3B8" }}>
-                {now.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-              </p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-foreground text-xl font-bold tracking-tight">Monthly P&L</h2>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[13px] font-semibold text-muted-foreground">Monthly:</span>
+                <span className={`text-[13px] font-bold ${monthlyPnl >= 0 ? "text-profit" : "text-loss"}`}>
+                  {monthlyPnl >= 0 ? "+" : "-"}${Math.abs(monthlyPnl).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
+                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-border flex items-center justify-center transition-colors text-foreground"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                <span className="text-foreground font-bold text-[13px] min-w-[90px] text-center">
+                  {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </span>
+                <button
+                  onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
+                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-border flex items-center justify-center transition-colors text-foreground"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Header row: M T W T F S S + Weekly */}
-          <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_90px] gap-3.5 text-center mb-3">
+          <div className="grid grid-cols-8 gap-1.5 text-center mb-2">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
               <div
                 key={i}
-                className="py-1.5 font-semibold uppercase"
-                style={{ fontSize: 12, letterSpacing: "0.15em", color: "#94A3B8", opacity: 0.5 }}
+                className="py-1 font-medium text-xs text-muted-foreground uppercase"
               >
                 {d}
               </div>
             ))}
             <div
-              className="py-1.5 font-semibold uppercase"
-              style={{ fontSize: 12, letterSpacing: "0.15em", color: "#94A3B8", opacity: 0.5 }}
+              className="py-1 font-medium text-xs text-muted-foreground uppercase"
             >
               Weekly
             </div>
           </div>
 
           {/* Week rows */}
-          <div className="space-y-3.5">
+          <div className="space-y-1.5 flex-1 flex flex-col justify-between">
             {Array.from({ length: weeks }).map((_, w) => {
               const wt = weeklyTotals[w];
               const wPositive = wt.pnl >= 0;
+              const weeklyColorClass = wt.trades === 0
+                ? "text-muted-foreground"
+                : wPositive
+                  ? "text-emerald-600 dark:text-blue-500"
+                  : "text-red-600 dark:text-red-500";
               return (
-                <div key={w} className="grid grid-cols-[repeat(7,minmax(0,1fr))_90px] gap-3.5">
+                <div key={w} className="grid grid-cols-8 gap-1.5">
                   {Array.from({ length: 7 }).map((__, d) => {
                     const cellIdx = w * 7 + d;
                     const dayNum = cellIdx - startDow + 1;
@@ -357,7 +390,8 @@ export default function Dashboard() {
                       return (
                         <div
                           key={d}
-                          style={{ height: 72, borderRadius: 22, border: "1px solid rgba(255,255,255,0.02)" }}
+                          className="bg-transparent border border-transparent opacity-0"
+                          style={{ aspectRatio: "1/1", borderRadius: 14 }}
                         />
                       );
                     }
@@ -365,57 +399,43 @@ export default function Dashboard() {
                     const data = calendarData[dateStr];
                     const hasData = !!data;
                     const isProfit = hasData && data.pnl >= 0;
-                    const isToday = dayNum === now.getDate();
-                    const cellStyle: React.CSSProperties = {
-                      height: 72,
-                      borderRadius: 22,
-                      background: "linear-gradient(180deg, rgba(12,19,36,0.95), rgba(8,14,28,0.95))",
-                      border: hasData
-                        ? isProfit
-                          ? "1.5px solid rgba(59,130,246,0.65)"
-                          : "1.5px solid rgba(239,68,68,0.65)"
-                        : "1px solid rgba(255,255,255,0.03)",
-                      boxShadow: hasData
-                        ? isProfit
-                          ? "inset 0 0 20px rgba(59,130,246,0.08)"
-                          : "inset 0 0 20px rgba(239,68,68,0.06)"
-                        : "none",
-                      outline: isToday ? "1px solid rgba(59,130,246,0.4)" : "none",
-                      outlineOffset: isToday ? 2 : 0,
-                    };
+                    const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+
+                    let cellClasses = "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-[14px] border ";
+                    if (hasData) {
+                      if (isProfit) {
+                        cellClasses += "bg-[#ECFDF5] dark:bg-[#0c1c36] border-emerald-500/20 dark:border-blue-500/20 text-emerald-600 dark:text-blue-500 hover:bg-[#D1FAE5] dark:hover:bg-[#0f244a] hover:border-emerald-500/40 dark:hover:border-blue-500/40";
+                      } else {
+                        cellClasses += "bg-[#FEF2F2] dark:bg-[#240d12] border-red-500/20 dark:border-red-500/20 text-red-600 dark:text-red-500 hover:bg-[#FEE2E2] dark:hover:bg-[#331118] hover:border-red-500/40 dark:hover:border-red-500/40";
+                      }
+                    } else {
+                      cellClasses += "bg-white dark:bg-[#0b0b0b] border-[#E5E7EB] dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-[#121212] hover:border-zinc-300 dark:hover:border-white/10";
+                    }
+                    if (isToday) {
+                      cellClasses += " ring-2 ring-blue-500/50";
+                    }
+
                     return (
                       <div
                         key={d}
-                        className="p-2.5 flex flex-col justify-between text-left cursor-pointer group relative transition-all duration-200 hover:-translate-y-0.5"
-                        style={cellStyle}
+                        className={cellClasses}
+                        style={{ aspectRatio: "1/1" }}
                         onClick={(e) => {
                           const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                           setSelectedDay({ date: dateStr, rect });
                         }}
-                        onMouseEnter={(e) => {
-                          if (!hasData) e.currentTarget.style.background = "rgba(17,27,49,0.95)";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!hasData)
-                            e.currentTarget.style.background =
-                              "linear-gradient(180deg, rgba(12,19,36,0.95), rgba(8,14,28,0.95))";
-                        }}
                       >
-                        <span
-                          className="font-semibold"
-                          style={{
-                            fontSize: 12,
-                            color: hasData ? (isProfit ? "#3B82F6" : "#EF4444") : "#94A3B8",
-                          }}
-                        >
+                        <span className={`absolute top-2.5 left-3 text-[11px] font-medium ${isToday ? "text-blue-600 dark:text-blue-500 font-bold" : "text-muted-foreground"} flex flex-col items-center gap-0.5`}>
                           {dayNum}
+                          {isToday && (
+                            <span className="w-1 h-1 rounded-full bg-blue-500" />
+                          )}
                         </span>
                         {hasData && (
                           <span
-                            className="font-bold leading-none text-num"
-                            style={{ fontSize: 15, color: isProfit ? "#3B82F6" : "#EF4444" }}
+                            className={`font-bold text-[13px] ${isProfit ? "text-emerald-600 dark:text-blue-500" : "text-red-600 dark:text-red-500"}`}
                           >
-                            {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(0)}
+                            {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2).replace(/\.00$/, '')}{!isProfit && Number.isInteger(data.pnl) ? ".00" : ""}
                           </span>
                         )}
                         {hasData && (
@@ -423,18 +443,19 @@ export default function Dashboard() {
                             <div
                               className="px-3 py-2 text-[11px] whitespace-nowrap"
                               style={{
-                                background: "#0B1120",
-                                border: "1px solid rgba(255,255,255,0.06)",
+                                background: "var(--card-bg)",
+                                border: "1px solid var(--border-color)",
                                 borderRadius: 12,
+                                color: "var(--text-primary)"
                               }}
                             >
                               <p
                                 className="font-bold text-num"
-                                style={{ color: isProfit ? "#3B82F6" : "#EF4444" }}
+                                style={{ color: isProfit ? "#10B981" : "#EF4444" }}
                               >
                                 {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2)}
                               </p>
-                              <p style={{ color: "#94A3B8" }}>
+                              <p className="text-muted-foreground">
                                 {data.count} trade{data.count > 1 ? "s" : ""}
                               </p>
                             </div>
@@ -445,103 +466,46 @@ export default function Dashboard() {
                   })}
                   {/* Weekly column — mini card */}
                   <div
-                    className="flex flex-col justify-between"
+                    className={`relative flex flex-col items-center justify-center rounded-[14px] p-2 border transition-all duration-200 ${wt.trades > 0
+                        ? wPositive
+                          ? "bg-[#ECFDF5] dark:bg-[#0c1c36] border-emerald-500/20 dark:border-blue-500/20 text-emerald-600 dark:text-blue-500"
+                          : "bg-[#FEF2F2] dark:bg-[#240d12] border-red-500/20 dark:border-red-500/20 text-red-600 dark:text-red-500"
+                        : "bg-white dark:bg-[#0b0b0b] border-[#E5E7EB] dark:border-white/5 text-muted-foreground"
+                      }`}
                     style={{
-                      height: 72,
-                      width: 90,
-                      borderRadius: 18,
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                      padding: 14,
+                      aspectRatio: "1/1",
                     }}
                   >
                     <span
-                      className="uppercase font-semibold leading-none"
-                      style={{ fontSize: 11, letterSpacing: "0.15em", color: "#94A3B8", opacity: 0.5 }}
+                      className={`absolute top-2.5 uppercase font-bold text-[9px] tracking-wider ${weeklyColorClass}`}
                     >
                       Weekly
                     </span>
-                    <div>
-                      <p
-                        className="font-bold text-num leading-none"
-                        style={{
-                          fontSize: 18,
-                          color: wt.trades === 0 ? "#94A3B8" : wPositive ? "#3B82F6" : "#EF4444",
-                        }}
-                      >
-                        {wPositive ? "" : "-"}${Math.abs(wt.pnl).toFixed(0)}
-                      </p>
-                      <p className="mt-1 leading-none" style={{ fontSize: 12, color: "#94A3B8" }}>
-                        {wt.trades} trades
-                      </p>
-                    </div>
+                    <span
+                      className={`font-bold text-num leading-none text-base ${weeklyColorClass}`}
+                    >
+                      {wt.trades === 0 ? "$0" : `${wPositive ? "+" : "-"}$${Math.abs(wt.pnl).toFixed(2).replace(/\.00$/, '')}${!wPositive && Number.isInteger(wt.pnl) ? ".00" : ""}`}
+                    </span>
+                    <span className={`absolute bottom-2.5 font-medium text-[10px] ${weeklyColorClass}`}>
+                      Traded D...
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="flex gap-8 justify-center mt-8" style={{ fontSize: 13, color: "#94A3B8" }}>
-            <span className="flex items-center gap-2.5">
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 22,
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#3B82F6",
-                }}
-              />
+          <div className="flex gap-6 justify-center mt-4 text-[12px] font-medium text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 dark:bg-blue-500" />
               Profit
             </span>
-            <span className="flex items-center gap-2.5">
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 22,
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#EF4444",
-                }}
-              />
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
               Loss
             </span>
           </div>
         </div>
-
-      </div>
-
-      {/* Open Positions */}
-      <div className="rounded-2xl bg-card border border-border/60 p-6">
-        <h2 className="text-[15px] font-bold text-foreground mb-5">Open Positions</h2>
-        {trades.length > 0 ? (
-          <div className="space-y-1">
-            {trades.slice(0, 5).map((t) => (
-              <div key={t.id} className="flex items-center justify-between py-3 px-4 rounded-xl hover:bg-secondary/40 transition-all duration-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center text-base">🥇</div>
-                  <div>
-                    <p className="font-bold text-foreground text-[14px]">{t.symbol}</p>
-                    <p className="text-[11px] text-muted-foreground font-medium">
-                      {new Date(t.close_time).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </div>
-                <span className={`badge-pill ${t.direction === "Long" ? "bg-primary/15 text-primary" : "bg-loss/15 text-loss"}`}>
-                  {t.direction}
-                </span>
-                <p className={`font-extrabold text-num text-[15px] ${Number(t.pnl) >= 0 ? "text-profit" : "text-loss"}`}>
-                  {Number(t.pnl) >= 0 ? "+" : ""}${Number(t.pnl).toFixed(2)}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Activity className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
-            <p className="text-muted-foreground text-sm font-medium">No trades yet. Go to Trades to add your first trade.</p>
-          </div>
-        )}
       </div>
 
       {selectedDay && (

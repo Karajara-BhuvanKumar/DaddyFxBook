@@ -32,6 +32,7 @@ export interface Journal {
   tags: string | null;
   rating: number | null;
   risk_reward: string | null;
+  strategy_setup: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -119,7 +120,7 @@ export function useSaveJournal() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (journal: { trade_id: string; pre_trade_notes: string; post_trade_notes: string; emotions: string; lessons: string; tags: string; rating: number; risk_reward: string }) => {
+    mutationFn: async (journal: { trade_id: string; pre_trade_notes: string; post_trade_notes: string; emotions: string; lessons: string; tags: string; rating: number; risk_reward: string; strategy_setup: string }) => {
       const existing = await supabase.from('journals').select('id').eq('trade_id', journal.trade_id).maybeSingle();
       if (existing.data) {
         const { error } = await supabase.from('journals').update(journal).eq('id', existing.data.id);

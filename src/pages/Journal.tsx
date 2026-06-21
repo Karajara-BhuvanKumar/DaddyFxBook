@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useTrades, useJournal, useSaveJournal, useChecklist, useSaveChecklist, useScreenshots, useUploadScreenshot } from "@/hooks/useTrades";
-import { BookOpen, Save, Star, ImagePlus, Check, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { BookOpen, Save, Star, Check, Activity, ArrowUpRight, ArrowDownRight, RefreshCw, FileText, SlidersHorizontal, DollarSign, Smile, Tag, Image, Plus, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { AITradeReviewPanel } from "@/components/ai-report/AITradeReviewPanel";
+import { StrategySetupCard } from "@/components/journal/StrategySetupCard";
+import { emptyStrategySetup, parseStrategySetup, serializeStrategySetup, type StrategySetup } from "@/lib/strategySetup";
+import { cn } from "@/lib/utils";
 
 export default function Journal() {
   const { data: trades = [], isLoading } = useTrades();
@@ -15,17 +18,24 @@ export default function Journal() {
   const uploadScreenshot = useUploadScreenshot();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedTrade = trades.find(t => t.id === selectedId);
+  const isWinner = selectedTrade ? Number(selectedTrade.pnl) >= 0 : true;
+  const iconColor = isWinner ? "text-blue-500" : "text-red-500";
 
   const [journal, setJournal] = useState({ pre_trade_notes: '', post_trade_notes: '', emotions: '', lessons: '', tags: '', rating: 5, risk_reward: '' });
+  const [strategySetup, setStrategySetup] = useState<StrategySetup>(emptyStrategySetup);
   const [checklist, setChecklist] = useState({ checked_higher_tf: false, risk_within_limits: false, fits_plan: false, key_levels: false, news_checked: false });
+  const [customChecklist, setCustomChecklist] = useState<{ id: string; label: string; checked: boolean }[]>([]);
+  const [newCustomLabel, setNewCustomLabel] = useState("");
 
   useEffect(() => { if (!selectedId && trades.length > 0) setSelectedId(trades[0].id); }, [trades, selectedId]);
 
   useEffect(() => {
     if (existingJournal) {
       setJournal({ pre_trade_notes: existingJournal.pre_trade_notes || '', post_trade_notes: existingJournal.post_trade_notes || '', emotions: existingJournal.emotions || '', lessons: existingJournal.lessons || '', tags: existingJournal.tags || '', rating: existingJournal.rating || 5, risk_reward: existingJournal.risk_reward ?? '' });
+      setStrategySetup(parseStrategySetup(existingJournal.strategy_setup));
     } else {
       setJournal({ pre_trade_notes: '', post_trade_notes: '', emotions: '', lessons: '', tags: '', rating: 5, risk_reward: '' });
+      setStrategySetup(emptyStrategySetup);
     }
   }, [existingJournal, selectedId]);
 
@@ -37,9 +47,22 @@ export default function Journal() {
     }
   }, [existingChecklist, selectedId]);
 
+  const formatJournalDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleDateString('en-US', { month: 'short' });
+    const year = d.getFullYear();
+    const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    return `${month} ${day}, ${year}, ${time}`;
+  };
+
   async function handleSave() {
     if (!selectedId) return;
-    try { await saveJournal.mutateAsync({ trade_id: selectedId, ...journal }); await saveChecklist.mutateAsync({ trade_id: selectedId, ...checklist }); toast.success("Journal saved!"); } catch (err: any) { toast.error(err.message); }
+    try {
+      await saveJournal.mutateAsync({ trade_id: selectedId, ...journal, strategy_setup: serializeStrategySetup(strategySetup) });
+      await saveChecklist.mutateAsync({ trade_id: selectedId, ...checklist });
+      toast.success("Journal saved!");
+    } catch (err: any) { toast.error(err.message); }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -48,7 +71,23 @@ export default function Journal() {
     try { await uploadScreenshot.mutateAsync({ tradeId: selectedId, file }); toast.success("Screenshot uploaded!"); } catch (err: any) { toast.error(err.message); }
   }
 
-  const checkCount = Object.values(checklist).filter(Boolean).length;
+  const handleAddCustomChecklist = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomLabel.trim()) return;
+    setCustomChecklist(c => [...c, { id: Math.random().toString(), label: newCustomLabel.trim(), checked: false }]);
+    setNewCustomLabel("");
+  };
+
+  const toggleCustomChecklist = (id: string) => {
+    setCustomChecklist(c => c.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
+  };
+
+  const deleteCustomChecklist = (id: string) => {
+    setCustomChecklist(c => c.filter(item => item.id !== id));
+  };
+
+  const checkCount = Object.values(checklist).filter(Boolean).length + customChecklist.filter(item => item.checked).length;
+  const totalCheckCount = 5 + customChecklist.length;
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
@@ -59,39 +98,77 @@ export default function Journal() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Trade Journal</h1>
-        <p className="text-base text-muted-foreground mt-1 font-medium">{trades.length} trades</p>
+        <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Journal</h1>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Sun, Jun 21</span>
+        </div>
       </div>
 
       <div className="flex gap-6 min-h-[calc(100vh-12rem)]">
         {/* Trade list */}
-        <div className="w-72 shrink-0 glass-card rounded-2xl overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border/60">
-            <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/20">All {trades.length}</span>
+        <div className="w-80 shrink-0 rounded-2xl border border-border bg-card overflow-hidden flex flex-col shadow-sm">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[15px] font-bold text-foreground">Trade Journal</h3>
+              <button className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-border text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" /> Live
+              </button>
+            </div>
+            <span className="text-[10px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/10 px-2 py-0.5 rounded-full">
+              {trades.length} entries
+            </span>
           </div>
-          <div className="flex-1 overflow-auto divide-y divide-border/40">
+
+          <div className="p-2 border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
+            <button className="px-2.5 py-1 rounded-lg bg-secondary text-foreground text-[10px] font-bold tracking-wider uppercase border border-border">
+              AI {trades.length}
+            </button>
+            <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
+              Journaled 0
+            </button>
+            <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
+              Pending {trades.length}
+            </button>
+            <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
+              L...
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-auto p-3 space-y-2">
             {trades.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12 text-base font-medium">Add trades first</p>
+              <p className="text-center text-zinc-500 py-12 text-xs font-semibold">Add trades first</p>
             ) : (
               trades.map(t => (
                 <button key={t.id} onClick={() => setSelectedId(t.id)}
-                  className={`w-full text-left p-4 transition-all duration-200 ${selectedId === t.id ? 'bg-primary/8 border-l-2 border-l-primary' : 'hover:bg-secondary/40 border-l-2 border-l-transparent'}`}>
-                  <div className="flex items-center justify-between mb-1.5">
+                  className={cn(
+                    "w-full text-left p-4 rounded-xl border transition-all duration-200 flex flex-col",
+                    selectedId === t.id
+                      ? Number(t.pnl) >= 0
+                        ? 'bg-blue-500/10 border-blue-500/30'
+                        : 'bg-red-500/10 border-red-500/30'
+                      : 'bg-card border-border hover:bg-[#F8FAFC] dark:hover:bg-zinc-900/10'
+                  )}>
+                  <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">🥇</span>
-                      <span className="font-semibold text-foreground text-base">{t.symbol}</span>
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm">
+                        <DollarSign className="w-3 h-3 text-black stroke-[3]" />
+                      </div>
+                      <span className="font-bold text-foreground text-xs">{t.symbol}</span>
                     </div>
-                    <span className={`text-sm font-bold font-mono-num ${Number(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
-                      {Number(t.pnl) >= 0 ? '+' : ''}${Number(t.pnl).toFixed(2)}
+                    <span className="bg-muted text-[9px] text-muted-foreground font-bold px-1.5 py-0.5 rounded">
+                      NEW
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className={`flex items-center gap-0.5 font-medium ${t.direction === 'Long' ? 'text-primary' : 'text-loss'}`}>
-                      {t.direction === 'Long' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                      {t.direction}
+                  <div className="flex items-center gap-1.5 text-xs mt-2 font-semibold">
+                    <span className={t.direction === 'Long' ? 'text-blue-500' : 'text-red-500'}>{t.direction}</span>
+                    <span className="text-muted-foreground">${Number(t.entry_price).toFixed(2)}</span>
+                    <span className={Number(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}>
+                      {Number(t.pnl) >= 0 ? '+' : '-'}${Math.abs(Number(t.pnl)).toFixed(2)}
                     </span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground font-medium">{new Date(t.close_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-semibold mt-2.5">
+                    {formatJournalDate(t.open_time)}
                   </div>
                 </button>
               ))
@@ -100,98 +177,205 @@ export default function Journal() {
         </div>
 
         {/* Journal editor */}
-        <div className="flex-1 glass-card rounded-2xl p-8 overflow-auto">
+        <div
+          className={cn(
+            "flex-1 rounded-3xl border p-6 overflow-auto transition-all duration-300 shadow-xl dark:shadow-2xl relative",
+            selectedTrade
+              ? isWinner
+                ? "bg-gradient-to-b from-blue-500/5 dark:from-[#0b172a]/20 via-card to-card border-blue-500/20 dark:border-blue-500/10 shadow-[0_0_50px_-12px_rgba(59,130,246,0.06)] dark:shadow-[0_0_50px_-12px_rgba(59,130,246,0.12)]"
+                : "bg-gradient-to-b from-red-500/5 dark:from-[#2a0b0b]/20 via-card to-card border-red-500/20 dark:border-red-500/10 shadow-[0_0_50px_-12px_rgba(239,68,68,0.06)] dark:shadow-[0_0_50px_-12px_rgba(239,68,68,0.12)]"
+              : "bg-card border-border"
+          )}
+        >
           {selectedTrade ? (
-            <div className="space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-warning/10 flex items-center justify-center text-lg">🥇</div>
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-2xl font-extrabold text-foreground">{selectedTrade.symbol}</h2>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-lg ${Number(selectedTrade.pnl) >= 0 ? 'bg-profit/10 text-profit border border-profit/20' : 'bg-loss/10 text-loss border border-loss/20'}`}>
-                        {Number(selectedTrade.pnl) >= 0 ? 'WIN' : 'LOSS'}
-                      </span>
-                      <span className={`text-xl font-extrabold font-mono-num ${Number(selectedTrade.pnl) >= 0 ? 'text-profit' : 'text-loss'}`}>
-                        {Number(selectedTrade.pnl) >= 0 ? '+' : ''}${Number(selectedTrade.pnl).toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground font-medium mt-0.5">
-                      {selectedTrade.direction} · ${Number(selectedTrade.entry_price).toFixed(2)} → ${Number(selectedTrade.exit_price).toFixed(2)} · {selectedTrade.lot_size} lots
-                    </p>
+            <div className="space-y-6 animate-fade-up">
+              <div className="flex items-center justify-between border-b border-border pb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm">
+                    <DollarSign className="w-4 h-4 text-black stroke-[3]" />
                   </div>
+                  <h2 className="text-2xl font-bold text-foreground tracking-tight">{selectedTrade.symbol}</h2>
+                  <span className={cn(
+                    "text-[10px] font-bold px-2 py-0.5 rounded-md border",
+                    isWinner
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-500/20'
+                      : 'bg-red-500/10 text-red-600 dark:text-red-500 border-red-500/20'
+                  )}>
+                    {isWinner ? 'WINNER' : 'LOSER'}
+                  </span>
                 </div>
-                <button onClick={handleSave} disabled={saveJournal.isPending}
-                  className="flex items-center gap-2 btn-premium text-primary-foreground px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50">
-                  <Save className="w-4 h-4" /> {saveJournal.isPending ? 'Saving...' : 'Save'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button className="border border-border p-2 rounded-xl text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                  <button className="flex items-center gap-1.5 border border-border px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                    <FileText className="w-3.5 h-3.5" /> Report
+                  </button>
+                  <button className="flex items-center gap-1.5 border border-border px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                    <SlidersHorizontal className="w-3.5 h-3.5" /> Analytics
+                  </button>
+                  <button onClick={handleSave} disabled={saveJournal.isPending}
+                    className={cn(
+                      "text-white font-bold px-6 py-2 rounded-xl text-xs transition-all disabled:opacity-50 shadow-sm",
+                      isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
+                    )}>
+                    {saveJournal.isPending ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
               </div>
 
-              {[
-                { label: 'Pre-Trade Analysis', key: 'pre_trade_notes', placeholder: 'What did you see? Plan, thesis, levels, risk...', icon: '📋' },
-                { label: 'Post-Trade Review', key: 'post_trade_notes', placeholder: 'What happened? Execution, slippage, improvements...', icon: '⏱️' },
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2 mb-2">
-                    <span>{field.icon}</span> {field.label}
-                  </label>
-                  <textarea value={journal[field.key as keyof typeof journal] as string} onChange={e => setJournal(j => ({ ...j, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder}
-                    className="w-full bg-secondary/40 text-foreground border border-border/60 rounded-xl px-4 py-3.5 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 min-h-[100px] resize-y transition-all duration-200 placeholder:text-muted-foreground/40" />
-                </div>
-              ))}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-semibold mb-6">
+                <span className={selectedTrade.direction === 'Long' ? 'text-blue-500' : 'text-red-500'}>{selectedTrade.direction}</span>
+                <span>·</span>
+                <span>Entry ${Number(selectedTrade.entry_price).toFixed(2)}</span>
+                <span>·</span>
+                <span>Size {selectedTrade.lot_size}</span>
+                <span>·</span>
+                <span>{formatJournalDate(selectedTrade.open_time)}</span>
+              </div>
 
-              <div className="bg-secondary/30 rounded-xl p-5 border border-border/40 flex items-center gap-6">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">⚖️ Risk : Reward</span>
+              {/* Pre-Trade Analysis */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <FileText className={cn("w-3.5 h-3.5", iconColor)} /> Pre-Trade Analysis
+                </label>
+                <textarea value={journal.pre_trade_notes} onChange={e => setJournal(j => ({ ...j, pre_trade_notes: e.target.value }))}
+                  placeholder="What did you see? Plan, thesis, levels, risk..."
+                  className={cn(
+                    "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                    isWinner
+                      ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                      : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                  )} />
+              </div>
+
+              {/* Post-Trade Review */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <CheckCircle2 className={cn("w-3.5 h-3.5", iconColor)} /> Post-Trade Review
+                </label>
+                <textarea value={journal.post_trade_notes} onChange={e => setJournal(j => ({ ...j, post_trade_notes: e.target.value }))}
+                  placeholder="What happened? Execution, slippage, improvements..."
+                  className={cn(
+                    "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                    isWinner
+                      ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                      : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                  )} />
+              </div>
+
+              {/* Risk Reward */}
+              <div className={cn(
+                "border rounded-xl p-4 flex items-center justify-between transition-all duration-300",
+                isWinner
+                  ? "bg-blue-500/5 dark:bg-[#0b172a]/10 border-blue-500/20 dark:border-blue-500/10"
+                  : "bg-red-500/5 dark:bg-[#2a0b0b]/10 border-red-500/20 dark:border-red-500/10"
+              )}>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <SlidersHorizontal className={cn("w-3.5 h-3.5", iconColor)} /> Risk : Reward
+                </span>
                 <div className="flex items-center gap-2">
                   <input
                     value={journal.risk_reward.split(':')[0] ?? ''}
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${e.target.value}:${j.risk_reward.split(':')[1] ?? ''}` }))}
-                    placeholder="Risk"
-                    className="w-16 h-10 bg-card text-foreground border border-border rounded-[18px] px-3 text-base text-center font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-200 placeholder:text-[#64748B]" />
-                  <span className="text-muted-foreground font-bold text-xl">:</span>
+                    placeholder="1"
+                    className={cn(
+                      "w-12 h-8 bg-card text-foreground border border-border rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
+                      isWinner
+                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    )} />
+                  <span className="text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
                   <input
                     value={journal.risk_reward.split(':')[1] ?? ''}
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${j.risk_reward.split(':')[0] ?? ''}:${e.target.value}` }))}
-                    placeholder="Reward"
-                    className="w-16 h-10 bg-card text-foreground border border-border rounded-[18px] px-3 text-base text-center font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-200 placeholder:text-[#64748B]" />
+                    placeholder="2"
+                    className={cn(
+                      "w-12 h-8 bg-card text-foreground border border-border rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
+                      isWinner
+                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    )} />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              {/* Emotions & Lessons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">😊 Emotions</label>
-                  <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
-                    className="w-full bg-secondary/40 text-foreground border border-border/60 rounded-xl px-4 py-3.5 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 min-h-[80px] resize-y transition-all duration-200 placeholder:text-muted-foreground/40" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">📖 Lessons Learned</label>
-                  <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
-                    className="w-full bg-secondary/40 text-foreground border border-border/60 rounded-xl px-4 py-3.5 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 min-h-[80px] resize-y transition-all duration-200 placeholder:text-muted-foreground/40" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">🏷️ Tags</label>
-                  <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
-                    className="w-full bg-secondary/40 text-foreground border border-border/60 rounded-xl px-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-200 placeholder:text-muted-foreground/40" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center justify-between">
-                    <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5" /> Rating</span>
-                    <span className={`text-lg font-extrabold font-mono-num ${journal.rating >= 7 ? 'text-profit' : journal.rating >= 4 ? 'text-warning' : 'text-loss'}`}>{journal.rating}/10</span>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <Smile className={cn("w-3.5 h-3.5", iconColor)} /> Emotions
                   </label>
-                  <input type="range" min={1} max={10} value={journal.rating} onChange={e => setJournal(j => ({ ...j, rating: parseInt(e.target.value) }))} className="w-full accent-primary h-2 mt-2" />
+                  <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
+                    className={cn(
+                      "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      isWinner
+                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    )} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <BookOpen className={cn("w-3.5 h-3.5", iconColor)} /> Lessons Learned
+                  </label>
+                  <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
+                    className={cn(
+                      "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      isWinner
+                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    )} />
                 </div>
               </div>
 
+              {/* Tags & Rating */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <Tag className={cn("w-3.5 h-3.5", iconColor)} /> Tags
+                  </label>
+                  <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
+                    className={cn(
+                      "w-full bg-card text-foreground border border-border rounded-xl px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      isWinner
+                        ? "focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20"
+                        : "focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20"
+                    )} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5"><Star className={cn("w-4 h-4", iconColor)} /> Rating</span>
+                    <span className={cn(
+                      "text-xs font-extrabold px-2.5 py-0.5 rounded border",
+                      isWinner
+                        ? "text-blue-500 bg-blue-500/10 border-blue-500/10"
+                        : "text-red-500 bg-red-500/10 border-red-500/10"
+                    )}>{journal.rating}/10</span>
+                  </label>
+                  <div className="relative mt-3 px-2">
+                    <input
+                      type="range"
+                      min={1}
+                      max={10}
+                      value={journal.rating}
+                      onChange={e => setJournal(j => ({ ...j, rating: parseInt(e.target.value) }))}
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer outline-none bg-gradient-to-r from-red-500 via-amber-500 to-blue-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/20 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:active:scale-110"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground font-bold mt-2 select-none">
+                      <span>1</span>
+                      <span>5</span>
+                      <span>10</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Execution Checklist */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center justify-between">
-                  <span>✅ Execution Checklist</span>
-                  <span className="text-primary font-mono-num">{checkCount}/5</span>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className={cn("w-3.5 h-3.5", iconColor)} /> Execution Checklist</span>
+                  <span className={cn("font-bold text-xs", isWinner ? "text-blue-500" : "text-red-500")}>{checkCount}/{totalCheckCount}</span>
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="flex flex-wrap gap-2.5">
                   {[
                     { key: 'checked_higher_tf', label: 'Checked higher timeframe' },
                     { key: 'risk_within_limits', label: 'Risk within limits' },
@@ -201,36 +385,96 @@ export default function Journal() {
                   ].map(item => (
                     <button key={item.key} type="button"
                       onClick={() => setChecklist(c => ({ ...c, [item.key]: !c[item.key as keyof typeof c] }))}
-                      className={`flex items-center gap-2.5 p-3.5 rounded-xl border text-sm text-left transition-all duration-200 ${
-                        checklist[item.key as keyof typeof checklist] ? 'bg-primary/8 border-primary/30 text-foreground' : 'bg-secondary/30 border-border/60 text-muted-foreground hover:border-border'
-                      }`}>
-                      <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-200 ${
-                        checklist[item.key as keyof typeof checklist] ? 'bg-primary border-primary shadow-[0_0_8px_-2px_hsl(221,83%,53%,0.5)]' : 'border-muted-foreground/40'
-                      }`}>
-                        {checklist[item.key as keyof typeof checklist] && <Check className="w-3 h-3 text-primary-foreground" />}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs text-left transition-all duration-200",
+                        checklist[item.key as keyof typeof checklist]
+                          ? isWinner
+                            ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-white'
+                            : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
+                          : 'bg-card border-border text-muted-foreground hover:bg-secondary'
+                      )}>
+                      <div className={cn(
+                        "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
+                        checklist[item.key as keyof typeof checklist]
+                          ? isWinner
+                            ? 'bg-blue-500 border-blue-500'
+                            : 'bg-red-500 border-red-500'
+                          : 'border-border dark:border-zinc-700'
+                      )}>
+                        {checklist[item.key as keyof typeof checklist] && <Check className="w-2.5 h-2.5 text-black stroke-[3]" />}
                       </div>
                       {item.label}
                     </button>
                   ))}
+                  {customChecklist.map(item => (
+                    <div key={item.id} className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs text-left transition-all duration-200",
+                      item.checked
+                        ? isWinner
+                          ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-white'
+                          : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
+                        : 'bg-card border-border text-muted-foreground hover:bg-secondary'
+                    )}>
+                      <button type="button" onClick={() => toggleCustomChecklist(item.id)} className="flex items-center gap-2 text-left">
+                        <div className={cn(
+                          "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
+                          item.checked
+                            ? isWinner
+                              ? 'bg-blue-500 border-blue-500'
+                              : 'bg-red-500 border-red-500'
+                            : 'border-border dark:border-zinc-700'
+                        )}>
+                          {item.checked && <Check className="w-2.5 h-2.5 text-black stroke-[3]" />}
+                        </div>
+                        {item.label}
+                      </button>
+                      <button type="button" onClick={() => deleteCustomChecklist(item.id)} className="text-zinc-500 hover:text-red-500 transition-colors ml-1">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
+                <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 max-w-xs">
+                  <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
+                    className={cn(
+                      "flex-1 bg-card text-foreground border border-border rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      isWinner
+                        ? "focus:border-blue-500/40"
+                        : "focus:border-red-500/40"
+                    )} />
+                  <button type="submit" className={cn(
+                    "w-7 h-7 rounded-lg flex items-center justify-center text-white transition-colors",
+                    isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
+                  )}>
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </form>
               </div>
 
+              {/* Screenshots */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 block">🖼️ Screenshots</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-3">
+                  <Image className={cn("w-3.5 h-3.5", iconColor)} /> Screenshots
+                </label>
                 <div className="flex flex-wrap gap-3">
                   {screenshots.map(s => (
-                    <div key={s.id} className="w-36 h-28 rounded-xl overflow-hidden border border-border/60 hover:border-primary/30 transition-all duration-200 group">
+                    <div key={s.id} className="w-36 h-24 rounded-xl overflow-hidden border border-border hover:border-blue-500/30 transition-all duration-200 group relative">
                       <img src={(s as { signed_url?: string }).signed_url || s.image_url} alt="Trade screenshot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   ))}
                   <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="w-36 h-28 rounded-xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-200 group">
-                    <ImagePlus className="w-6 h-6 mb-1.5 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium">Add Image</span>
+                    className={cn(
+                      "w-36 h-24 rounded-xl border border-dashed bg-card flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
+                      isWinner ? "border-border dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-border dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
+                    )}>
+                    <Plus className="w-5 h-5 mb-1 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Add Image</span>
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                 </div>
               </div>
+
+              <StrategySetupCard value={strategySetup} onChange={setStrategySetup} />
 
               <AITradeReviewPanel tradeId={selectedTrade.id} />
             </div>

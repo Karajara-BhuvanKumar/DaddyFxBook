@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  LineChart,
   Sparkles,
   FlaskConical,
   Settings,
@@ -37,7 +36,6 @@ const mainItems: NavItem[] = [
   { to: "/trades", label: "Trades", icon: List },
   { to: "/journal", label: "Journal", icon: BookOpen },
   { to: "/analysis", label: "Analysis", icon: BarChart3, hasSub: true },
-  { to: "/market", label: "Market", icon: LineChart },
   {
     to: "/ai-report",
     label: "AI Report",
@@ -70,33 +68,27 @@ function NavRow({ item, collapsed, isActive }: { item: NavItem; collapsed: boole
   return (
     <RouterNavLink
       to={item.to}
-      style={
-        isActive
-          ? { background: "linear-gradient(90deg, rgba(59,130,246,0.18), rgba(59,130,246,0.03))" }
-          : undefined
-      }
-      className={`relative flex items-center ${collapsed ? "justify-center" : "gap-[14px]"} ${collapsed ? "px-3" : "pl-5 pr-3"} rounded-2xl text-[13px] font-medium transition-colors duration-200 group ${
-        isActive
-          ? "text-foreground"
-          : "text-sidebar-foreground hover:text-foreground hover:bg-accent/40"
-      }`}
+      className={`relative flex items-center ${collapsed ? "justify-center" : "gap-[14px]"} ${collapsed ? "px-3" : "pl-5 pr-3"} rounded-xl text-[13px] font-medium transition-all duration-200 group ${isActive
+          ? "bg-blue-500/10 text-blue-600 dark:bg-gradient-to-r dark:from-blue-500/20 dark:to-transparent dark:text-white"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        }`}
+      style={{ height: 48 }}
     >
-      <span style={{ height: 52 }} className="absolute inset-0 pointer-events-none" />
-      <div className="flex items-center w-full" style={{ height: 52 }}>
-        {isActive && (
-          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary" />
-        )}
-        <item.icon className={`shrink-0 ${isActive ? "text-primary" : ""}`} style={{ width: 18, height: 18, strokeWidth: 1.8 }} />
+      <div className="flex items-center w-full h-full">
+        <item.icon className={`shrink-0 ${isActive ? "text-blue-500" : ""}`} style={{ width: 18, height: 18, strokeWidth: 1.8 }} />
         {!collapsed && (
           <>
             <span className="flex-1 truncate ml-[14px]">{item.label}</span>
             {item.badge && (
-              <span className={`badge-pill ${badgeClass(item.badge.tone)}`}>{item.badge.label}</span>
+              <span className={`badge-pill ${item.badge.tone === "warning" ? "bg-[#d8a400] text-white" : badgeClass(item.badge.tone)}`}>{item.badge.label}</span>
             )}
-            {item.dot && !item.badge && (
-              <span className="w-2 h-2 rounded-full bg-primary" />
+            {isActive && (
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 ml-auto" />
             )}
-            {item.hasSub && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/60 ml-2" />}
+            {item.dot && !item.badge && !isActive && (
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50 ml-auto" />
+            )}
+            {item.hasSub && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-2" />}
           </>
         )}
       </div>
@@ -112,51 +104,63 @@ export default function AppSidebar() {
 
   return (
     <aside
-      className={`${collapsed ? "w-[72px]" : "w-[264px]"} min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300 ease-out relative`}
+      className={`${collapsed ? "w-[72px]" : "w-[260px]"} min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300 ease-out relative`}
     >
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-7 w-6 h-6 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 z-10"
+        className="absolute -right-3 top-7 w-6 h-6 rounded-full bg-sidebar border border-sidebar-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200 z-10"
       >
         {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
 
       {/* Brand */}
-      <div className={`px-5 pt-5 pb-4 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
-        <div className="w-9 h-9 rounded-xl btn-premium flex items-center justify-center shrink-0">
-          <TrendingUp className="w-5 h-5 text-primary-foreground" />
+      <div className={`px-5 pt-7 pb-4 flex flex-col ${collapsed ? "items-center" : ""}`}>
+        <div className="flex items-center gap-2.5 w-full">
+          {collapsed ? (
+            <img
+              src="/daddyfxbook-logo.png"
+              alt="DF"
+              className="w-10 h-10 object-contain dark:invert dark:hue-rotate-180"
+            />
+          ) : (
+            <div className="flex items-center gap-2 w-full">
+              <img
+                src="/daddyfxbook-logo.png"
+                alt="DaddyFxBook"
+                className="h-10 object-contain dark:invert dark:hue-rotate-180"
+              />
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#d8a400] text-white ml-auto">BETA</span>
+            </div>
+          )}
         </div>
         {!collapsed && (
-          <span className="brand-wordmark whitespace-nowrap flex items-center gap-2">
-            Daddy<span className="accent">FX</span>Book
-            <span className="badge-pill bg-warning/15 text-warning">BETA</span>
-          </span>
+          <p className="text-muted-foreground text-xs mt-3 ml-1 font-medium">Sun, Jun 21</p>
         )}
       </div>
 
       {/* User card */}
       {!collapsed && (
-        <div className="mx-3 mb-4 rounded-xl bg-card/60 border border-border/60 p-2.5 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+        <div className="mx-4 mt-2 mb-6 rounded-2xl bg-card border border-border p-3 flex items-center gap-3 hover:bg-accent/50 dark:hover:bg-white/5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors cursor-pointer relative">
+          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
             {initial}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <p className="text-[13px] font-semibold text-foreground truncate">
-                {user?.email?.split("@")[0] ?? "user"}
+                {user?.email?.split("@")[0] ?? "trading view"}
               </p>
-              <span className="badge-pill bg-muted/60 text-muted-foreground">FREE</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-border text-muted-foreground">FREE</span>
             </div>
             <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
           </div>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-500" />
         </div>
       )}
 
       {/* Menu */}
       <nav className="flex-1 px-3 space-y-2 overflow-y-auto">
         {!collapsed && (
-          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.15em] px-3 mt-7 mb-3.5">
+          <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.15em] px-4 mt-2 mb-3.5">
             Menu
           </p>
         )}
@@ -176,13 +180,12 @@ export default function AppSidebar() {
                         key={child.to}
                         to={child.to}
                         end
-                        className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-all duration-150 ${
-                          active
-                            ? "text-foreground bg-primary/10"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
-                        }`}
+                        className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-all duration-150 ${active
+                            ? "text-blue-600 dark:text-white bg-blue-500/5 dark:bg-white/5"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
                       >
-                        <child.icon className={`w-3.5 h-3.5 shrink-0 ${active ? "text-primary" : ""}`} />
+                        <child.icon className={`w-3.5 h-3.5 shrink-0 ${active ? "text-blue-500" : ""}`} />
                         <span className="truncate">{child.label}</span>
                       </RouterNavLink>
                     );
@@ -194,7 +197,7 @@ export default function AppSidebar() {
         })}
 
         {!collapsed && (
-          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.15em] px-3 mt-7 mb-3.5">
+          <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.15em] px-4 mt-7 mb-3.5">
             Support
           </p>
         )}
@@ -207,7 +210,7 @@ export default function AppSidebar() {
       <div className={`p-3 border-t border-sidebar-border ${collapsed ? "items-center flex flex-col" : ""}`}>
         <button
           onClick={signOut}
-          className={`flex items-center ${collapsed ? "justify-center" : "gap-2"} px-3 py-2 rounded-lg text-[13px] text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-all duration-200 w-full group`}
+          className={`flex items-center ${collapsed ? "justify-center" : "gap-2"} px-4 py-2 rounded-xl text-[13px] text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all duration-200 w-full group`}
         >
           <LogOut className="w-4 h-4" />
           {!collapsed && <span>Sign Out</span>}

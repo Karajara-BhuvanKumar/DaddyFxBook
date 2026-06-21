@@ -320,9 +320,9 @@ export default function TradeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#080808] border-zinc-900 text-white">
         <DialogHeader>
-          <DialogTitle>{initial ? "Edit trade" : "Add backtest trade"}</DialogTitle>
+          <DialogTitle className="text-white text-xl font-bold">{initial ? "Edit trade" : "Add backtest trade"}</DialogTitle>
         </DialogHeader>
 
         {/* Stepper */}
@@ -335,32 +335,32 @@ export default function TradeFormDialog({
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors w-full",
                   step === s.n
-                    ? "bg-primary/15 text-primary border border-primary/40"
-                    : "bg-muted/30 text-muted-foreground border border-transparent hover:bg-muted/50"
+                    ? "bg-blue-600/10 text-blue-500 border border-blue-500/20"
+                    : "bg-[#0b0b0b] text-zinc-500 border border-zinc-900 hover:text-zinc-300 hover:border-zinc-800"
                 )}
               >
                 <span className={cn(
-                  "w-6 h-6 rounded-full flex items-center justify-center text-xs",
-                  step === s.n ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/70"
+                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                  step === s.n ? "bg-blue-500 text-white" : "bg-zinc-800 text-zinc-400"
                 )}>{s.n}</span>
                 <span className="truncate">{s.label}</span>
               </button>
-              {idx < steps.length - 1 && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+              {idx < steps.length - 1 && <ChevronRight className="w-4 h-4 text-zinc-700 shrink-0" />}
             </div>
           ))}
         </div>
 
         {step === 1 && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Pair</Label>
-                <Input value={form.pair} onChange={(e) => updateAndRecalc({ pair: e.target.value })} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Pair</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-white font-bold h-11 rounded-xl" value={form.pair} onChange={(e) => updateAndRecalc({ pair: e.target.value })} />
               </div>
               <div>
-                <Label>Direction</Label>
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Direction</Label>
                 <Select value={form.direction} onValueChange={(v) => updateAndRecalc({ direction: v as "long" | "short" })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white font-bold h-11 rounded-xl"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="long">Long</SelectItem>
                     <SelectItem value="short">Short</SelectItem>
@@ -368,57 +368,57 @@ export default function TradeFormDialog({
                 </Select>
               </div>
               <div>
-                <Label>Entry price</Label>
-                <Input type="number" step="any" value={form.entry_price} onChange={(e) => updateAndRecalc({ entry_price: e.target.value })} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Entry price</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.entry_price} onChange={(e) => updateAndRecalc({ entry_price: e.target.value })} />
               </div>
               <div>
-                <Label>Stop loss</Label>
-                <Input type="number" step="any" value={form.stop_loss} onChange={(e) => updateAndRecalc({ stop_loss: e.target.value })} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Stop loss</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.stop_loss} onChange={(e) => updateAndRecalc({ stop_loss: e.target.value })} />
               </div>
               <div>
-                <Label>Take profit</Label>
-                <Input type="number" step="any" value={form.take_profit} onChange={(e) => updateAndRecalc({ take_profit: e.target.value })} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Take profit</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.take_profit} onChange={(e) => updateAndRecalc({ take_profit: e.target.value })} />
               </div>
               <div>
-                <Label>Exit price</Label>
-                <Input type="number" step="any" value={form.exit_price} onChange={(e) => updateAndRecalc({ exit_price: e.target.value })} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Exit price</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-white font-mono h-11 rounded-xl" type="number" step="any" value={form.exit_price} onChange={(e) => updateAndRecalc({ exit_price: e.target.value })} />
               </div>
               <div>
-                <Label>Risk : Reward</Label>
-                <Input type="number" step="any" readOnly value={form.rr} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Risk : Reward</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-zinc-500 font-mono h-11 rounded-xl" type="number" step="any" readOnly value={form.rr} />
               </div>
               <div>
-                <Label>R gained</Label>
-                <Input type="number" step="any" readOnly value={form.r_gained} />
-                {invalidRisk && <p className="text-xs text-destructive mt-1">Invalid risk</p>}
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">R gained</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-zinc-500 font-mono h-11 rounded-xl" type="number" step="any" readOnly value={form.r_gained} />
+                {invalidRisk && <p className="text-xs text-red-500 mt-1 font-bold">Invalid risk</p>}
               </div>
               <div>
-                <Label>P&L</Label>
-                <Input type="number" step="any" readOnly value={form.pnl} className={cn(pnlClass)} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">P&L</Label>
+                <Input className={cn("bg-[#060606] border-zinc-900 font-mono h-11 rounded-xl font-bold", form.pnl ? (parseFloat(form.pnl) > 0 ? "text-blue-500" : "text-red-500") : "text-zinc-500")} type="number" step="any" readOnly value={form.pnl} />
               </div>
               <div>
-                <Label>Outcome</Label>
-                <div className="h-10 flex items-center">
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Outcome</Label>
+                <div className="h-11 flex items-center">
                   <Badge className={cn(
-                    "capitalize",
+                    "capitalize px-3 py-1 rounded-md text-[11px] font-bold tracking-wider",
                     form.outcome === "win"
-                      ? "bg-profit text-white border-transparent hover:bg-profit/80"
+                      ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
                       : form.outcome === "loss"
-                      ? "bg-loss text-white border-transparent hover:bg-loss/80"
-                      : "bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80"
+                        ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                        : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                   )}>
                     {form.outcome === "win" ? "Win" : form.outcome === "loss" ? "Loss" : "Break-even"}
                   </Badge>
                 </div>
               </div>
               <div>
-                <Label>Date</Label>
-                <Input type="date" value={form.trade_date} onChange={(e) => updateAndRecalc({ trade_date: e.target.value })} />
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Date</Label>
+                <Input className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl" type="date" value={form.trade_date} onChange={(e) => updateAndRecalc({ trade_date: e.target.value })} />
               </div>
               <div>
-                <Label>Session</Label>
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Session</Label>
                 <Select value={form.session} onValueChange={(v) => updateAndRecalc({ session: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {SESSIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -433,16 +433,16 @@ export default function TradeFormDialog({
             <StrategyCard title="HTF Structure" example={`${strategy.htf_tf || "—"} | ${strategy.htf_level || "—"}`}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Timeframe</Label>
+                  <Label className="text-zinc-400">Timeframe</Label>
                   <Select value={strategy.htf_tf} onValueChange={(v) => updateStrategy({ htf_tf: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{HTF_TIMEFRAMES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Level Type</Label>
+                  <Label className="text-zinc-400">Level Type</Label>
                   <Select value={strategy.htf_level} onValueChange={(v) => updateStrategy({ htf_level: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{LEVEL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
@@ -452,16 +452,16 @@ export default function TradeFormDialog({
             <StrategyCard title="LTF Structure" example={`${strategy.ltf_tf || "—"} | ${strategy.ltf_level || "—"}`}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Timeframe</Label>
+                  <Label className="text-zinc-400">Timeframe</Label>
                   <Select value={strategy.ltf_tf} onValueChange={(v) => updateStrategy({ ltf_tf: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{LTF_TIMEFRAMES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Level Type</Label>
+                  <Label className="text-zinc-400">Level Type</Label>
                   <Select value={strategy.ltf_level} onValueChange={(v) => updateStrategy({ ltf_level: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{LEVEL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
@@ -471,16 +471,16 @@ export default function TradeFormDialog({
             <StrategyCard title="Confirmation" example={`${strategy.conf_tf || "—"} | ${strategy.conf_type || "—"}`}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Timeframe</Label>
+                  <Label className="text-zinc-400">Timeframe</Label>
                   <Select value={strategy.conf_tf} onValueChange={(v) => updateStrategy({ conf_tf: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{CONFIRM_TIMEFRAMES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Type</Label>
+                  <Label className="text-zinc-400">Type</Label>
                   <Select value={strategy.conf_type} onValueChange={(v) => updateStrategy({ conf_type: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{CONFIRM_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
@@ -497,35 +497,35 @@ export default function TradeFormDialog({
                       key={c}
                       onClick={() => toggleConfluence(c)}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-sm border transition-colors flex items-center gap-1.5",
+                        "px-3 py-1.5 rounded-full text-sm border transition-colors flex items-center gap-1.5 font-semibold",
                         active
-                          ? "bg-primary/15 text-primary border-primary/50"
-                          : "bg-muted/30 text-muted-foreground border-border hover:bg-muted/50"
+                          ? "bg-blue-600/15 text-blue-500 border-blue-500/30"
+                          : "bg-[#060606] text-zinc-500 border-zinc-900 hover:text-white"
                       )}
                     >
-                      {active && <Check className="w-3.5 h-3.5" />}
+                      {active && <Check className="w-3.5 h-3.5 text-blue-500" />}
                       {c}
                     </button>
                   );
                 })}
               </div>
               {strategy.confluences.includes("FIB Zone") && (
-                <div className="mt-3 max-w-xs">
-                  <Label>FIB Zone Timeframe</Label>
+                <div className="mt-4 max-w-xs">
+                  <Label className="text-zinc-400">FIB Zone Timeframe</Label>
                   <Select value={strategy.fib_tf} onValueChange={(v) => updateStrategy({ fib_tf: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger className="bg-[#060606] border-zinc-900 text-white mt-1.5"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>{FIB_TIMEFRAMES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               )}
             </StrategyCard>
 
-            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
-              <div className="text-xs uppercase tracking-wider text-primary/80 mb-2">Setup Summary</div>
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+              <div className="text-xs uppercase font-bold tracking-wider text-blue-500 mb-2">Setup Summary</div>
               {summary ? (
-                <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed">{summary}</pre>
+                <pre className="text-sm text-zinc-300 whitespace-pre-wrap font-mono leading-relaxed font-semibold">{summary}</pre>
               ) : (
-                <p className="text-sm text-muted-foreground">Fill the cards above to generate a summary.</p>
+                <p className="text-sm text-zinc-500 font-medium">Fill the cards above to generate a summary.</p>
               )}
             </div>
           </div>
@@ -533,20 +533,20 @@ export default function TradeFormDialog({
 
         {step === 3 && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Market condition</Label>
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Market condition</Label>
                 <Select value={form.market_condition} onValueChange={(v) => updateAndRecalc({ market_condition: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {MARKET_CONDITIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Emotion</Label>
+                <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Emotion</Label>
                 <Select value={form.emotion} onValueChange={(v) => updateAndRecalc({ emotion: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {EMOTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -554,12 +554,13 @@ export default function TradeFormDialog({
               </div>
             </div>
             <div>
-              <Label>Notes</Label>
-              <Textarea rows={4} value={form.notes} onChange={(e) => updateAndRecalc({ notes: e.target.value })} />
+              <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Notes</Label>
+              <Textarea className="bg-[#060606] border-zinc-900 text-white rounded-xl placeholder:text-zinc-600" rows={4} value={form.notes} onChange={(e) => updateAndRecalc({ notes: e.target.value })} />
             </div>
             <div>
-              <Label>Screenshot</Label>
+              <Label className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Screenshot</Label>
               <Input
+                className="bg-[#060606] border-zinc-900 text-white h-11 rounded-xl file:text-white file:font-semibold"
                 type="file"
                 accept="image/*"
                 disabled={uploading}
@@ -574,22 +575,22 @@ export default function TradeFormDialog({
           </div>
         )}
 
-        <DialogFooter className="flex sm:justify-between gap-2">
+        <DialogFooter className="flex sm:justify-between gap-2 mt-4 pt-4 border-t border-zinc-900/50">
           <div>
             {step > 1 && (
-              <Button variant="outline" onClick={() => setStep((step - 1) as 1 | 2 | 3)}>
+              <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-900 h-11 rounded-xl font-bold" onClick={() => setStep((step - 1) as 1 | 2 | 3)}>
                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
               </Button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-900 h-11 rounded-xl font-bold" onClick={() => onOpenChange(false)}>Cancel</Button>
             {step < 3 ? (
-              <Button onClick={() => setStep((step + 1) as 1 | 2 | 3)}>
+              <Button className="bg-white text-black hover:bg-zinc-200 h-11 rounded-xl font-bold px-6" onClick={() => setStep((step + 1) as 1 | 2 | 3)}>
                 Next <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <Button onClick={submit} disabled={saving}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white h-11 rounded-xl font-bold px-6" onClick={submit} disabled={saving}>
                 {saving ? "Saving…" : initial ? "Save changes" : "Add trade"}
               </Button>
             )}
@@ -610,10 +611,10 @@ function StrategyCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card/50 p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        {example && <span className="text-xs font-mono text-muted-foreground">{example}</span>}
+    <div className="rounded-2xl border border-zinc-900 bg-[#0b0b0b] p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+        {example && <span className="text-[11px] font-mono font-semibold tracking-wider text-zinc-500 uppercase">{example}</span>}
       </div>
       {children}
     </div>
