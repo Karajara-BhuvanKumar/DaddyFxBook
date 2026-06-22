@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTrades, useAddTrade, useDeleteTrade, calculatePnl, Trade } from "@/hooks/useTrades";
 import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X, SlidersHorizontal, DollarSign, Share2, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ export default function Trades() {
   const addTrade = useAddTrade();
   const deleteTrade = useDeleteTrade();
   const [showForm, setShowForm] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [sharingTrade, setSharingTrade] = useState<Trade | null>(null);
   const [form, setForm] = useState({
@@ -21,6 +23,14 @@ export default function Trades() {
     openDate: new Date().toISOString().slice(0, 16),
     closeDate: new Date().toISOString().slice(0, 16),
   });
+
+  // Auto-open form when navigated with ?add=true
+  useEffect(() => {
+    if (searchParams.get("add") === "true") {
+      setShowForm(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const previewPnl = useMemo(() => {
     const entry = parseFloat(form.entryPrice);

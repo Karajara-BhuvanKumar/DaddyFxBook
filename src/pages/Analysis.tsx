@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useTrades } from "@/hooks/useTrades";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { 
@@ -740,24 +741,24 @@ export default function Analysis() {
       </div>
 
       {/* Trading Calendar + Day Trades */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 md:gap-6">
         {/* Trading Calendar */}
-        <div className="lg:col-span-7 bg-[#0B0B0B] rounded-[20px] p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <div>
+        <div className="lg:col-span-7 bg-[#0B0B0B] rounded-[20px] p-3 sm:p-4 md:p-6 flex flex-col min-w-0 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 md:mb-4">
+            <div className="min-w-0">
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
                 <Calendar className="w-4 h-4 text-[#3B82F6]" /> Trading Calendar
               </h3>
-              <p className="text-[11px] text-zinc-500 font-semibold mt-1">Daily P&L heatmap - Click on days to see trades</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 font-semibold mt-1">Daily P&L heatmap - Click on days to see trades</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
                 className="w-7 h-7 rounded-full bg-[#121212] hover:bg-[#1A1A1A] flex items-center justify-center transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5 text-zinc-400" />
               </button>
-              <span className="text-white font-bold text-[12px] min-w-[90px] text-center">
+              <span className="text-white font-bold text-[11px] sm:text-[12px] min-w-[80px] sm:min-w-[90px] text-center">
                 {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </span>
               <button
@@ -769,102 +770,114 @@ export default function Analysis() {
             </div>
           </div>
 
-          {/* Grid Header */}
-          <div className="grid grid-cols-8 gap-1.5 text-center mb-2">
-            {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((d, i) => (
-              <div key={i} className="py-1 font-bold text-[10px] text-zinc-500 uppercase">{d}</div>
+          {/* Day-of-week headers — 7 columns only */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 text-center mb-1.5">
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <div key={i} className="py-1 font-bold text-[9px] sm:text-[10px] text-zinc-500 uppercase">
+                <span className="hidden sm:inline">{["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][i]}</span>
+                <span className="sm:hidden">{d}</span>
+              </div>
             ))}
-            <div className="py-1 font-bold text-[10px] text-zinc-500 uppercase">Weekly</div>
           </div>
 
-          {/* Grid Rows */}
-          <div className="space-y-1.5 mt-2">
+          {/* Calendar grid — week rows with weekly summary below each */}
+          <div className="flex-1 flex flex-col gap-1 sm:gap-1.5 min-h-0">
             {Array.from({ length: weeks }).map((_, w) => {
               const wt = weeklyTotals[w];
               const wPositive = wt.pnl >= 0;
+              const weeklyColor = wt.trades === 0
+                ? "text-zinc-500"
+                : wPositive ? "text-[#3B82F6]" : "text-[#EF4444]";
               return (
-                <div key={w} className="grid grid-cols-8 gap-1.5">
-                  {Array.from({ length: 7 }).map((__, d) => {
-                    const cellIdx = w * 7 + d;
-                    const dayNum = cellIdx - startDow + 1;
-                    const inMonth = dayNum >= 1 && dayNum <= daysInMonth;
-                    if (!inMonth) {
+                <div key={w} className="flex flex-col gap-1 sm:gap-1.5">
+                  {/* 7-column day grid */}
+                  <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+                    {Array.from({ length: 7 }).map((__, d) => {
+                      const cellIdx = w * 7 + d;
+                      const dayNum = cellIdx - startDow + 1;
+                      const inMonth = dayNum >= 1 && dayNum <= daysInMonth;
+                      if (!inMonth) {
+                        return (
+                          <div
+                            key={d}
+                            className="min-h-[48px] sm:min-h-[56px] md:min-h-[64px] lg:min-h-[72px] rounded-[8px] sm:rounded-[10px]"
+                          />
+                        );
+                      }
+                      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                      const data = calendarData[dateStr];
+                      const hasData = !!data;
+                      const isProfit = hasData && data.pnl >= 0;
+                      const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+
                       return (
                         <div
                           key={d}
-                          className="bg-[#0b0b0b] border border-white/[0.02] opacity-0"
-                          style={{ aspectRatio: "1/1", borderRadius: 10 }}
-                        />
+                          className={cn(
+                            "flex flex-col items-center justify-between cursor-pointer group transition-all duration-200 rounded-[8px] sm:rounded-[10px] border overflow-hidden",
+                            "min-h-[48px] sm:min-h-[56px] md:min-h-[64px] lg:min-h-[72px] py-1 px-0.5 sm:p-1.5",
+                            hasData
+                              ? isProfit
+                                ? "bg-[#0A1224] border-[#3B82F6]/20 hover:bg-[#0F1A3A] hover:border-[#3B82F6]/40"
+                                : "bg-[#240A0A] border-[#EF4444]/20 hover:bg-[#330F0F] hover:border-[#EF4444]/40"
+                              : "bg-[#0B0B0B] border-white/[0.05] hover:bg-[#0F0F0F] hover:border-white/[0.1]",
+                            isToday && !hasData && "ring-1 ring-white/10"
+                          )}
+                          onClick={() => setSelectedCalendarDay(dateStr)}
+                        >
+                          {/* Day number */}
+                          <span className={cn(
+                            "w-full text-left font-bold leading-none pl-0.5",
+                            "text-[9px] sm:text-[10px] md:text-[11px]",
+                            isToday ? "text-[#3B82F6]" : "text-zinc-500"
+                          )}>
+                            {dayNum}
+                          </span>
+                          
+                          {/* P&L value */}
+                          <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
+                            {hasData && (
+                              <span
+                                className={cn(
+                                  "font-bold leading-none truncate max-w-full px-0.5",
+                                  "text-[10px] sm:text-[12px] md:text-[14px] lg:text-[16px]",
+                                  isProfit ? "text-[#3B82F6]" : "text-[#EF4444]"
+                                )}
+                              >
+                                {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(0)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Trade count */}
+                          <div className="w-full h-3 flex items-end justify-center">
+                            {hasData && (
+                              <span className="hidden sm:block text-[8px] md:text-[9px] text-zinc-500 font-bold leading-none truncate max-w-full pb-0.5">
+                                {data.count} trade{data.count > 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       );
-                    }
-                    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-                    const data = calendarData[dateStr];
-                    const hasData = !!data;
-                    const isProfit = hasData && data.pnl >= 0;
-                    const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-
-                    let cellClasses = "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-[10px] border ";
-                    if (hasData) {
-                      if (isProfit) {
-                        cellClasses += "bg-[#0A1224] border-[#3B82F6]/20 text-[#3B82F6] hover:bg-[#0F1A3A] hover:border-[#3B82F6]/40";
-                      } else {
-                        cellClasses += "bg-[#240A0A] border-[#EF4444]/20 text-[#EF4444] hover:bg-[#330F0F] hover:border-[#EF4444]/40";
-                      }
-                    } else {
-                      cellClasses += "bg-[#0B0B0B] border-white/[0.05] hover:bg-[#0F0F0F] hover:border-white/[0.1]";
-                    }
-                    if (isToday && !hasData) {
-                      cellClasses += " ring-1 ring-white/10";
-                    }
-
-                    return (
-                      <div
-                        key={d}
-                        className={cellClasses}
-                        style={{ aspectRatio: "1/1" }}
-                        onClick={() => setSelectedCalendarDay(dateStr)}
-                      >
-                        <span className={`absolute top-2.5 left-3 text-[12px] font-bold ${isToday ? "text-[#3B82F6]" : "text-zinc-500"}`}>
-                          {dayNum}
-                        </span>
-                        {hasData && (
-                          <span className={`font-bold text-[15px] ${isProfit ? "text-[#3B82F6]" : "text-[#EF4444]"}`}>
-                            {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(0)}
-                          </span>
-                        )}
-                        {hasData && (
-                          <span className="absolute bottom-2 text-[10px] text-zinc-500 font-bold leading-none">
-                            {data.count} trade{data.count > 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {/* Weekly Column */}
+                    })}
+                  </div>
+                  {/* Weekly summary — always below the week row */}
                   <div
-                    className={`relative flex flex-col items-center justify-center rounded-[10px] p-2 border transition-all duration-200 ${
+                    className={cn(
+                      "flex items-center justify-between rounded-lg sm:rounded-[10px] px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all duration-200",
                       wt.trades > 0
-                        ? wPositive
-                          ? "bg-[#0A1224] border-[#3B82F6]/20 text-[#3B82F6]"
-                          : "bg-[#240A0A] border-[#EF4444]/20 text-[#EF4444]"
-                        : "bg-[#0B0B0B] border-white/[0.05] text-zinc-500"
-                    }`}
-                    style={{ aspectRatio: "1/1" }}
+                        ? wPositive ? "bg-[#0A1224]/60" : "bg-[#240A0A]/60"
+                        : "bg-[#080808]",
+                    )}
                   >
-                    <span
-                      className="absolute top-2.5 uppercase font-bold"
-                      style={{ fontSize: 9, letterSpacing: "0.05em", color: wt.trades === 0 ? "#52525B" : wPositive ? "#3B82F6" : "#EF4444" }}
-                    >
-                      Weekly
+                    <span className={cn("font-bold uppercase tracking-wider", weeklyColor, "text-[8px] sm:text-[9px] md:text-[10px]")}>
+                      Week {w + 1}
                     </span>
-                    <span
-                      className="font-bold text-[15px] leading-none"
-                      style={{ color: wt.trades === 0 ? "#52525B" : wPositive ? "#3B82F6" : "#EF4444" }}
-                    >
+                    <span className={cn("font-bold text-num", weeklyColor, "text-[10px] sm:text-xs md:text-sm")}>
                       {wt.trades === 0 ? "$0" : `${wPositive ? "+" : "-"}$${Math.abs(wt.pnl).toFixed(0)}`}
                     </span>
-                    <span className="absolute bottom-2 font-bold" style={{ fontSize: 9, color: wt.trades === 0 ? "#52525B" : wPositive ? "#3B82F6" : "#EF4444" }}>
-                      Traded {wt.trades}
+                    <span className={cn("font-medium opacity-60", weeklyColor, "text-[8px] sm:text-[9px] md:text-[10px]")}>
+                      {wt.trades} trade{wt.trades !== 1 ? "s" : ""}
                     </span>
                   </div>
                 </div>
@@ -872,15 +885,16 @@ export default function Analysis() {
             })}
           </div>
 
-          <div className="flex gap-6 justify-center mt-6" style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700 }}>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3B82F6]" /> Profitable Day
+          {/* Legend */}
+          <div className="flex flex-wrap gap-3 sm:gap-6 justify-center mt-3 sm:mt-5 text-[10px] sm:text-[11px] font-bold text-[#94A3B8]">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#3B82F6]" /> Profitable Day
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> Losing Day
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#EF4444]" /> Losing Day
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" /> No Trades
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-zinc-700" /> No Trades
             </span>
           </div>
         </div>

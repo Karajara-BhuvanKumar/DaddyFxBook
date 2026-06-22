@@ -1,5 +1,6 @@
 import { useEffect, useState, memo } from "react";
 import { Search, Plus, Clock, Bell, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,6 +12,7 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { user } = useAuth();
   const { settings } = useUserSettings();
   const { setMobileOpen } = useSidebar();
+  const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
   const [searchOpen, setSearchOpen] = useState(false);
   const initial = (settings?.display_name || user?.email || "U").slice(0, 2).toUpperCase();
@@ -102,8 +104,10 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
             <ThemeToggle />
           </div>
           <button
+            onClick={() => navigate("/trades?add=true")}
             className="touch-target bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-white transition-colors rounded-xl"
-            aria-label="Add"
+            aria-label="Add Trade"
+            title="Add Trade"
           >
             <Plus className="w-4 h-4" />
           </button>
