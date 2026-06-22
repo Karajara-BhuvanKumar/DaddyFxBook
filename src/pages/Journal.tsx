@@ -240,7 +240,7 @@ export default function Journal() {
                 <textarea value={journal.pre_trade_notes} onChange={e => setJournal(j => ({ ...j, pre_trade_notes: e.target.value }))}
                   placeholder="What did you see? Plan, thesis, levels, risk..."
                   className={cn(
-                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                     "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                   )} />
               </div>
@@ -253,7 +253,7 @@ export default function Journal() {
                 <textarea value={journal.post_trade_notes} onChange={e => setJournal(j => ({ ...j, post_trade_notes: e.target.value }))}
                   placeholder="What happened? Execution, slippage, improvements..."
                   className={cn(
-                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                     "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                   )} />
               </div>
@@ -271,7 +271,7 @@ export default function Journal() {
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${e.target.value}:${j.risk_reward.split(':')[1] ?? ''}` }))}
                     placeholder="1"
                     className={cn(
-                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
+                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                   <span className="text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
@@ -280,7 +280,7 @@ export default function Journal() {
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${j.risk_reward.split(':')[0] ?? ''}:${e.target.value}` }))}
                     placeholder="2"
                     className={cn(
-                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-700",
+                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
@@ -294,7 +294,7 @@ export default function Journal() {
                   </label>
                   <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
                     className={cn(
-                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
@@ -304,7 +304,7 @@ export default function Journal() {
                   </label>
                   <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
                     className={cn(
-                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
@@ -318,7 +318,7 @@ export default function Journal() {
                   </label>
                   <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
                     className={cn(
-                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                 </div>
@@ -418,7 +418,7 @@ export default function Journal() {
                 <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 w-full max-w-xs">
                   <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
                     className={cn(
-                      "flex-1 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-700",
+                      "flex-1 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                     )} />
                   <button type="submit" className={cn(
