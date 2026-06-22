@@ -66,9 +66,15 @@ export default function AIScorecard() {
   const { data: grades = [] } = useQuery({
     queryKey: ["trade_review_grades", user?.id],
     enabled: !!user,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase.from("ai_trade_reviews").select("grade");
-      if (error) throw error;
+      if (error) {
+        // Table may not exist yet — return empty gracefully
+        const code = (error as { code?: string }).code;
+        if (code === "42P01" || code === "PGRST116") return [];
+        throw error;
+      }
       return ((data ?? []) as Array<{ grade: string }>).map((r) => r.grade as "A+" | "A" | "B" | "C" | "F");
     },
   });

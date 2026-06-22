@@ -22,11 +22,22 @@ export interface PersistedTradeReview {
   updated_at: string;
 }
 
+/**
+ * Returns true if the Supabase error indicates the table does not exist.
+ * PostgREST returns code 42P01 for undefined tables.
+ */
+function isTableMissing(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = (error as { code?: string }).code;
+  return code === "42P01" || code === "PGRST116";
+}
+
 export function useLatestReport() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["ai_performance_report", user?.id],
     enabled: !!user,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_performance_reports")
@@ -34,7 +45,10 @@ export function useLatestReport() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableMissing(error)) return null;
+        throw error;
+      }
       return data as unknown as PersistedReport | null;
     },
   });
@@ -45,12 +59,16 @@ export function useTradeReviews() {
   return useQuery({
     queryKey: ["ai_trade_reviews", user?.id],
     enabled: !!user,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_trade_reviews")
         .select("*")
         .order("updated_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        if (isTableMissing(error)) return [];
+        throw error;
+      }
       return (data ?? []) as unknown as PersistedTradeReview[];
     },
   });
@@ -61,13 +79,17 @@ export function useTradeReview(tradeId: string | null) {
   return useQuery({
     queryKey: ["ai_trade_review", tradeId],
     enabled: !!user && !!tradeId,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_trade_reviews")
         .select("*")
         .eq("trade_id", tradeId!)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableMissing(error)) return null;
+        throw error;
+      }
       return data as unknown as PersistedTradeReview | null;
     },
   });

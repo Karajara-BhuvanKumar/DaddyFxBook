@@ -400,6 +400,165 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_trade_reviews: {
+        Row: {
+          id: string
+          user_id: string
+          trade_id: string
+          grade: string
+          went_right: string[]
+          went_wrong: string[]
+          improvements: string[]
+          summary: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          trade_id: string
+          grade?: string
+          went_right?: string[]
+          went_wrong?: string[]
+          improvements?: string[]
+          summary?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          trade_id?: string
+          grade?: string
+          went_right?: string[]
+          went_wrong?: string[]
+          improvements?: string[]
+          summary?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_performance_reports: {
+        Row: {
+          id: string
+          user_id: string
+          report: Record<string, unknown>
+          stats: Record<string, unknown> | null
+          trade_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          report?: Record<string, unknown>
+          stats?: Record<string, unknown> | null
+          trade_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          report?: Record<string, unknown>
+          stats?: Record<string, unknown> | null
+          trade_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_period_reports: {
+        Row: {
+          id: string
+          user_id: string
+          period_type: string
+          period_start: string
+          period_end: string
+          trade_count: number
+          stats: Record<string, unknown>
+          report: Record<string, unknown>
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          period_type: string
+          period_start: string
+          period_end: string
+          trade_count?: number
+          stats?: Record<string, unknown>
+          report?: Record<string, unknown>
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          period_type?: string
+          period_start?: string
+          period_end?: string
+          trade_count?: number
+          stats?: Record<string, unknown>
+          report?: Record<string, unknown>
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_scorecards: {
+        Row: {
+          id: string
+          user_id: string
+          discipline_score: number
+          risk_score: number
+          execution_score: number
+          psychology_score: number
+          consistency_score: number
+          overall_score: number
+          classification: string
+          trade_count: number
+          breakdown: Record<string, unknown>
+          ai_insights: Record<string, unknown> | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          discipline_score?: number
+          risk_score?: number
+          execution_score?: number
+          psychology_score?: number
+          consistency_score?: number
+          overall_score?: number
+          classification?: string
+          trade_count?: number
+          breakdown?: Record<string, unknown>
+          ai_insights?: Record<string, unknown> | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          discipline_score?: number
+          risk_score?: number
+          execution_score?: number
+          psychology_score?: number
+          consistency_score?: number
+          overall_score?: number
+          classification?: string
+          trade_count?: number
+          breakdown?: Record<string, unknown>
+          ai_insights?: Record<string, unknown> | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {}
     Functions: {}

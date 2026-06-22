@@ -180,13 +180,27 @@ export function useSaveJournal() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (journal: { trade_id: string; pre_trade_notes: string; post_trade_notes: string; emotions: string; lessons: string; tags: string; rating: number; risk_reward: string; strategy_setup: string }) => {
-      const existing = await supabase.from('journals').select('id').eq('trade_id', journal.trade_id).maybeSingle();
+      if (!user) throw new Error("Not authenticated");
+      const { trade_id, ...updateFields } = journal;
+      const existing = await supabase.from('journals').select('id').eq('trade_id', trade_id).maybeSingle();
+      if (existing.error) {
+        console.error('[useSaveJournal] lookup error:', { code: existing.error.code, message: existing.error.message, details: existing.error.details, hint: existing.error.hint });
+        throw existing.error;
+      }
       if (existing.data) {
-        const { error } = await supabase.from('journals').update(journal).eq('id', existing.data.id);
-        if (error) throw error;
+        // Update — only send updatable fields, not trade_id
+        const { error } = await supabase.from('journals').update(updateFields).eq('id', existing.data.id);
+        if (error) {
+          console.error('[useSaveJournal] update error:', { code: error.code, message: error.message, details: error.details, hint: error.hint });
+          throw error;
+        }
       } else {
-        const { error } = await supabase.from('journals').insert({ ...journal, user_id: user!.id });
-        if (error) throw error;
+        // Insert — include trade_id and user_id
+        const { error } = await supabase.from('journals').insert({ ...journal, user_id: user.id });
+        if (error) {
+          console.error('[useSaveJournal] insert error:', { code: error.code, message: error.message, details: error.details, hint: error.hint });
+          throw error;
+        }
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['journal'] }),

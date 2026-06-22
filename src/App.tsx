@@ -25,7 +25,24 @@ const BacktestSession = lazy(() => import("./pages/BacktestSession"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ShareTrade = lazy(() => import("./pages/ShareTrade"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Never retry client errors (4xx) — these include 404 (missing table)
+        // and 400 (bad request). Only retry server errors (5xx), up to 2 times.
+        const status = (error as { status?: number })?.status;
+        const code = (error as { code?: string })?.code;
+        // PostgREST 404 = table not found, 42P01 = undefined_table
+        if (code === 'PGRST116' || code === '42P01' || code === '42501') return false;
+        if (status && status >= 400 && status < 500) return false;
+        return failureCount < 2;
+      },
+      staleTime: 5 * 60 * 1000,       // 5 minutes — prevent redundant refetches
+      refetchOnWindowFocus: false,     // Don't spam API on tab switch
+    },
+  },
+});
 
 function PageLoader() {
   return (

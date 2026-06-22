@@ -37,6 +37,15 @@ export interface ScorecardRecord {
   created_at: string;
 }
 
+/**
+ * Returns true if the Supabase error indicates the table does not exist.
+ */
+function isTableMissing(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = (error as { code?: string }).code;
+  return code === "42P01" || code === "PGRST116";
+}
+
 function toISODate(d: Date) {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
@@ -47,6 +56,7 @@ export function usePeriodReport(periodType: PeriodType, periodStart: Date | null
   return useQuery({
     queryKey: ["ai_period_report", periodType, key],
     enabled: !!user && !!key,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_period_reports")
@@ -54,7 +64,10 @@ export function usePeriodReport(periodType: PeriodType, periodStart: Date | null
         .eq("period_type", periodType)
         .eq("period_start", key!)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableMissing(error)) return null;
+        throw error;
+      }
       return data as unknown as PeriodReportRecord | null;
     },
   });
@@ -94,6 +107,7 @@ export function useLatestScorecard() {
   return useQuery({
     queryKey: ["ai_scorecard_latest", user?.id],
     enabled: !!user,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_scorecards")
@@ -101,7 +115,10 @@ export function useLatestScorecard() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableMissing(error)) return null;
+        throw error;
+      }
       return data as unknown as ScorecardRecord | null;
     },
   });
@@ -112,13 +129,17 @@ export function useScorecardHistory() {
   return useQuery({
     queryKey: ["ai_scorecard_history", user?.id],
     enabled: !!user,
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_scorecards")
         .select("*")
         .order("created_at", { ascending: true })
         .limit(60);
-      if (error) throw error;
+      if (error) {
+        if (isTableMissing(error)) return [];
+        throw error;
+      }
       return (data ?? []) as unknown as ScorecardRecord[];
     },
   });
