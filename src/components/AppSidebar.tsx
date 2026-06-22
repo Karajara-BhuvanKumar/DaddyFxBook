@@ -300,7 +300,7 @@ function DesktopSidebar() {
     <aside
       className={cn(
         "hidden lg:flex min-h-screen bg-sidebar flex-col shrink-0 transition-all duration-300 ease-out relative",
-        collapsed ? "w-[72px]" : "w-[200px] xl:w-[260px]",
+        collapsed ? "w-[72px]" : "w-[200px] xl:w-[240px]",
       )}
     >
       <SidebarContent

@@ -125,6 +125,17 @@ export default function Dashboard() {
   const dataMin = Math.min(...chartData.map((i) => i.cumulative), 0);
   const gradientOffset = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
 
+  /** Format a P&L value for calendar display — compact, no trailing .00 */
+  const formatCalPnl = (pnl: number) => {
+    const abs = Math.abs(pnl);
+    const sign = pnl >= 0 ? "+" : "-";
+    // For values >= 1000 show 1 decimal, otherwise show 2
+    const formatted = abs >= 1000
+      ? abs.toFixed(1).replace(/\.0$/, "")
+      : abs.toFixed(2).replace(/\.00$/, "");
+    return `${sign}$${formatted}`;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -137,25 +148,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 overflow-guard">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+    <div className="space-y-4 md:space-y-6 overflow-guard">
+      {/* Stat Cards — auto-fit grid that wraps naturally */}
+      <div
+        className="grid gap-3 md:gap-4"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
+      >
         {stats.map((stat) => (
           <div key={stat.label} className="stat-card">
             <div className="flex items-start justify-between">
-              <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center ${stat.iconBg}`}>
-                <stat.icon className="w-[18px] h-[18px]" />
+              <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 ${stat.iconBg}`}>
+                <stat.icon className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" />
               </div>
               {stat.pill && (
                 <span className={stat.pill.tone}>{stat.pill.label}</span>
               )}
             </div>
-            <div>
-              <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-2 uppercase">{stat.label}</p>
-              <p className={cn("stat-value", stat.tone)}>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-1.5 uppercase">{stat.label}</p>
+              <p className={cn("stat-value truncate", stat.tone)}>
                 {stat.value >= 0 ? "+" : "-"}${Math.abs(stat.value).toFixed(2)}
               </p>
-              <p className="text-[12px] text-zinc-600 mt-3 font-medium flex items-center gap-1">
+              <p className="text-[12px] text-zinc-600 mt-2 font-medium flex items-center gap-1 truncate">
                 {stat.sub}
               </p>
             </div>
@@ -165,16 +179,16 @@ export default function Dashboard() {
         {/* Win Rate card */}
         <div className="stat-card">
           <div className="flex items-start justify-between">
-            <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#051020] text-[#3b82f6] flex items-center justify-center">
-              <Target className="w-[18px] h-[18px]" />
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#051020] text-[#3b82f6] flex items-center justify-center shrink-0">
+              <Target className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" />
             </div>
           </div>
           <div>
-            <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-2 uppercase">WIN RATE</p>
+            <p className="text-[11px] font-bold text-zinc-500 tracking-wider mb-1.5 uppercase">WIN RATE</p>
             <p className="stat-value text-white">
               {winRate.toFixed(0)}%
             </p>
-            <div className="mt-4 h-1.5 rounded-full bg-[#1A1A1A] overflow-hidden">
+            <div className="mt-3 h-1.5 rounded-full bg-[#1A1A1A] overflow-hidden">
               <div
                 className="h-full rounded-full bg-[#3b82f6] transition-all duration-700"
                 style={{ width: `${Math.min(100, winRate)}%` }}
@@ -184,25 +198,25 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Performance + Calendar */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
-        {/* Performance */}
+      {/* Performance + Calendar — stacks below xl, side-by-side at xl+ */}
+      <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-4 md:gap-5">
+        {/* Performance Chart */}
         <div
-          className="lg:col-span-3 rounded-2xl flex flex-col transition-colors border border-white/[0.05] relative overflow-hidden min-h-[320px] md:min-h-[400px] lg:min-h-[480px] p-4 sm:p-6 lg:p-8 pb-4"
-          style={{ background: "#080808" }}
+          className="rounded-2xl flex flex-col transition-colors border border-white/[0.05] relative overflow-hidden p-4 sm:p-5 lg:p-6 pb-4"
+          style={{ background: "#080808", minHeight: "clamp(280px, 30vw, 480px)" }}
         >
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 md:mb-8 z-10">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 md:mb-6 z-10">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-2 md:mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-4 h-4 text-zinc-500 shrink-0" />
                 <span className="text-[11px] md:text-[12px] font-bold text-zinc-500 tracking-widest uppercase">PERFORMANCE</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                <p className={cn("font-black leading-none tracking-tight text-3xl sm:text-4xl lg:text-[44px]", totalPnl >= 0 ? "text-[#3b82f6]" : "text-[#ef4444]")}>
+              <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                <p className={cn("font-black leading-none tracking-tight text-2xl sm:text-3xl lg:text-4xl xl:text-[40px]", totalPnl >= 0 ? "text-[#3b82f6]" : "text-[#ef4444]")}>
                   {totalPnl >= 0 ? "+" : "-"}${Math.abs(totalPnl).toFixed(2)}
                 </p>
-                <span className={`flex items-center gap-1 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-[14px] font-bold border ${totalPnl >= 0 ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
-                  <TrendingUp className="w-3.5 h-3.5" />
+                <span className={`flex items-center gap-1 px-2 md:px-2.5 py-1 md:py-1.5 rounded-full text-xs md:text-[13px] font-bold border ${totalPnl >= 0 ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
+                  <TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
                   200.0%
                 </span>
               </div>
@@ -212,7 +226,7 @@ export default function Dashboard() {
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-2.5 sm:px-4 py-1.5 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-200 min-h-[36px] ${timeframe === tf
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-200 min-h-[36px] ${timeframe === tf
                       ? "bg-[#2A2A2A] text-white shadow-sm"
                       : "text-zinc-500 hover:text-white"
                     }`}
@@ -223,9 +237,9 @@ export default function Dashboard() {
             </div>
           </div>
           {chartData.length > 0 ? (
-            <div className="flex-1 min-h-[200px] md:min-h-[280px] -mx-2 sm:-mx-4 -mb-2 relative z-10">
-              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-                <AreaChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 0 }}>
+            <div className="flex-1 min-h-[180px] md:min-h-[220px] -mx-2 sm:-mx-3 -mb-2 relative z-10">
+              <ResponsiveContainer width="100%" height="100%" minHeight={180}>
+                <AreaChart data={chartData} margin={{ top: 16, right: 36, left: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset={gradientOffset} stopColor="#3b82f6" stopOpacity={1} />
@@ -259,11 +273,11 @@ export default function Dashboard() {
                         <text
                           x={x}
                           y={y}
-                          dx={16}
+                          dx={12}
                           dy={4}
                           textAnchor="start"
                           fill={isProfit ? "#3b82f6" : "#ef4444"}
-                          fontSize={11}
+                          fontSize={10}
                           fontFamily="Inter"
                           fontWeight="600"
                         >
@@ -271,7 +285,7 @@ export default function Dashboard() {
                         </text>
                       );
                     }}
-                    width={40}
+                    width={36}
                   />
                   <Tooltip
                     content={({ active, payload }: any) => {
@@ -282,20 +296,20 @@ export default function Dashboard() {
                         const sign = isProfit ? "+" : "-";
                         return (
                           <div
-                            className="rounded-2xl px-5 py-4"
+                            className="rounded-2xl px-4 py-3"
                             style={{
                               background: "#080808",
                               border: `1px solid ${isProfit ? "rgba(59, 130, 246, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
                               boxShadow: `0 8px 32px ${isProfit ? "rgba(59, 130, 246, 0.15)" : "rgba(239, 68, 68, 0.15)"}`,
                             }}
                           >
-                            <p className="text-[#94A3B8] text-[12px] font-semibold mb-2 tracking-wide">
+                            <p className="text-[#94A3B8] text-[11px] font-semibold mb-1.5 tracking-wide">
                               {data.fullDate}
                             </p>
-                            <p className="font-black text-[32px] tracking-tight leading-none mb-1.5" style={{ color }}>
+                            <p className="font-black text-[26px] tracking-tight leading-none mb-1" style={{ color }}>
                               {sign}${Math.abs(data.cumulative).toFixed(2)}
                             </p>
-                            <p className="text-[#64748B] text-[10px] font-bold tracking-widest uppercase">
+                            <p className="text-[#64748B] text-[9px] font-bold tracking-widest uppercase">
                               Cumulative P&L
                             </p>
                           </div>
@@ -340,85 +354,55 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Monthly P&L */}
+        {/* Monthly P&L Calendar */}
         <div
-          className="lg:col-span-2 rounded-[20px] flex flex-col transition-colors min-h-[360px] md:min-h-[430px] p-3 sm:p-5 overflow-hidden"
+          className="rounded-[20px] flex flex-col transition-colors p-3 sm:p-4 lg:p-5 min-w-0"
           style={{ background: "#0B0B0B" }}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 md:mb-4">
-            <h2 className="text-foreground text-lg md:text-xl font-bold tracking-tight">Monthly P&L</h2>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          {/* Calendar Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+            <h2 className="text-foreground text-base md:text-lg font-bold tracking-tight">Monthly P&L</h2>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-[13px] font-semibold text-muted-foreground">Monthly:</span>
-                <span className={`text-xs sm:text-[13px] font-bold ${monthlyPnl >= 0 ? "text-profit" : "text-loss"}`}>
+                <span className="text-xs font-semibold text-muted-foreground">Monthly:</span>
+                <span className={`text-xs font-bold ${monthlyPnl >= 0 ? "text-profit" : "text-loss"}`}>
                   {monthlyPnl >= 0 ? "+" : "-"}${Math.abs(monthlyPnl).toFixed(2)}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
+                  className="w-6 h-6 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                  <ChevronLeft className="w-3 h-3 text-muted-foreground" />
                 </button>
-                <span className="text-foreground font-bold text-xs sm:text-[13px] min-w-[80px] sm:min-w-[90px] text-center">
+                <span className="text-foreground font-bold text-xs min-w-[80px] text-center">
                   {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </span>
                 <button
                   onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                  className="w-7 h-7 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
+                  className="w-6 h-6 rounded-full bg-secondary hover:bg-muted border border-white/[0.08] flex items-center justify-center transition-colors text-foreground"
                 >
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Mobile: scrollable weekly summary cards */}
-          <div className="md:hidden -mx-1 mb-3">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
-              {weeklyTotals.map((wt, w) => {
-                const wPositive = wt.pnl >= 0;
-                return (
-                  <div
-                    key={w}
-                    className={cn(
-                      "snap-start shrink-0 w-[120px] rounded-xl p-3 flex flex-col items-center justify-center min-h-[88px]",
-                      wt.trades > 0
-                        ? wPositive ? "bg-[#051020] text-[#3b82f6]" : "bg-[#1a0505] text-[#ef4444]"
-                        : "bg-[#121212] text-zinc-600",
-                    )}
-                  >
-                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-70">Week {w + 1}</span>
-                    <span className="font-bold text-sm mt-1">
-                      {wt.trades === 0 ? "$0" : `${wPositive ? "+" : "-"}$${Math.abs(wt.pnl).toFixed(0)}`}
-                    </span>
-                    <span className="text-[10px] opacity-60 mt-0.5">{wt.trades} trades</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Header row: M T W T F S S + Weekly */}
-          <div className="hidden md:grid grid-cols-8 gap-1 sm:gap-1.5 text-center mb-2">
+          {/* Day-of-week headers — 7 columns only */}
+          <div className="grid grid-cols-7 gap-1 xl:gap-1.5 text-center mb-1.5">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
               <div
                 key={i}
-                className="py-1 font-medium text-xs text-muted-foreground uppercase"
+                className="py-1 font-medium text-[10px] xl:text-xs text-muted-foreground uppercase"
               >
                 {d}
               </div>
             ))}
-            <div
-              className="py-1 font-medium text-xs text-muted-foreground uppercase"
-            >
-              Weekly
-            </div>
           </div>
 
-          {/* Week rows — compact on mobile */}
-          <div className="space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-between min-h-0 overflow-hidden">
+          {/* Calendar grid — week rows with weekly summary below each */}
+          <div className="flex-1 flex flex-col gap-1 xl:gap-1.5 min-h-0">
             {Array.from({ length: weeks }).map((_, w) => {
               const wt = weeklyTotals[w];
               const wPositive = wt.pnl >= 0;
@@ -428,111 +412,112 @@ export default function Dashboard() {
                   ? "text-emerald-600 dark:text-blue-500"
                   : "text-red-600 dark:text-red-500";
               return (
-                <div key={w} className="grid grid-cols-8 gap-0.5 sm:gap-1 md:gap-1.5">
-                  {Array.from({ length: 7 }).map((__, d) => {
-                    const cellIdx = w * 7 + d;
-                    const dayNum = cellIdx - startDow + 1;
-                    const inMonth = dayNum >= 1 && dayNum <= daysInMonth;
-                    if (!inMonth) {
+                <div key={w} className="flex flex-col gap-1 xl:gap-1.5">
+                  {/* 7-column day grid */}
+                  <div className="grid grid-cols-7 gap-1 xl:gap-1.5">
+                    {Array.from({ length: 7 }).map((__, d) => {
+                      const cellIdx = w * 7 + d;
+                      const dayNum = cellIdx - startDow + 1;
+                      const inMonth = dayNum >= 1 && dayNum <= daysInMonth;
+                      if (!inMonth) {
+                        return (
+                          <div
+                            key={d}
+                            className="min-h-[36px] xl:min-h-[44px] 2xl:min-h-[52px] rounded-xl"
+                          />
+                        );
+                      }
+                      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                      const data = calendarData[dateStr];
+                      const hasData = !!data;
+                      const isProfit = hasData && data.pnl >= 0;
+                      const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+
                       return (
                         <div
                           key={d}
-                          className="bg-transparent border border-transparent opacity-0"
-                          style={{ aspectRatio: "1/1", borderRadius: 14 }}
-                        />
-                      );
-                    }
-                    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-                    const data = calendarData[dateStr];
-                    const hasData = !!data;
-                    const isProfit = hasData && data.pnl >= 0;
-                    const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-
-                    let cellClasses = "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-xl ";
-                    if (hasData) {
-                      if (isProfit) {
-                        cellClasses += "bg-[#051020] text-[#3b82f6] hover:bg-[#081830]";
-                      } else {
-                        cellClasses += "bg-[#1a0505] text-[#ef4444] hover:bg-[#240a0a]";
-                      }
-                    } else {
-                      cellClasses += "bg-[#121212] hover:bg-[#1A1A1A]";
-                    }
-                    if (isToday) {
-                      cellClasses += " ring-2 ring-blue-500/50";
-                    }
-
-                    return (
-                      <div
-                        key={d}
-                        className={cellClasses}
-                        style={{ aspectRatio: "1/1" }}
-                        onClick={(e) => {
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                          setSelectedDay({ date: dateStr, rect });
-                        }}
-                      >
-                        <span className={`absolute top-1 sm:top-2.5 left-1.5 sm:left-3 text-[9px] sm:text-[11px] font-medium ${isToday ? "text-blue-600 dark:text-blue-500 font-bold" : "text-muted-foreground"} flex flex-col items-center gap-0.5`}>
-                          {dayNum}
-                          {isToday && (
-                            <span className="w-1 h-1 rounded-full bg-blue-500" />
+                          className={cn(
+                            "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-xl min-h-[36px] xl:min-h-[44px] 2xl:min-h-[52px] p-1",
+                            hasData
+                              ? isProfit
+                                ? "bg-[#051020] text-[#3b82f6] hover:bg-[#081830]"
+                                : "bg-[#1a0505] text-[#ef4444] hover:bg-[#240a0a]"
+                              : "bg-[#121212] hover:bg-[#1A1A1A]",
+                            isToday && "ring-2 ring-blue-500/50"
                           )}
-                        </span>
-                        {hasData && (
-                          <span
-                            className={`font-bold text-[9px] sm:text-[11px] md:text-[13px] ${isProfit ? "text-emerald-600 dark:text-blue-500" : "text-red-600 dark:text-red-500"}`}
-                          >
-                            {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2).replace(/\.00$/, '')}{!isProfit && Number.isInteger(data.pnl) ? ".00" : ""}
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            setSelectedDay({ date: dateStr, rect });
+                          }}
+                        >
+                          {/* Day number */}
+                          <span className={cn(
+                            "absolute top-0.5 left-1 xl:top-1 xl:left-1.5 font-medium leading-none",
+                            "text-[8px] xl:text-[9px] 2xl:text-[10px]",
+                            isToday ? "text-blue-600 dark:text-blue-500 font-bold" : "text-muted-foreground"
+                          )}>
+                            {dayNum}
+                            {isToday && (
+                              <span className="block w-1 h-1 rounded-full bg-blue-500 mx-auto mt-0.5" />
+                            )}
                           </span>
-                        )}
-                        {hasData && (
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 pointer-events-none">
-                            <div
-                              className="px-3 py-2 text-[11px] whitespace-nowrap"
-                              style={{
-                                background: "var(--card-bg)",
-                                border: "1px solid var(--border-color)",
-                                borderRadius: 12,
-                                color: "var(--text-primary)"
-                              }}
+                          {/* P&L value */}
+                          {hasData && (
+                            <span
+                              className={cn(
+                                "font-bold leading-none mt-1.5 truncate max-w-full px-0.5",
+                                "text-[8px] xl:text-[10px] 2xl:text-[12px]",
+                                isProfit ? "text-emerald-600 dark:text-blue-500" : "text-red-600 dark:text-red-500"
+                              )}
                             >
-                              <p
-                                className="font-bold text-num"
-                                style={{ color: isProfit ? "#10B981" : "#EF4444" }}
+                              {formatCalPnl(data.pnl)}
+                            </span>
+                          )}
+                          {/* Hover tooltip */}
+                          {hasData && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 pointer-events-none">
+                              <div
+                                className="px-3 py-2 text-[11px] whitespace-nowrap"
+                                style={{
+                                  background: "var(--card-bg)",
+                                  border: "1px solid var(--border-color)",
+                                  borderRadius: 12,
+                                  color: "var(--text-primary)"
+                                }}
                               >
-                                {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2)}
-                              </p>
-                              <p className="text-muted-foreground">
-                                {data.count} trade{data.count > 1 ? "s" : ""}
-                              </p>
+                                <p
+                                  className="font-bold text-num"
+                                  style={{ color: isProfit ? "#10B981" : "#EF4444" }}
+                                >
+                                  {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2)}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  {data.count} trade{data.count > 1 ? "s" : ""}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {/* Weekly column — hidden on smallest screens (shown in scroll above) */}
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Weekly summary — always below the week row */}
                   <div
                     className={cn(
-                      "relative hidden sm:flex flex-col items-center justify-center rounded-xl p-1 sm:p-2 transition-all duration-200",
+                      "flex items-center justify-between rounded-xl px-3 py-1.5 transition-all duration-200",
                       wt.trades > 0
-                        ? wPositive ? "bg-[#051020] text-[#3b82f6]" : "bg-[#1a0505] text-[#ef4444]"
-                        : "bg-[#121212] text-zinc-600",
+                        ? wPositive ? "bg-[#051020]/60" : "bg-[#1a0505]/60"
+                        : "bg-[#0a0a0a]",
                     )}
-                    style={{ aspectRatio: "1/1" }}
                   >
-                    <span
-                      className={`absolute top-2.5 uppercase font-bold text-[9px] tracking-wider ${weeklyColorClass}`}
-                    >
-                      Weekly
+                    <span className={cn("font-bold uppercase tracking-wider", weeklyColorClass, "text-[9px] xl:text-[10px]")}>
+                      Week {w + 1}
                     </span>
-                    <span
-                      className={`font-bold text-num leading-none text-base ${weeklyColorClass}`}
-                    >
-                      {wt.trades === 0 ? "$0" : `${wPositive ? "+" : "-"}$${Math.abs(wt.pnl).toFixed(2).replace(/\.00$/, '')}${!wPositive && Number.isInteger(wt.pnl) ? ".00" : ""}`}
+                    <span className={cn("font-bold text-num", weeklyColorClass, "text-xs xl:text-sm")}>
+                      {wt.trades === 0 ? "$0" : formatCalPnl(wt.pnl)}
                     </span>
-                    <span className={`absolute bottom-2.5 font-medium text-[10px] ${weeklyColorClass}`}>
-                      Traded D...
+                    <span className={cn("font-medium opacity-60", weeklyColorClass, "text-[9px] xl:text-[10px]")}>
+                      {wt.trades} trade{wt.trades !== 1 ? "s" : ""}
                     </span>
                   </div>
                 </div>
@@ -540,7 +525,8 @@ export default function Dashboard() {
             })}
           </div>
 
-          <div className="flex gap-6 justify-center mt-4 text-[12px] font-medium text-muted-foreground">
+          {/* Legend */}
+          <div className="flex gap-5 justify-center mt-3 text-[11px] font-medium text-muted-foreground">
             <span className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 dark:bg-blue-500" />
               Profit
