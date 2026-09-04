@@ -14,14 +14,32 @@ export default function Dashboard() {
   const [selectedDay, setSelectedDay] = useState<{ date: string; rect: DOMRect } | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const filteredTrades = useMemo(() => {
-    if (timeframe === "ALL") return trades;
+  const { filteredTrades, prevPnl } = useMemo(() => {
+    if (timeframe === "ALL") return { filteredTrades: trades, prevPnl: null };
     const cutoff = new Date();
-    if (timeframe === "1D") cutoff.setDate(cutoff.getDate() - 1);
-    else if (timeframe === "1W") cutoff.setDate(cutoff.getDate() - 7);
-    else if (timeframe === "1M") cutoff.setMonth(cutoff.getMonth() - 1);
-    else if (timeframe === "3M") cutoff.setMonth(cutoff.getMonth() - 3);
-    return trades.filter((t) => new Date(t.close_time) >= cutoff);
+    const prevCutoff = new Date();
+    if (timeframe === "1D") {
+      cutoff.setDate(cutoff.getDate() - 1);
+      prevCutoff.setDate(prevCutoff.getDate() - 2);
+    } else if (timeframe === "1W") {
+      cutoff.setDate(cutoff.getDate() - 7);
+      prevCutoff.setDate(prevCutoff.getDate() - 14);
+    } else if (timeframe === "1M") {
+      cutoff.setMonth(cutoff.getMonth() - 1);
+      prevCutoff.setMonth(prevCutoff.getMonth() - 2);
+    } else if (timeframe === "3M") {
+      cutoff.setMonth(cutoff.getMonth() - 3);
+      prevCutoff.setMonth(prevCutoff.getMonth() - 6);
+    }
+    const current = trades.filter((t) => new Date(t.close_time) >= cutoff);
+    const previous = trades.filter((t) => {
+      const d = new Date(t.close_time);
+      return d >= prevCutoff && d < cutoff;
+    });
+    return {
+      filteredTrades: current,
+      prevPnl: previous.reduce((s, t) => s + Number(t.pnl), 0)
+    };
   }, [trades, timeframe]);
 
   // Treat all trades as realized for now (no "open position" flag in schema)
@@ -32,6 +50,23 @@ export default function Dashboard() {
   const winningTrades = filteredTrades.filter((t) => Number(t.pnl) > 0);
   const losingTrades = filteredTrades.filter((t) => Number(t.pnl) < 0);
   const winRate = closedCount > 0 ? (winningTrades.length / closedCount) * 100 : 0;
+
+  const perfPct = useMemo(() => {
+    if (prevPnl === null || prevPnl === 0) return null;
+    return ((totalPnl - prevPnl) / Math.abs(prevPnl)) * 100;
+  }, [totalPnl, prevPnl]);
+
+  const getPnlTone = (val: number) => {
+    if (val > 0) return "text-[#3b82f6]";
+    if (val < 0) return "text-[#ef4444]";
+    return "text-white";
+  };
+
+  const getPnlIconBg = (val: number) => {
+    if (val > 0) return "bg-[#051020] text-[#3b82f6]";
+    if (val < 0) return "bg-[#1a0505] text-[#ef4444]";
+    return "bg-[#121212] text-white";
+  };
 
   const chartData = useMemo(() => {
     const sorted = [...filteredTrades].sort((a, b) => a.close_time.localeCompare(b.close_time));
@@ -98,10 +133,10 @@ export default function Dashboard() {
       label: "TOTAL P&L",
       value: totalPnl,
       icon: DollarSign,
-      iconBg: "bg-[#051020] text-[#3b82f6]",
-      pill: { label: "TOTAL", tone: "bg-[#051020] text-[#3b82f6] text-[10px] px-3 py-1 rounded-full font-bold" },
+      iconBg: getPnlIconBg(totalPnl),
+      pill: { label: "TOTAL", tone: cn("text-[10px] px-3 py-1 rounded-full font-bold", getPnlIconBg(totalPnl)) },
       sub: `-> ${closedCount} trades`,
-      tone: "text-[#3b82f6]",
+      tone: getPnlTone(totalPnl),
     },
     {
       label: "UNREALIZED",
@@ -115,9 +150,9 @@ export default function Dashboard() {
       label: "REALIZED",
       value: realized,
       icon: CheckCircle2,
-      iconBg: "bg-[#051020] text-[#3b82f6]",
+      iconBg: getPnlIconBg(realized),
       sub: `${closedCount} closed trades`,
-      tone: "text-[#3b82f6]",
+      tone: getPnlTone(realized),
     },
   ];
 
@@ -212,12 +247,21 @@ export default function Dashboard() {
                 <span className="text-[11px] md:text-[12px] font-bold text-zinc-500 tracking-widest uppercase">PERFORMANCE</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                <p className={cn("font-black leading-none tracking-tight text-2xl sm:text-3xl lg:text-4xl xl:text-[40px]", totalPnl >= 0 ? "text-[#3b82f6]" : "text-[#ef4444]")}>
+                <p className={cn("font-black leading-none tracking-tight text-2xl sm:text-3xl lg:text-4xl xl:text-[40px]", getPnlTone(totalPnl))}>
                   {totalPnl >= 0 ? "+" : "-"}${Math.abs(totalPnl).toFixed(2)}
                 </p>
-                <span className={`flex items-center gap-1 px-2 md:px-2.5 py-1 md:py-1.5 rounded-full text-xs md:text-[13px] font-bold border ${totalPnl >= 0 ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"}`}>
-                  <TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                  200.0%
+                <span className={cn(
+                  "flex items-center gap-1 px-2 md:px-2.5 py-1 md:py-1.5 rounded-full text-xs md:text-[13px] font-bold border",
+                  perfPct === null 
+                    ? "bg-white/5 text-zinc-400 border-white/10" 
+                    : perfPct >= 0 
+                      ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+                      : "bg-red-500/10 text-red-500 border-red-500/20"
+                )}>
+                  {perfPct !== null && (
+                    <TrendingUp className={cn("w-3 h-3 md:w-3.5 md:h-3.5", perfPct < 0 && "rotate-180")} />
+                  )}
+                  {perfPct === null ? "—" : `${perfPct >= 0 ? "+" : ""}${perfPct.toFixed(1)}%`}
                 </span>
               </div>
             </div>
