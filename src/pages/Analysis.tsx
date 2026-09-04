@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { useTrades } from "@/hooks/useTrades";
+import { useTrades, useAllJournals } from "@/hooks/useTrades";
+import { parseStrategySetup, buildSetupKey, buildBroadSetupKey } from "@/lib/strategySetup";
+import { BreakdownList, type BreakdownItem } from "@/components/BreakdownList";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { 
   Activity, TrendingUp, TrendingDown, BarChart3, Calendar, Globe, 
   DollarSign, CheckCircle2, Star, SlidersHorizontal, Moon, Coffee, 
-  Building2, ChevronLeft, ChevronRight, FileText, X 
+  Building2, ChevronLeft, ChevronRight, FileText, X, Layers 
 } from "lucide-react";
 
 export default function Analysis() {
   const { data: trades = [], isLoading } = useTrades();
+  const { data: allJournals = [] } = useAllJournals();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [timePeriod, setTimePeriod] = useState<'Today' | '7 Days' | '30 Days' | '3 Months' | '1 Year' | 'All Time'>('30 Days');
   const [filterBy, setFilterBy] = useState<'All Trades' | 'Winners' | 'Losers'>('All Trades');
@@ -739,6 +742,99 @@ export default function Analysis() {
           })}
         </div>
       </div>
+
+      {/* By Setup Performance */}
+      {(() => {
+        // Build a map of trade_id -> journal for quick lookup
+        const journalMap = new Map(allJournals.map(j => [j.trade_id, j]));
+
+        // Aggregate filtered trades hierarchically: broad -> granular
+        type Metrics = { trades: number; wins: number; pnl: number };
+        const setupMap = new Map<string, { metrics: Metrics; children: Map<string, Metrics> }>();
+
+        for (const trade of filteredTrades) {
+          const journal = journalMap.get(trade.id);
+          if (!journal?.strategy_setup) continue;
+          
+          const parsed = parseStrategySetup(journal.strategy_setup);
+          const broadKey = buildBroadSetupKey(parsed);
+          const granularKey = buildSetupKey(parsed);
+
+          // Skip if both are Unspecified
+          if (broadKey === "Unspecified" && granularKey === "Unspecified") continue;
+          
+          // Use broadKey as top-level, or fallback to granularKey if broad is empty
+          const topKey = broadKey !== "Unspecified" ? broadKey : granularKey;
+
+          if (!setupMap.has(topKey)) {
+            setupMap.set(topKey, {
+              metrics: { trades: 0, wins: 0, pnl: 0 },
+              children: new Map(),
+            });
+          }
+          
+          const parent = setupMap.get(topKey)!;
+          parent.metrics.trades += 1;
+          if (Number(trade.pnl) > 0) parent.metrics.wins += 1;
+          parent.metrics.pnl += Number(trade.pnl);
+
+          // If we have a distinct granular key, track it as a child
+          if (granularKey !== "Unspecified" && granularKey !== topKey) {
+            const child = parent.children.get(granularKey) ?? { trades: 0, wins: 0, pnl: 0 };
+            child.trades += 1;
+            if (Number(trade.pnl) > 0) child.wins += 1;
+            child.pnl += Number(trade.pnl);
+            parent.children.set(granularKey, child);
+          }
+        }
+
+        const setupRows: BreakdownItem[] = Array.from(setupMap.entries())
+          .map(([key, data]) => {
+            const children: BreakdownItem[] = Array.from(data.children.entries())
+              .map(([childKey, childMetrics]) => ({
+                key: childKey,
+                trades: childMetrics.trades,
+                wins: childMetrics.wins,
+                winRate: childMetrics.trades ? childMetrics.wins / childMetrics.trades : 0,
+                netValue: Number(childMetrics.pnl.toFixed(2)),
+                unit: "$" as const,
+              }))
+              .sort((a, b) => b.netValue - a.netValue);
+
+            return {
+              key,
+              trades: data.metrics.trades,
+              wins: data.metrics.wins,
+              winRate: data.metrics.trades ? data.metrics.wins / data.metrics.trades : 0,
+              netValue: Number(data.metrics.pnl.toFixed(2)),
+              unit: "$" as const,
+              children: children.length > 0 ? children : undefined,
+            };
+          })
+          .sort((a, b) => b.netValue - a.netValue);
+
+        return (
+          <div className="bg-[#0B0B0B] rounded-[20px] p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <Layers className="w-4 h-4 text-[#3B82F6]" />
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Performance by Setup</h3>
+            </div>
+            <p className="text-[11px] text-zinc-500 font-semibold mb-5">
+              Breakdown by strategy setup from journal entries
+            </p>
+            {setupRows.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
+                <Layers className="w-8 h-8 mb-2 opacity-20" />
+                <p className="text-[11px] font-semibold leading-relaxed text-center">
+                  Log strategy setups in the Journal to see breakdown here
+                </p>
+              </div>
+            ) : (
+              <BreakdownList rows={setupRows} />
+            )}
+          </div>
+        );
+      })()}
 
       {/* Trading Calendar + Day Trades */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 md:gap-6">

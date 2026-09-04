@@ -390,3 +390,25 @@ export function usePublicTrade(tradeId: string | null) {
   });
 }
 
+/**
+ * Fetch all journals for the current user.
+ * Used by the Analysis page to build "By Setup" breakdown
+ * without loading journals one-by-one per trade.
+ */
+export function useAllJournals() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['journals-all', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('journals')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Journal[];
+    },
+    enabled: !!user,
+  });
+}
+
+

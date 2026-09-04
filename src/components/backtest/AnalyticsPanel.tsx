@@ -13,6 +13,7 @@ import {
   Cell,
 } from "recharts";
 import type { BacktestAnalytics, BreakdownRow } from "@/lib/backtest";
+import { BreakdownList, type BreakdownItem } from "@/components/BreakdownList";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -39,27 +40,15 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
 }
 
 function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
-  if (rows.length === 0) return <p className="text-xs text-zinc-500 font-medium">No data</p>;
-  return (
-    <div className="space-y-2">
-      {rows.map((r) => (
-        <div key={r.key} className="flex items-center justify-between text-xs gap-3">
-          <span className="text-white font-bold truncate flex-1">{r.key}</span>
-          <span className="text-zinc-500 font-medium tabular-nums">{r.trades}t</span>
-          <span className="text-zinc-500 font-medium tabular-nums w-12 text-right">
-            {(r.winRate * 100).toFixed(0)}%
-          </span>
-          <span
-            className={`font-mono font-bold tabular-nums w-16 text-right ${
-              r.netR >= 0 ? "text-blue-500" : "text-red-500"
-            }`}
-          >
-            {r.netR >= 0 ? "+" : ""}{r.netR.toFixed(2)}R
-          </span>
-        </div>
-      ))}
-    </div>
-  );
+  const items: BreakdownItem[] = rows.map((r) => ({
+    key: r.key,
+    trades: r.trades,
+    wins: r.wins,
+    winRate: r.winRate,
+    netValue: r.netR,
+    unit: "R" as const,
+  }));
+  return <BreakdownList rows={items} />;
 }
 
 export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {

@@ -73,15 +73,108 @@ export function buildStrategySummary(s: StrategySetup): string {
 }
 
 export function parseStrategySetup(raw: string | null | undefined): StrategySetup {
-  if (!raw) return { ...emptyStrategySetup };
+  if (!raw) return { ...emptyStrategySetup, confluences: [] };
   try {
     const parsed = JSON.parse(raw) as Partial<StrategySetup>;
-    return { ...emptyStrategySetup, ...parsed };
+    return { ...emptyStrategySetup, confluences: [], ...parsed };
   } catch {
-    return { ...emptyStrategySetup };
+    return { ...emptyStrategySetup, confluences: [] };
   }
 }
 
 export function serializeStrategySetup(s: StrategySetup): string {
   return JSON.stringify(s);
+}
+
+/**
+ * Build a single-line composite key from a StrategySetup for aggregation grouping.
+ * Example: "M15 TJL 1 Confirmation: M1 CC Engulfing Confluences: SL Outside Zone"
+ * Returns "Unspecified" if no meaningful fields are set.
+ */
+export function buildSetupKey(s: StrategySetup): string {
+  const parts: string[] = [];
+
+  const ltf = [s.ltf_tf, s.ltf_level].filter(Boolean).join(" ");
+  if (ltf) parts.push(ltf);
+
+  const conf = [s.conf_tf, s.conf_type].filter(Boolean).join(" ");
+  if (conf) parts.push(`Confirmation: ${conf}`);
+
+  if (s.confluences.length) {
+    const confluenceParts = s.confluences.map((c) =>
+      c === "FIB Zone" && s.fib_tf ? `${c} (${s.fib_tf})` : c
+    );
+    parts.push(`Confluences: ${confluenceParts.join(" + ")}`);
+  }
+
+  return parts.length > 0 ? parts.join(" ") : "Unspecified";
+}
+
+/**
+ * Build a broad composite key from a StrategySetup for high-level grouping.
+ * Example: "H4 SBR / M15 TJL 1 / Bearish"
+ * Groups by HTF, LTF, and Bias only. Returns "Unspecified" if no meaningful fields are set.
+ */
+export function buildBroadSetupKey(s: StrategySetup): string {
+  const parts: string[] = [];
+
+  const htf = [s.htf_tf, s.htf_level].filter(Boolean).join(" ");
+  if (htf) parts.push(htf);
+
+  const ltf = [s.ltf_tf, s.ltf_level].filter(Boolean).join(" ");
+  if (ltf) parts.push(ltf);
+
+  if (s.bias) parts.push(s.bias);
+
+  return parts.length > 0 ? parts.join(" / ") : "Unspecified";
+}
+
+/**
+ * Parse a multi-line backtest setup text (as stored in backtest_trades.setup)
+ * back into a StrategySetup object. Best-effort parsing.
+ */
+export function parseSetupText(text: string | null | undefined): StrategySetup {
+  const s: StrategySetup = { ...emptyStrategySetup, confluences: [] };
+  if (!text) return s;
+
+  const lines = text.split("\n");
+  const parseTwo = (rest: string, tfs: readonly string[], levels: readonly string[]) => {
+    const tf = tfs.find((t) => rest.startsWith(t + " ") || rest === t) ?? "";
+    const remaining = tf ? rest.slice(tf.length).trim() : rest;
+    const level = levels.find((l) => remaining === l) ?? "";
+    return { tf, level };
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("HTF:")) {
+      const r = parseTwo(trimmed.slice(4).trim(), HTF_TIMEFRAMES, LEVEL_TYPES);
+      s.htf_tf = r.tf; s.htf_level = r.level;
+    } else if (trimmed.startsWith("LTF:")) {
+      const r = parseTwo(trimmed.slice(4).trim(), LTF_TIMEFRAMES, LEVEL_TYPES);
+      s.ltf_tf = r.tf; s.ltf_level = r.level;
+    } else if (trimmed.startsWith("Confirmation:")) {
+      const r = parseTwo(trimmed.slice(13).trim(), CONFIRM_TIMEFRAMES, CONFIRM_TYPES);
+      s.conf_tf = r.tf; s.conf_type = r.level;
+    } else if (trimmed.startsWith("✓")) {
+      const rest = trimmed.slice(1).trim();
+      const fibMatch = rest.match(/^FIB Zone \(([^)]+)\)$/);
+      if (fibMatch) {
+        if (!s.confluences.includes("FIB Zone")) s.confluences.push("FIB Zone");
+        s.fib_tf = fibMatch[1];
+      } else if ((CONFLUENCES as readonly string[]).includes(rest)) {
+        if (!s.confluences.includes(rest)) s.confluences.push(rest);
+      }
+    }
+  }
+  return s;
+}
+
+/**
+ * Build a setup key from the raw multi-line text stored in backtest_trades.setup.
+ * Parses the text into a StrategySetup, then calls buildSetupKey().
+ * Ensures backtesting and live journal produce identical keys for the same setup.
+ */
+export function buildSetupKeyFromText(text: string | null | undefined): string {
+  return buildSetupKey(parseSetupText(text));
 }

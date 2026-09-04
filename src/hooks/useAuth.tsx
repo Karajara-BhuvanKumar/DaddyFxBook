@@ -28,6 +28,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+    }).catch((err) => {
+      console.warn("Supabase auth check error:", err);
+    }).finally(() => {
       setLoading(false);
     });
 
