@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { parseEdgeFunctionError } from "@/lib/edgeFunctions";
 import type { AIReport, TradeReview, Grade } from "@/components/ai-report/types";
 
 export interface PersistedReport {
@@ -102,8 +103,9 @@ export function useGenerateReport() {
       const { data, error } = await supabase.functions.invoke("ai-report", {
         body: { mode: opts?.mode ?? "full", trade_id: opts?.trade_id },
       });
-      if (error) throw error;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      if (error || (data as { error?: string })?.error) {
+        throw await parseEdgeFunctionError(error, data);
+      }
       return data as { report: AIReport; stats: unknown };
     },
     onSuccess: () => {

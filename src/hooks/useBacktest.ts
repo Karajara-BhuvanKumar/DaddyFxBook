@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { parseEdgeFunctionError } from "@/lib/edgeFunctions";
 import type { BacktestSession, BacktestTrade } from "@/lib/backtest";
 
 export function useBacktestSessions() {
@@ -188,8 +189,9 @@ export function useGenerateBacktestAIReport() {
       const { data, error } = await supabase.functions.invoke("backtest-ai", {
         body: { session_id: sessionId },
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      if (error || (data as any)?.error) {
+        throw await parseEdgeFunctionError(error, data);
+      }
       return data;
     },
     onSuccess: (data, sessionId) => {

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { parseEdgeFunctionError } from "@/lib/edgeFunctions";
 import type { ScorecardSnapshot } from "@/lib/scoring";
 import type { PeriodType, PeriodStats } from "@/lib/periodStats";
 
@@ -93,8 +94,9 @@ export function useGeneratePeriodReport() {
           trades: input.trades,
         },
       });
-      if (error) throw error;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      if (error || (data as { error?: string })?.error) {
+        throw await parseEdgeFunctionError(error, data);
+      }
       return data as { report: Record<string, unknown> };
     },
     onSuccess: (_d, vars) =>
@@ -161,8 +163,9 @@ export function useGenerateScorecard() {
           trades_summary: input.trades_summary,
         },
       });
-      if (error) throw error;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      if (error || (data as { error?: string })?.error) {
+        throw await parseEdgeFunctionError(error, data);
+      }
       return data;
     },
     onSuccess: () => {
