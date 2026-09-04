@@ -11,11 +11,6 @@ import {
   Sparkles,
   FlaskConical,
   Settings,
-  Brain,
-  CalendarDays,
-  CalendarRange,
-  CalendarClock,
-  Award,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
@@ -43,18 +38,9 @@ const mainItems: NavItem[] = [
   { to: "/analysis", label: "Analysis", icon: BarChart3, hasSub: true },
   {
     to: "/ai-report",
-    label: "AI Report",
+    label: "Performance Coach",
     icon: Sparkles,
     badge: { label: "PRO", tone: "primary" },
-    hasSub: true,
-    children: [
-      { to: "/ai-report", label: "Performance Coach", icon: Brain },
-      { to: "/ai-report/reviews", label: "Trade Reviews", icon: BookOpen },
-      { to: "/ai-report/daily", label: "Daily Report", icon: CalendarDays },
-      { to: "/ai-report/weekly", label: "Weekly Report", icon: CalendarRange },
-      { to: "/ai-report/monthly", label: "Monthly Report", icon: CalendarClock },
-      { to: "/ai-report/scorecard", label: "Trader Scorecard", icon: Award },
-    ],
   },
   { to: "/backtesting", label: "Backtesting", icon: FlaskConical, badge: { label: "ELITE", tone: "warning" } },
 ];

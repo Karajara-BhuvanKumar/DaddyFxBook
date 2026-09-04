@@ -36,7 +36,7 @@ function scoreColor(score: number) {
   return "#EF4444"; // red-500
 }
 
-export default function AIScorecard() {
+export function ScorecardTab() {
   const { user } = useAuth();
   const { data: trades = [], isLoading: tradesLoading } = useTrades();
   const { data: latest, isLoading: latestLoading } = useLatestScorecard();

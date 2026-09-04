@@ -27,6 +27,7 @@ import type { OpenRouterModelId, FormattedReport, ReportSection } from "@/lib/ai
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { ScorecardTab } from "@/components/ai-report/ScorecardTab";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -130,6 +131,7 @@ function SectionCard({ section }: { section: ReportSection }) {
 
 export default function AIReportPage() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"coach" | "scorecard">("coach");
 
   // Config
   const [apiKey, setApiKey] = useState("");
@@ -380,7 +382,35 @@ export default function AIReportPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="flex bg-[#0B0B0B] border border-white/[0.06] rounded-[20px] p-1.5 mb-6 w-fit">
+        <button
+          onClick={() => setActiveTab("coach")}
+          className={cn(
+            "px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
+            activeTab === "coach" ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-white hover:bg-white/5"
+          )}
+        >
+          <BrainCircuit className="w-4 h-4" /> Performance Coach
+        </button>
+        <button
+          onClick={() => setActiveTab("scorecard")}
+          className={cn(
+            "px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
+            activeTab === "scorecard" ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-white hover:bg-white/5"
+          )}
+        >
+          <Target className="w-4 h-4" /> Trader Scorecard
+        </button>
+      </div>
+
+      {activeTab === "scorecard" && (
+        <div className="-mx-6 -mt-5">
+          <ScorecardTab />
+        </div>
+      )}
+
+      {activeTab === "coach" && (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
         {/* ════ LEFT — Configuration ════ */}
         <div className="xl:col-span-4">
@@ -783,6 +813,7 @@ export default function AIReportPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
