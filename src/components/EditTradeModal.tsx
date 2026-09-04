@@ -140,8 +140,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl bg-[#0B0B0B] border-white/[0.08] text-white p-0 overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="p-6 pb-2 border-b border-white/[0.08]">
+      <DialogContent className="max-w-2xl bg-card border-border text-card-foreground p-0 overflow-hidden flex flex-col max-h-[90vh]">
+        <DialogHeader className="p-6 pb-2 border-b border-border">
           <DialogTitle className="text-xl font-bold">Edit Trade</DialogTitle>
         </DialogHeader>
 
@@ -156,7 +156,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Symbol</label>
                   <input type="text" value={form.symbol} onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))}
-                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" required />
+                    className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" required />
                 </div>
                 
                 <div>
@@ -165,8 +165,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                     {(['Long', 'Short'] as const).map(d => (
                       <button key={d} type="button" onClick={() => setForm(f => ({ ...f, direction: d }))}
                         className={`flex-1 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${form.direction === d
-                            ? (d === 'Long' ? 'bg-[#0A1224] text-[#3B82F6]' : 'bg-[#240A0A] text-[#EF4444]')
-                            : 'bg-[#121212] text-foreground border border-white/[0.08] hover:bg-secondary'
+                            ? (d === 'Long' ? 'bg-profit-tint text-profit' : 'bg-loss-tint text-loss')
+                            : 'bg-secondary text-foreground border border-border hover:bg-muted'
                           }`}>
                         {d === 'Long' ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                         {d}
@@ -187,24 +187,24 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                   <div key={field.key}>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{field.label}</label>
                     <input type={field.type} step="0.01" value={(form as any)[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
-                      className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                      className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 ))}
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Open Date</label>
                   <input type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
-                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Close Date</label>
                   <input type="datetime-local" value={form.closeDate} onChange={e => setForm(f => ({ ...f, closeDate: e.target.value }))}
-                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/[0.08] space-y-4">
-                <h4 className="text-sm font-bold text-white">Journaling & Analysis</h4>
+              <div className="pt-4 border-t border-border space-y-4">
+                <h4 className="text-sm font-bold text-foreground">Journaling & Analysis</h4>
                 
                 {[
                   { label: 'Tags (comma separated)', key: 'tags' },
@@ -232,8 +232,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/[0.08]">
-                <h4 className="text-sm font-bold text-white mb-4">Execution Checklist</h4>
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-sm font-bold text-foreground mb-4">Execution Checklist</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { label: 'Checked Higher TF', key: 'checked_higher_tf' },
@@ -242,15 +242,15 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                     { label: 'At Key Levels', key: 'key_levels' },
                     { label: 'News Checked', key: 'news_checked' },
                   ].map(item => (
-                    <label key={item.key} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-[#121212] rounded-lg transition-colors">
+                    <label key={item.key} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-muted rounded-lg transition-colors">
                       <div className="relative flex items-center justify-center">
                         <input type="checkbox" checked={(form as any)[item.key]} onChange={e => setForm(f => ({ ...f, [item.key]: e.target.checked }))} 
-                          className="peer appearance-none w-5 h-5 border-2 border-white/[0.2] rounded bg-transparent checked:bg-[#3B82F6] checked:border-[#3B82F6] transition-all cursor-pointer" />
+                          className="peer appearance-none w-5 h-5 border-2 border-border rounded bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer" />
                         <svg className="absolute w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <span className="text-sm text-[#E2E8F0] font-medium select-none">{item.label}</span>
+                      <span className="text-sm text-foreground/80 font-medium select-none">{item.label}</span>
                     </label>
                   ))}
                 </div>
@@ -259,13 +259,13 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
           </ScrollArea>
         )}
 
-        <div className="p-4 sm:p-6 border-t border-white/[0.08] flex flex-col sm:flex-row gap-3">
+        <div className="p-4 sm:p-6 border-t border-border flex flex-col sm:flex-row gap-3">
           <button type="submit" form="edit-trade-form" disabled={updateTrade.isPending || isLoading} 
-            className="touch-target w-full sm:flex-1 bg-[#3B82F6] hover:bg-blue-600 text-white px-6 py-3 min-h-[44px] rounded-xl font-bold text-sm transition-all disabled:opacity-50">
+            className="touch-target w-full sm:flex-1 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 min-h-[44px] rounded-xl font-bold text-sm transition-all disabled:opacity-50">
             {updateTrade.isPending ? 'Saving...' : 'Save Changes'}
           </button>
           <button type="button" onClick={onClose} 
-            className="touch-target w-full sm:w-auto bg-transparent border border-white/[0.1] hover:bg-white/[0.05] text-white px-6 py-3 min-h-[44px] rounded-xl font-semibold text-sm transition-all">
+            className="touch-target w-full sm:w-auto bg-transparent border border-border hover:bg-muted text-foreground px-6 py-3 min-h-[44px] rounded-xl font-semibold text-sm transition-all">
             Cancel
           </button>
         </div>

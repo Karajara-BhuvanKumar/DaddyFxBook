@@ -61,6 +61,7 @@ export function useTrades() {
       const { data, error } = await supabase
         .from('trades')
         .select('*')
+        .eq('user_id', user!.id)
         .order('close_time', { ascending: false });
       if (error) throw error;
       return data as Trade[];

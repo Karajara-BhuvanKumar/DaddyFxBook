@@ -57,15 +57,15 @@ export default function Dashboard() {
   }, [totalPnl, prevPnl]);
 
   const getPnlTone = (val: number) => {
-    if (val > 0) return "text-[#3b82f6]";
-    if (val < 0) return "text-[#ef4444]";
-    return "text-white";
+    if (val > 0) return "text-profit";
+    if (val < 0) return "text-loss";
+    return "text-foreground";
   };
 
   const getPnlIconBg = (val: number) => {
-    if (val > 0) return "bg-[#051020] text-[#3b82f6]";
-    if (val < 0) return "bg-[#1a0505] text-[#ef4444]";
-    return "bg-[#121212] text-white";
+    if (val > 0) return "bg-profit-tint text-profit";
+    if (val < 0) return "bg-loss-tint text-loss";
+    return "bg-neutral-tint text-muted-foreground";
   };
 
   const chartData = useMemo(() => {
@@ -158,7 +158,7 @@ export default function Dashboard() {
 
   const dataMax = Math.max(...chartData.map((i) => i.cumulative), 0);
   const dataMin = Math.min(...chartData.map((i) => i.cumulative), 0);
-  const gradientOffset = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
+  const gradientOffset = (dataMax === 0 && dataMin === 0) ? 1 : dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
 
   /** Format a P&L value for calendar display — compact, no trailing .00 */
   const formatCalPnl = (pnl: number) => {
@@ -214,7 +214,7 @@ export default function Dashboard() {
         {/* Win Rate card */}
         <div className="stat-card">
           <div className="flex items-start justify-between">
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#051020] text-[#3b82f6] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-profit-tint text-profit flex items-center justify-center shrink-0">
               <Target className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" />
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function Dashboard() {
             </p>
             <div className="mt-3 h-1.5 rounded-full bg-[#1A1A1A] overflow-hidden">
               <div
-                className="h-full rounded-full bg-[#3b82f6] transition-all duration-700"
+                className="h-full rounded-full bg-profit transition-all duration-700"
                 style={{ width: `${Math.min(100, winRate)}%` }}
               />
             </div>
@@ -237,8 +237,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-4 md:gap-5">
         {/* Performance Chart */}
         <div
-          className="rounded-2xl flex flex-col transition-colors border border-white/[0.05] relative overflow-hidden p-4 sm:p-5 lg:p-6 pb-4"
-          style={{ background: "#080808", minHeight: "clamp(280px, 30vw, 480px)" }}
+          className="rounded-2xl flex flex-col transition-colors border border-border relative overflow-hidden p-4 sm:p-5 lg:p-6 pb-4 bg-card"
+          style={{ minHeight: "clamp(280px, 30vw, 480px)" }}
         >
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 md:mb-6 z-10">
             <div className="min-w-0">
@@ -265,14 +265,14 @@ export default function Dashboard() {
                 </span>
               </div>
             </div>
-            <div className="flex flex-wrap gap-1 bg-[#121212] p-1 rounded-xl border border-white/[0.05] shrink-0 self-start">
+            <div className="flex flex-wrap gap-1 bg-secondary p-1 rounded-xl border border-border shrink-0 self-start">
               {timeframes.map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
                   className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-[13px] font-bold transition-all duration-200 min-h-[36px] ${timeframe === tf
-                      ? "bg-[#2A2A2A] text-white shadow-sm"
-                      : "text-zinc-500 hover:text-white"
+                      ? "bg-muted text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {tf}
@@ -400,8 +400,7 @@ export default function Dashboard() {
 
         {/* Monthly P&L Calendar */}
         <div
-          className="rounded-[20px] flex flex-col transition-colors p-3 sm:p-4 lg:p-5 min-w-0"
-          style={{ background: "#0B0B0B" }}
+          className="rounded-[20px] flex flex-col transition-colors p-3 sm:p-4 lg:p-5 min-w-0 bg-card"
         >
           {/* Calendar Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
@@ -453,8 +452,8 @@ export default function Dashboard() {
               const weeklyColorClass = wt.trades === 0
                 ? "text-muted-foreground"
                 : wPositive
-                  ? "text-emerald-600 dark:text-blue-500"
-                  : "text-red-600 dark:text-red-500";
+                  ? "text-profit"
+                  : "text-loss";
               return (
                 <div key={w} className="flex flex-col gap-1 xl:gap-1.5">
                   {/* 7-column day grid */}
@@ -484,9 +483,9 @@ export default function Dashboard() {
                             "relative flex flex-col items-center justify-center cursor-pointer group transition-all duration-200 rounded-xl min-h-[36px] xl:min-h-[44px] 2xl:min-h-[52px] p-1",
                             hasData
                               ? isProfit
-                                ? "bg-[#051020] text-[#3b82f6] hover:bg-[#081830]"
-                                : "bg-[#1a0505] text-[#ef4444] hover:bg-[#240a0a]"
-                              : "bg-[#121212] hover:bg-[#1A1A1A]",
+                                ? "bg-profit-tint text-profit hover:brightness-110"
+                                : "bg-loss-tint text-loss hover:brightness-110"
+                              : "bg-muted hover:bg-accent",
                             isToday && "ring-2 ring-blue-500/50"
                           )}
                           onClick={(e) => {
@@ -511,7 +510,7 @@ export default function Dashboard() {
                               className={cn(
                                 "font-bold leading-none mt-1.5 truncate max-w-full px-0.5",
                                 "text-[8px] xl:text-[10px] 2xl:text-[12px]",
-                                isProfit ? "text-emerald-600 dark:text-blue-500" : "text-red-600 dark:text-red-500"
+                                isProfit ? "text-profit" : "text-loss"
                               )}
                             >
                               {formatCalPnl(data.pnl)}
@@ -530,8 +529,7 @@ export default function Dashboard() {
                                 }}
                               >
                                 <p
-                                  className="font-bold text-num"
-                                  style={{ color: isProfit ? "#10B981" : "#EF4444" }}
+                                  className={cn("font-bold text-num", isProfit ? "text-profit" : "text-loss")}
                                 >
                                   {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(2)}
                                 </p>
@@ -550,8 +548,8 @@ export default function Dashboard() {
                     className={cn(
                       "flex items-center justify-between rounded-xl px-3 py-1.5 transition-all duration-200",
                       wt.trades > 0
-                        ? wPositive ? "bg-[#051020]/60" : "bg-[#1a0505]/60"
-                        : "bg-[#0a0a0a]",
+                        ? wPositive ? "bg-profit-tint" : "bg-loss-tint"
+                        : "bg-secondary",
                     )}
                   >
                     <span className={cn("font-bold uppercase tracking-wider", weeklyColorClass, "text-[9px] xl:text-[10px]")}>
@@ -572,7 +570,7 @@ export default function Dashboard() {
           {/* Legend */}
           <div className="flex gap-5 justify-center mt-3 text-[11px] font-medium text-muted-foreground">
             <span className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 dark:bg-blue-500" />
+              <span className="inline-block w-2 h-2 rounded-full bg-profit" />
               Profit
             </span>
             <span className="flex items-center gap-2">

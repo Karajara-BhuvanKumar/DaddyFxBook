@@ -353,7 +353,7 @@
     @apply flex flex-col justify-between rounded-[20px] transition-colors w-full;
     min-height: clamp(120px, 16vw, 170px);
     padding: clamp(1rem, 2vw, 1.5rem);
-    background: #0B0B0B;
+    background: hsl(var(--card));
   }
 
   .stat-value {
@@ -365,7 +365,20 @@
 
   .surface-card {
     @apply rounded-[20px] w-full min-w-0;
-    background: #0B0B0B;
+    background: hsl(var(--card));
+  }
+
+  /* Tinted icon backgrounds — theme-aware */
+  .bg-profit-tint {
+    background-color: hsl(var(--profit) / 0.12);
+  }
+
+  .bg-loss-tint {
+    background-color: hsl(var(--loss) / 0.12);
+  }
+
+  .bg-neutral-tint {
+    background-color: hsl(var(--muted));
   }
 
   .touch-target {
