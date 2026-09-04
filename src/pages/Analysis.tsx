@@ -193,21 +193,33 @@ export default function Analysis() {
   }, [filteredTrades]);
 
   const sessionPerf = useMemo(() => {
-    const sessions = [
-      { name: 'Asian', start: 22, end: 8, pnl: 0, count: 0, wins: 0 },
-      { name: 'London', start: 8, end: 13, pnl: 0, count: 0, wins: 0 },
-      { name: 'New York', start: 13, end: 22, pnl: 0, count: 0, wins: 0 },
-    ];
+    const buckets: Record<string, { name: string; pnl: number; count: number; wins: number }> = {
+      Asian: { name: 'Asian', pnl: 0, count: 0, wins: 0 },
+      London: { name: 'London', pnl: 0, count: 0, wins: 0 },
+      'New York': { name: 'New York', pnl: 0, count: 0, wins: 0 },
+    };
+    const journalMap = new Map(allJournals.map(j => [j.trade_id, j]));
     filteredTrades.forEach(t => {
-      const hour = new Date(t.open_time).getUTCHours();
-      let s = sessions[2];
-      if ((hour >= 22 || hour < 8)) s = sessions[0];
-      else if (hour >= 8 && hour < 13) s = sessions[1];
-      s.pnl += Number(t.pnl); s.count++;
-      if (Number(t.pnl) > 0) s.wins++;
+      // Prefer trade.session, fall back to journal market_session
+      let raw = t.session;
+      if (!raw) {
+        const j = journalMap.get(t.id);
+        if (j?.strategy_setup) {
+          try { raw = JSON.parse(j.strategy_setup).market_session || null; } catch { /* ignore */ }
+        }
+      }
+      if (!raw) return; // no session data — skip
+      // Fold killzones into parent session
+      if (raw === 'London Killzone') raw = 'London';
+      else if (raw === 'New York Killzone') raw = 'New York';
+      const bucket = buckets[raw];
+      if (!bucket) return; // unknown session value — skip
+      bucket.pnl += Number(t.pnl);
+      bucket.count++;
+      if (Number(t.pnl) > 0) bucket.wins++;
     });
-    return sessions;
-  }, [filteredTrades]);
+    return [buckets['Asian'], buckets['London'], buckets['New York']];
+  }, [filteredTrades, allJournals]);
 
   const calendarData = useMemo(() => {
     const daily: Record<string, { pnl: number; count: number }> = {};

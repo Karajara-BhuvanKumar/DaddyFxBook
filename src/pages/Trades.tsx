@@ -7,6 +7,13 @@ import TradeCard from "@/components/TradeCard";
 import EditTradeModal from "@/components/EditTradeModal";
 import ShareTradeModal from "@/components/ShareTradeModal";
 
+/** Return current local time as YYYY-MM-DDThh:mm for datetime-local inputs. */
+function localNow(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function Trades() {
   const { data: trades = [], isLoading } = useTrades();
   const addTrade = useAddTrade();
@@ -20,8 +27,8 @@ export default function Trades() {
     entryPrice: '',
     exitPrice: '',
     lotSize: '0.1',
-    openDate: new Date().toISOString().slice(0, 16),
-    closeDate: new Date().toISOString().slice(0, 16),
+    openDate: localNow(),
+    closeDate: localNow(),
   });
 
   // Auto-open form when navigated with ?add=true
@@ -58,7 +65,7 @@ export default function Trades() {
       await addTrade.mutateAsync({ symbol: 'XAUUSD', direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: form.openDate, close_time: form.closeDate });
       toast.success("Trade added!");
       setShowForm(false);
-      setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', openDate: new Date().toISOString().slice(0, 16), closeDate: new Date().toISOString().slice(0, 16) });
+      setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', openDate: localNow(), closeDate: localNow() });
     } catch (err: any) { toast.error(err.message); }
   }
 

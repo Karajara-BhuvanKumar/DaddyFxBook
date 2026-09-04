@@ -203,8 +203,22 @@ export function useSaveJournal() {
           throw error;
         }
       }
+
+      // Sync market_session from strategy_setup → trades.session
+      if (journal.strategy_setup) {
+        try {
+          const parsed = JSON.parse(journal.strategy_setup);
+          const marketSession: string | undefined = parsed.market_session;
+          if (marketSession) {
+            await supabase.from('trades').update({ session: marketSession }).eq('id', trade_id);
+          }
+        } catch { /* strategy_setup not valid JSON — skip sync */ }
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['journal'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['journal'] });
+      qc.invalidateQueries({ queryKey: ['trades'] });
+    },
   });
 }
 

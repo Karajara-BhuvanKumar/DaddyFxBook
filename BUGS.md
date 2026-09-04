@@ -66,3 +66,32 @@
 
 ---
 *Last updated: Section 2 fixes complete — TSC verified ✓*
+
+---
+
+## Targeted Fixes: Trade Datetime + Session Performance ✅
+
+### LOGIC BUGS
+
+| # | Bug | Severity | Status |
+|---|-----|----------|--------|
+| TF-L1 | **Add Trade form datetime defaults to UTC, not local time** — `new Date().toISOString().slice(0,16)` returns UTC, but `datetime-local` inputs treat values as local. Shows wrong time (5h30m behind IST). Affects initial default + post-submit reset. | Wrong data shown | ✅ FIXED → `localNow()` helper using local Date methods |
+| TF-L2 | **Session Performance widget derives session from UTC hour ranges** — ignores trade's stored `session` field and journal's `market_session`. Hardcoded `getUTCHours()` ranges (22-8, 8-13, 13-22) guess session incorrectly. | Wrong data shown | ✅ FIXED → reads `trade.session`, falls back to journal `strategy_setup.market_session`, folds killzones into parent sessions |
+| TF-L3 | **Journal save doesn't sync `market_session` to `trades.session`** — `useSaveJournal` only writes to `journals` table. Trade's `session` field stays null, causing stale data in AI reports and analysis. | Data integrity | ✅ FIXED → `useSaveJournal` now parses `market_session` and updates `trades.session` |
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/pages/Trades.tsx` | Added `localNow()` helper; replaced 3 `toISOString()` calls |
+| `src/pages/Analysis.tsx` | Rewrote `sessionPerf` to use stored session field + journal fallback |
+| `src/hooks/useTrades.ts` | `useSaveJournal` syncs `market_session` → `trades.session`; invalidates `trades` query |
+
+### Notes
+
+- **Killzone handling**: "London Killzone" → "London", "New York Killzone" → "New York" for the 3-bucket widget
+- **AI report/prompt builder `getUTCHours()`**: NOT the same bug — they do hour-of-day analytics, not session bucketing, and already read `trade.session` separately. Left untouched.
+- **Timezone**: Uses browser local time for datetime defaults. App has a `settings.timezone` field but `datetime-local` inputs are inherently browser-local.
+
+---
+*Last updated: Targeted fixes — TSC + Vite build verified ✓*
