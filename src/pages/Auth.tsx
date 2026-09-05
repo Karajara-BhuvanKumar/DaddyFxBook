@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { TrendingUp, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import GlowBackdrop from "@/components/GlowBackdrop";
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
@@ -22,22 +23,31 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-[120px]" />
-      </div>
+    <div className="min-h-screen bg-background flex items-end justify-center relative overflow-hidden">
+      {/* Glow backdrop — blurred shapes + bottom fade */}
+      <GlowBackdrop />
 
-      <div className="w-full max-w-[420px] relative z-10">
+      {/* Content layer — sits on top of the glow */}
+      <div className="w-full max-w-[420px] relative z-10 px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 md:pb-16">
+        {/* Branding block */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mx-auto mb-5">
-            <img src="/daddyfxbook-logo.png" alt="DaddyFxBook Logo" className="w-24 h-24 object-contain drop-shadow-2xl" />
+            <img
+              src="/daddyfxbook-logo.png"
+              alt="DaddyFxBook Logo"
+              className="w-24 h-24 object-contain drop-shadow-[0_0_40px_rgba(59,130,246,0.3)]"
+            />
           </div>
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">DaddyFxBook</h1>
-          <p className="text-base text-muted-foreground mt-2 font-medium">Professional XAUUSD Trading Journal</p>
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
+            DaddyFxBook
+          </h1>
+          <p className="text-base text-muted-foreground mt-2 font-medium">
+            Professional XAUUSD Trading Journal
+          </p>
         </div>
 
-        <div className="glass-card rounded-[20px] p-8">
+        {/* Auth card — subtle dark scrim for contrast over bright glow */}
+        <div className="glass-card rounded-[20px] p-8 backdrop-blur-sm bg-card/80 border border-white/[0.06]">
           <h2 className="text-xl font-semibold text-foreground mb-6">
             {isLogin ? "Welcome back" : "Create account"}
           </h2>

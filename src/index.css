@@ -415,4 +415,27 @@
   .report-content li {
     @apply break-words;
   }
+
+  /* ── GlowBackdrop entrance animation ──────────────────── */
+  @keyframes glowFadeIn {
+    from {
+      opacity: 0;
+      transform: translateZ(0) scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: translateZ(0) scale(1);
+    }
+  }
+
+  .glow-backdrop-enter {
+    animation: glowFadeIn 1.2s ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glow-backdrop-enter {
+      animation: none;
+      opacity: 1;
+    }
+  }
 }
