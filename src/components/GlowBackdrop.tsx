@@ -1,20 +1,14 @@
 /**
  * GlowBackdrop — decorative blurred-circles background effect.
  *
- * Two variants:
- *   - "hero"    — bold, high-opacity glow for near-empty pages (Auth).
- *   - "ambient" — subtle, barely-there brand tint for data-dense pages.
- *
  * Usage:
  *   <GlowBackdrop variant="hero" />    // Auth page
- *   <GlowBackdrop variant="ambient" /> // App shell
  *
  * Performance: uses will-change + translateZ(0) to promote to a GPU layer.
  */
 
 interface GlowBackdropProps {
-  /** "hero" = bold Auth-page glow; "ambient" = subtle app-shell tint */
-  variant?: "hero" | "ambient";
+  variant?: "hero";
 }
 
 /* ── Per-variant configuration ─────────────────────────── */
@@ -33,21 +27,8 @@ const HERO_CONFIG = {
   ],
 } as const;
 
-const AMBIENT_CONFIG = {
-  containerHeight: "320px",      // confined to the very top
-  containerMaxWidth: "min(100%, 900px)",
-  blur: "blur(120px)",           // extra-soft so no visible shapes
-  fade: "linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.5) 40%, #050505 70%)",
-  animationClass: "",            // no entrance animation — always there
-  circles: [
-    { w: "clamp(180px, 40vw, 300px)", h: "clamp(180px, 40vw, 300px)", top: "-30%", left: "5%",   right: undefined, bg: "#3b82f6", opacity: 0.18 },
-    { w: "clamp(140px, 30vw, 240px)", h: "clamp(140px, 30vw, 240px)", top: "-10%", left: "30%",  right: undefined, bg: "#1e3a8a", opacity: 0.22 },
-    { w: "clamp(120px, 25vw, 200px)", h: "clamp(120px, 25vw, 200px)", top: "-20%", left: undefined, right: "10%",  bg: "#3b82f6", opacity: 0.1  },
-  ],
-} as const;
-
 export default function GlowBackdrop({ variant = "hero" }: GlowBackdropProps) {
-  const cfg = variant === "hero" ? HERO_CONFIG : AMBIENT_CONFIG;
+  const cfg = HERO_CONFIG;
 
   return (
     <div

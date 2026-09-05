@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import TopHeader from "./TopHeader";
 import { SidebarProvider } from "@/contexts/SidebarContext";
-import GlowBackdrop from "./GlowBackdrop";
 
 const titleMap: Record<string, { title: string; subtitle?: string }> = {
   "/": { title: "Dashboard" },
@@ -23,10 +22,8 @@ export default function AppLayout() {
     <SidebarProvider>
       <div className="flex min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-background">
         <AppSidebar />
-        <main className="flex-1 min-w-0 overflow-x-hidden relative">
-          {/* Persistent ambient glow — renders once, survives route changes */}
-          <GlowBackdrop variant="ambient" />
-          <div className="page-container space-y-4 md:space-y-6 overflow-guard relative z-10">
+        <main className="flex-1 min-w-0 overflow-x-hidden">
+          <div className="page-container space-y-4 md:space-y-6 overflow-guard">
             <TopHeader title={meta.title} subtitle={meta.subtitle ?? today} />
             <div className="overflow-guard">
               <Outlet />
