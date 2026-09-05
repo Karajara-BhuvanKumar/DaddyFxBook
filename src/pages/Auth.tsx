@@ -25,7 +25,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex items-end justify-center relative overflow-hidden">
       {/* Glow backdrop — blurred shapes + bottom fade */}
-      <GlowBackdrop />
+      <GlowBackdrop variant="hero" />
 
       {/* Content layer — sits on top of the glow */}
       <div className="w-full max-w-[420px] relative z-10 px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 md:pb-16">
