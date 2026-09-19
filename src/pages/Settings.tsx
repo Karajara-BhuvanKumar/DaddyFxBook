@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { useUserSettings, ACCENT_COLORS } from "@/hooks/useUserSettings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import {
   User, Settings as SettingsIcon, ShieldCheck, Clock, Palette, Bell, Database, Lock, Info,
-  Upload, Plus, Trash2, Download, LogOut, KeyRound, ChevronRight
+  Upload, Trash2, Download, LogOut, KeyRound, ChevronRight
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -29,8 +29,6 @@ const SESSIONS = ["Asian", "London", "New York"];
 const APP_VERSION = "1.5.0";
 const BUILD_VERSION = "2026.06.21";
 const SUBSCRIPTION = "Elite";
-
-type Rule = { id: string; rule: string; active: boolean; position: number };
 
 function toCSV(rows: any[]): string {
   if (!rows.length) return "";
@@ -53,52 +51,14 @@ function downloadCSV(name: string, csv: string) {
 
 export default function Settings() {
   const { user, signOut } = useAuth();
-  const qc = useQueryClient();
   const uid = user?.id ?? "";
+  const navigate = useNavigate();
   
   const { settings, isLoading, updateSettingsAsync, uploadAvatar } = useUserSettings();
 
   const fileInput = useRef<HTMLInputElement>(null);
-  const [newRule, setNewRule] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [activeTab, setActiveTab] = useState("profile");
-
-  const { data: rules = [] } = useQuery({
-    queryKey: ["trading_rules", uid],
-    enabled: !!uid,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trading_rules").select("*").eq("user_id", uid).order("position");
-      if (error) throw error;
-      return (data ?? []) as Rule[];
-    },
-  });
-
-  const addRule = useMutation({
-    mutationFn: async (rule: string) => {
-      const { error } = await supabase.from("trading_rules").insert({
-        user_id: uid, rule, position: rules.length,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => { setNewRule(""); qc.invalidateQueries({ queryKey: ["trading_rules", uid] }); },
-  });
-
-  const updateRule = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Rule> }) => {
-      const { error } = await supabase.from("trading_rules").update(patch).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["trading_rules", uid] }),
-  });
-
-  const deleteRule = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("trading_rules").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["trading_rules", uid] }),
-  });
 
   const exportTable = async (table: "trades" | "journals" | "backtest_sessions", filename: string) => {
     const { data, error } = await supabase.from(table).select("*").eq("user_id", uid);
@@ -290,44 +250,19 @@ export default function Settings() {
 
         {/* RULES */}
         {activeTab === "rules" && (
-          <SettingsCard title="Trading Rules" description="Your personal commandments. AI reports check trades against active rules.">
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <Input 
-                placeholder="e.g. Only trade London session..." 
-                value={newRule}
-                onChange={(e) => setNewRule(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && newRule.trim() && addRule.mutate(newRule.trim())} 
-                className="bg-input border-border/60 h-11 rounded-xl flex-1 focus-visible:ring-primary min-h-[44px]"
-              />
-              <Button 
-                onClick={() => newRule.trim() && addRule.mutate(newRule.trim())}
-                className="h-11 min-h-[44px] px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium w-full sm:w-auto"
+          <SettingsCard title="Trading Rules" description="Rules have moved to their own page with advanced features.">
+            <div className="flex flex-col items-center py-8 text-center">
+              <ShieldCheck className="w-10 h-10 text-primary/50 mb-3" />
+              <h3 className="font-medium text-foreground">Rules have a new home</h3>
+              <p className="text-sm text-muted-foreground mt-1 mb-5 max-w-md">
+                Manage your trading rules, set up auto-checked limits, and track discipline on the dedicated Rules page.
+              </p>
+              <Button
+                onClick={() => navigate("/rules")}
+                className="h-11 px-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               >
-                <Plus className="h-4 w-4 mr-2" /> Add Rule
+                <ChevronRight className="h-4 w-4 mr-2" /> Go to Rules
               </Button>
-            </div>
-            
-            <div className="space-y-3">
-              {rules.length === 0 && (
-                <div className="p-10 border border-dashed border-border rounded-xl text-center flex flex-col items-center">
-                  <ShieldCheck className="w-10 h-10 text-muted-foreground mb-3 opacity-50" />
-                  <h3 className="font-medium text-foreground">No rules defined</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Add your first trading rule above to strengthen your discipline.</p>
-                </div>
-              )}
-              {rules.map((r) => (
-                <div key={r.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-border transition-colors group">
-                  <Switch checked={r.active} onCheckedChange={(v) => updateRule.mutate({ id: r.id, patch: { active: v } })} className="data-[state=checked]:bg-primary" />
-                  <Input
-                    defaultValue={r.rule}
-                    onBlur={(e) => e.target.value !== r.rule && updateRule.mutate({ id: r.id, patch: { rule: e.target.value } })}
-                    className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-auto font-medium"
-                  />
-                  <Button size="icon" variant="ghost" onClick={() => deleteRule.mutate(r.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 rounded-lg">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
             </div>
           </SettingsCard>
         )}

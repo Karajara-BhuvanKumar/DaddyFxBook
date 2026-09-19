@@ -98,6 +98,8 @@ export type Database = {
           rule: string
           active: boolean
           position: number
+          rule_type: string
+          threshold: number | null
           created_at: string
           updated_at: string
         }
@@ -107,6 +109,8 @@ export type Database = {
           rule: string
           active?: boolean
           position?: number
+          rule_type?: string
+          threshold?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -116,8 +120,37 @@ export type Database = {
           rule?: string
           active?: boolean
           position?: number
+          rule_type?: string
+          threshold?: number | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rule_violations: {
+        Row: {
+          id: string
+          user_id: string
+          rule_id: string
+          violation_date: string
+          note: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          rule_id: string
+          violation_date: string
+          note?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          rule_id?: string
+          violation_date?: string
+          note?: string
+          created_at?: string
         }
         Relationships: []
       }

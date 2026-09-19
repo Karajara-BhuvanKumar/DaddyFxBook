@@ -11,6 +11,7 @@ import {
   Sparkles,
   FlaskConical,
   Settings,
+  Scale,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
@@ -35,6 +36,7 @@ const mainItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, dot: true },
   { to: "/trades", label: "Trades", icon: List },
   { to: "/journal", label: "Journal", icon: BookOpen },
+  { to: "/rules", label: "Rules", icon: Scale },
   { to: "/analysis", label: "Analysis", icon: BarChart3, hasSub: true },
   {
     to: "/ai-report",

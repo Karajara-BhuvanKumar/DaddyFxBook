@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Trades = lazy(() => import("./pages/Trades"));
 const Journal = lazy(() => import("./pages/Journal"));
+const Rules = lazy(() => import("./pages/Rules"));
 const Analysis = lazy(() => import("./pages/Analysis"));
 const AIReport = lazy(() => import("./pages/AIReport"));
 const Backtesting = lazy(() => import("./pages/Backtesting"));
@@ -76,6 +77,7 @@ const App = () => (
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/trades" element={<Trades />} />
                   <Route path="/journal" element={<Journal />} />
+                  <Route path="/rules" element={<Rules />} />
                   <Route path="/analysis" element={<Analysis />} />
                   <Route path="/ai-report" element={<AIReport />} />
                   <Route path="/backtesting" element={<Backtesting />} />

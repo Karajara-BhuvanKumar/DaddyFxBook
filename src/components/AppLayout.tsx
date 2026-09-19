@@ -7,6 +7,7 @@ const titleMap: Record<string, { title: string; subtitle?: string }> = {
   "/": { title: "Dashboard" },
   "/trades": { title: "Trades" },
   "/journal": { title: "Journal" },
+  "/rules": { title: "Rules" },
   "/analysis": { title: "Analysis" },
   "/ai-report": { title: "AI Report" },
   "/backtesting": { title: "Backtesting" },
