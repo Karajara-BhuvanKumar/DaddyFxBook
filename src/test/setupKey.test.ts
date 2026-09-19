@@ -5,7 +5,9 @@ import {
   buildSetupKeyFromText,
   parseStrategySetup,
   parseSetupText,
+  buildStrategySummary,
   emptyStrategySetup,
+  CONFIRM_TYPES,
   type StrategySetup,
 } from "@/lib/strategySetup";
 
@@ -192,5 +194,68 @@ describe("live journal JSON → buildSetupKey matches backtest text → buildSet
     expect(liveKey).toBe(
       "M15 TJL 1 Confirmation: M1 CC Engulfing Confluences: SL Outside Zone"
     );
+  });
+});
+
+describe("CONFIRM_TYPES and parseSetupText", () => {
+  it("CONFIRM_TYPES includes 'TJL 1' and 'TJL 2'", () => {
+    expect(CONFIRM_TYPES).toContain("TJL 1");
+    expect(CONFIRM_TYPES).toContain("TJL 2");
+  });
+
+  it("parseSetupText correctly parses 'Confirmation: M1 TJL 1'", () => {
+    const text = "Confirmation: M1 TJL 1";
+    const parsed = parseSetupText(text);
+    expect(parsed.conf_tf).toBe("M1");
+    expect(parsed.conf_type).toBe("TJL 1");
+  });
+});
+
+describe("Execution Type", () => {
+  it("buildStrategySummary includes Execution section when execution_type is set", () => {
+    const setup: StrategySetup = {
+      ...emptyStrategySetup,
+      bias: "Bullish",
+      execution_type: "Limit Order",
+    };
+    const summary = buildStrategySummary(setup);
+    expect(summary).toContain("Execution:\nLimit Order");
+    expect(summary).toContain("Bias:\nBullish");
+  });
+
+  it("buildStrategySummary omits Execution section when execution_type is empty", () => {
+    const setup: StrategySetup = {
+      ...emptyStrategySetup,
+      bias: "Bullish",
+      execution_type: "",
+    };
+    const summary = buildStrategySummary(setup);
+    expect(summary).not.toContain("Execution");
+  });
+
+  it("parseStrategySetup on a legacy JSON string without execution_type returns execution_type === ''", () => {
+    const legacyJson = JSON.stringify({
+      bias: "Bullish",
+    });
+    const parsed = parseStrategySetup(legacyJson);
+    expect(parsed.execution_type).toBe("");
+    expect(parsed.bias).toBe("Bullish");
+  });
+
+  it("buildSetupKey / buildBroadSetupKey output is identical whether or not execution_type is set", () => {
+    const setup1: StrategySetup = {
+      ...emptyStrategySetup,
+      ltf_tf: "M15",
+      ltf_level: "TJL 1",
+      bias: "Bearish",
+      execution_type: "Market Order",
+    };
+    const setup2: StrategySetup = {
+      ...setup1,
+      execution_type: "",
+    };
+
+    expect(buildSetupKey(setup1)).toBe(buildSetupKey(setup2));
+    expect(buildBroadSetupKey(setup1)).toBe(buildBroadSetupKey(setup2));
   });
 });

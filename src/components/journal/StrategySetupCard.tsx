@@ -21,6 +21,7 @@ import {
   CONFIRM_TYPES,
   CONFLUENCES,
   MARKET_SESSIONS,
+  EXECUTION_TYPES,
   buildStrategySummary,
 } from "@/lib/strategySetup";
 
@@ -214,6 +215,15 @@ export function StrategySetupCard({ value, onChange }: Props) {
                   onValueChange={(v) => update({ market_session: v })}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Execution Type</Label>
+              <SegmentedControl
+                value={value.execution_type}
+                options={EXECUTION_TYPES}
+                onChange={(v) => update({ execution_type: v })}
+              />
             </div>
 
             <div>
