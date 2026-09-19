@@ -133,3 +133,12 @@ The following indexes should exist after migration:
 - **Backup First:** Always backup your database before applying migrations.
 - **Fresh Install:** This schema is intended for a **fresh Supabase project**. If you have existing data, you will need to migrate it manually.
 - **Frontend:** No frontend code changes are required for this schema.
+
+---
+
+## 10. Applying Migrations (Updates)
+Migrations in this repository are not applied automatically when code is deployed. When you pull new code that includes updates in `supabase/migrations/`:
+1. Open the Supabase Dashboard and go to the SQL Editor.
+2. Paste the contents of the new migration file and run it.
+3. (Optional but recommended) If the API still reports missing columns or tables, run `NOTIFY pgrst, 'reload schema';` in the SQL Editor to force PostgREST to refresh its schema cache immediately.
+Alternatively, if you have linked your project locally with the Supabase CLI, you can apply new migrations using `supabase db push`.

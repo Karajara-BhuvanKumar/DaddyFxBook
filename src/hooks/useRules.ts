@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { isSchemaMismatchError } from "@/lib/supabaseErrors";
 
 // ---------------------------------------------------------------------------
 // Types (local — mirrors DB row shapes)
@@ -29,6 +30,40 @@ export interface RuleViolationRow {
 }
 
 // ---------------------------------------------------------------------------
+// useRulesSchemaStatus — probe query for missing columns/tables
+// ---------------------------------------------------------------------------
+
+export function useRulesSchemaStatus() {
+  const query = useQuery({
+    queryKey: ["rules_schema_status"],
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    queryFn: async () => {
+      let outdated = false;
+      try {
+        const { error: rulesError } = await supabase.from("trading_rules").select("rule_type,threshold").limit(1);
+        if (rulesError && isSchemaMismatchError(rulesError)) outdated = true;
+      } catch (e) {
+        if (isSchemaMismatchError(e)) outdated = true;
+      }
+
+      try {
+        const { error: violationsError } = await supabase.from("rule_violations").select("id").limit(1);
+        if (violationsError && isSchemaMismatchError(violationsError)) outdated = true;
+      } catch (e) {
+        if (isSchemaMismatchError(e)) outdated = true;
+      }
+      return { outdated };
+    }
+  });
+
+  return {
+    outdated: query.data?.outdated ?? false,
+    isChecking: query.isLoading,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // useRules — query + CRUD mutations
 // ---------------------------------------------------------------------------
 
@@ -47,24 +82,47 @@ export function useRules() {
         .eq("user_id", uid)
         .order("position");
       if (error) throw error;
-      return (data ?? []) as TradingRule[];
+      return (data ?? []).map(row => ({
+        ...row,
+        rule_type: row.rule_type ?? 'manual',
+        threshold: row.threshold ?? null,
+      })) as TradingRule[];
     },
   });
 
   const addRule = useMutation({
     mutationFn: async (input: { rule: string; rule_type: string; threshold: number | null }) => {
       const rules = query.data ?? [];
-      const { error } = await supabase.from("trading_rules").insert({
-        user_id: uid,
-        rule: input.rule,
-        rule_type: input.rule_type,
-        threshold: input.threshold,
-        position: rules.length,
-      });
-      if (error) throw error;
+      try {
+        const { error } = await supabase.from("trading_rules").insert({
+          user_id: uid,
+          rule: input.rule,
+          rule_type: input.rule_type,
+          threshold: input.threshold,
+          position: rules.length,
+        });
+        if (error) throw error;
+      } catch (error) {
+        if (isSchemaMismatchError(error)) {
+          if (input.rule_type === 'manual') {
+            // Fallback for old schema
+            const { error: fallbackError } = await supabase.from("trading_rules").insert({
+              user_id: uid,
+              rule: input.rule,
+              position: rules.length,
+            });
+            if (fallbackError) throw fallbackError;
+            return;
+          } else {
+            throw new Error("Database update required: run the latest migration to enable automatic rules.");
+          }
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["trading_rules", uid] });
+      qc.invalidateQueries({ queryKey: ["rules_schema_status"] });
       toast({ title: "Rule added" });
     },
     onError: (e: Error) => toast({ title: "Failed to add rule", description: e.message, variant: "destructive" }),
@@ -92,7 +150,7 @@ export function useRules() {
     onError: (e: Error) => toast({ title: "Failed to delete rule", description: e.message, variant: "destructive" }),
   });
 
-  return { rules: query.data ?? [], isLoading: query.isLoading, addRule, updateRule, deleteRule };
+  return { rules: query.data ?? [], isLoading: query.isLoading, error: query.error, addRule, updateRule, deleteRule };
 }
 
 // ---------------------------------------------------------------------------
@@ -106,12 +164,19 @@ export function useRuleViolations() {
   return useQuery({
     queryKey: ["rule_violations", uid],
     enabled: !!uid,
+    retry: false, // Do not retry if we hit a 404/schema error
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rule_violations")
         .select("*")
         .eq("user_id", uid);
-      if (error) throw error;
+      if (error) {
+        if (isSchemaMismatchError(error)) {
+          console.warn("rule_violations table not found; returning empty violations.");
+          return [];
+        }
+        throw error;
+      }
       return (data ?? []) as RuleViolationRow[];
     },
   });
@@ -138,23 +203,30 @@ export function useToggleRuleViolation() {
       currentlyFlagged: boolean;
       note?: string;
     }) => {
+      let error;
       if (currentlyFlagged) {
         // Delete
-        const { error } = await supabase
+        const res = await supabase
           .from("rule_violations")
           .delete()
           .eq("rule_id", ruleId)
           .eq("violation_date", violationDate);
-        if (error) throw error;
+        error = res.error;
       } else {
         // Insert
-        const { error } = await supabase.from("rule_violations").insert({
+        const res = await supabase.from("rule_violations").insert({
           user_id: uid,
           rule_id: ruleId,
           violation_date: violationDate,
           note: note ?? "",
         });
-        if (error) throw error;
+        error = res.error;
+      }
+      if (error) {
+        if (isSchemaMismatchError(error)) {
+          throw new Error("Database update required: run the latest migration to enable automatic rules.");
+        }
+        throw error;
       }
     },
     onSuccess: () => {

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Scale, Plus, Trash2, Zap, ShieldCheck } from "lucide-react";
+import { Scale, Plus, Trash2, Zap, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import migrationSql from "../../supabase/migrations/20260920_rules_page.sql?raw";
 import {
   Select,
   SelectContent,
@@ -24,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useRules } from "@/hooks/useRules";
+import { useRules, useRulesSchemaStatus } from "@/hooks/useRules";
 import { toast } from "@/hooks/use-toast";
 
 // ---------------------------------------------------------------------------
@@ -60,7 +62,9 @@ function autoTypeBadge(ruleType: string, threshold: number | null): string | nul
 
 export default function Rules() {
   const { rules, isLoading, addRule, updateRule, deleteRule } = useRules();
+  const { outdated } = useRulesSchemaStatus();
 
+  const [copied, setCopied] = useState(false);
   const [text, setText] = useState("");
   const [ruleType, setRuleType] = useState<RuleType>("manual");
   const [threshold, setThreshold] = useState<string>("");
@@ -98,8 +102,33 @@ export default function Rules() {
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(migrationSql);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="overflow-guard space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 md:pb-12">
+      {outdated && (
+        <Alert className="bg-amber-500/10 text-amber-500 border-amber-500/20 relative">
+          <AlertTriangle className="h-4 w-4 stroke-amber-500" />
+          <AlertTitle className="text-amber-500 font-semibold">Database update required</AlertTitle>
+          <AlertDescription className="mt-2 text-sm leading-relaxed text-amber-500/90 pr-24">
+            Your database is missing the latest Rules migration. Run <code>supabase/migrations/20260920_rules_page.sql</code> in the Supabase SQL Editor, then refresh this page.
+          </AlertDescription>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="absolute top-4 right-4 h-8 bg-background/50 border-amber-500/30 text-amber-500 hover:bg-amber-500/20"
+            onClick={handleCopy}
+          >
+            {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
+            Copy SQL
+          </Button>
+        </Alert>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="page-title font-bold tracking-tight">Rules</h1>
@@ -140,8 +169,13 @@ export default function Rules() {
               </SelectTrigger>
               <SelectContent className="bg-card border-border rounded-xl">
                 {RULE_TYPE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="rounded-lg cursor-pointer focus:bg-muted/50 focus:text-foreground">
-                    {o.label}
+                  <SelectItem 
+                    key={o.value} 
+                    value={o.value} 
+                    disabled={outdated && o.value !== "manual"}
+                    className="rounded-lg cursor-pointer focus:bg-muted/50 focus:text-foreground"
+                  >
+                    {o.label} {outdated && o.value !== "manual" && "(Update DB)"}
                   </SelectItem>
                 ))}
               </SelectContent>
