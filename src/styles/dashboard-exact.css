@@ -14,6 +14,9 @@
 .dashboard-exact-page {
   width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* ── Header ─────────────────────────────────────────────── */
@@ -223,7 +226,7 @@
 /* ── Content Area ────────────────────────────────────────── */
 .dashboard-exact-content {
   width: calc(100% - 48px);
-  margin: 20px auto 0;
+  margin: auto auto 0;
   padding-bottom: 32px;
   box-sizing: border-box;
   min-width: 0;
