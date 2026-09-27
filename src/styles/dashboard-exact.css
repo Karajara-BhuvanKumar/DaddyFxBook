@@ -1,3 +1,9 @@
+/* ===========================================================
+   Dashboard — Polished Exact CSS
+   Matches reference visual proportions from app.tradefxbook.com
+   =========================================================== */
+
+/* ── Base Layout (≥1024px) ──────────────────────────────── */
 @media (min-width: 1024px) {
   .dashboard-exact-shell {
     min-height: 100vh;
@@ -15,24 +21,24 @@
     min-width: 0;
   }
 
+  /* ── Header ─────────────────────────────────────────── */
   .dashboard-exact-header {
     width: 100%;
-    height: 89px;
-    width: 100%;
-    padding: 0 30px;
-    border-bottom: 1px solid #1d1d1d;
-    background: #020202;
+    height: 64px;
+    padding: 0 24px;
+    border-bottom: 1px solid #1a1a1a;
+    background: rgba(2, 2, 2, 0.92);
     position: sticky;
     top: 0;
     z-index: 50;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .dashboard-exact-header-row {
-    height: 88px;
+    height: 64px;
     display: grid;
-    grid-template-columns: 286px 578px 1fr;
+    grid-template-columns: 220px 1fr auto;
     align-items: center;
     column-gap: 20px;
   }
@@ -44,39 +50,42 @@
   .dashboard-exact-title h1 {
     margin: 0;
     color: #f5f7fa;
-    font-size: 26px;
+    font-size: 20px;
     line-height: 1;
-    font-weight: 800;
-    letter-spacing: -0.04em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
   }
 
   .dashboard-exact-title p {
-    margin: 7px 0 0;
+    margin: 4px 0 0;
     color: #6a6f78;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1;
     font-weight: 500;
   }
 
+  /* ── Search ──────────────────────────────────────────── */
   .dashboard-exact-search {
     position: relative;
-    width: 578px;
-    max-width: 100%;
-    height: 54px;
+    width: 100%;
+    max-width: 420px;
+    height: 40px;
+    justify-self: center;
   }
 
   .dashboard-exact-search input {
     width: 100%;
-    height: 54px;
+    height: 40px;
     box-sizing: border-box;
-    border: 1px solid #202020;
-    border-radius: 16px;
+    border: 1px solid #1e1e1e;
+    border-radius: 10px;
     background: #0b0b0b;
     color: #d7dbe1;
-    padding: 0 82px 0 58px;
+    padding: 0 72px 0 40px;
     outline: none;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
   }
 
   .dashboard-exact-search input::placeholder {
@@ -90,44 +99,45 @@
 
   .dashboard-exact-search-icon {
     position: absolute;
-    left: 22px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: #565b64;
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
     pointer-events: none;
   }
 
   .dashboard-exact-kbd {
     position: absolute;
-    right: 20px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    border-radius: 10px;
+    border-radius: 6px;
     background: #181818;
     color: #6f737a;
-    padding: 5px 10px;
-    font-size: 12px;
+    padding: 3px 8px;
+    font-size: 11px;
     line-height: 1;
     font-weight: 500;
     border: 1px solid #1e1e1e;
   }
 
+  /* ── Header Actions ──────────────────────────────────── */
   .dashboard-exact-actions {
     display: flex;
     justify-self: end;
     align-items: center;
-    gap: 9px;
-    height: 54px;
+    gap: 8px;
+    height: 40px;
   }
 
   .dashboard-exact-action,
   .dashboard-exact-theme {
-    width: 51px;
-    height: 51px;
-    border: 1px solid #202020;
-    border-radius: 15px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #1e1e1e;
+    border-radius: 10px;
     background: #0b0b0b;
     display: inline-flex;
     align-items: center;
@@ -135,103 +145,120 @@
     color: #8c9199;
     padding: 0;
     box-sizing: border-box;
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
   }
 
   .dashboard-exact-action:hover,
   .dashboard-exact-theme:hover {
-    background: #101010;
+    background: #131313;
     color: #e8eaee;
+    border-color: #282828;
   }
 
   .dashboard-exact-add {
     border: 0;
     background: #0b71ff;
     color: white;
-    box-shadow: 0 4px 20px rgba(11, 113, 255, 0.18);
+    box-shadow: 0 2px 12px rgba(11, 113, 255, 0.15);
   }
 
   .dashboard-exact-add:hover {
-    background: #0b71ff;
+    background: #1a7fff;
   }
 
   .dashboard-exact-time {
-    width: 149px;
-    height: 51px;
-    border: 1px solid #202020;
-    border-radius: 15px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid #1e1e1e;
+    border-radius: 10px;
     background: #0b0b0b;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     color: #8b9098;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-profile {
-    width: 93px;
-    height: 51px;
-    padding: 4px 10px 4px 8px;
+    height: 40px;
+    padding: 4px 10px 4px 6px;
     box-sizing: border-box;
-    border: 1px solid #202020;
-    border-radius: 15px;
+    border: 1px solid #1e1e1e;
+    border-radius: 10px;
     background: #0b0b0b;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 6px;
     cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease;
+  }
+
+  .dashboard-exact-profile:hover {
+    background: #131313;
+    border-color: #282828;
   }
 
   .dashboard-exact-profile-avatar {
-    width: 39px;
-    height: 39px;
-    border-radius: 11px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     background: #8d766a;
     color: #f6f2ee;
     display: grid;
     place-items: center;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
   }
 
   .dashboard-exact-profile-chevron {
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     color: #747981;
   }
 
+  /* ── Content Area ────────────────────────────────────── */
   .dashboard-exact-content {
-    width: calc(100% - 58px);
-    margin: 13px auto 0;
-    padding-bottom: 16px;
+    width: calc(100% - 48px);
+    margin: 20px auto 0;
+    padding-bottom: 24px;
     box-sizing: border-box;
   }
 
+  /* ── Stat Cards ──────────────────────────────────────── */
   .dashboard-exact-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 25px;
+    gap: 16px;
   }
 
   .dashboard-exact-stat {
-    height: 138px;
+    height: 110px;
     box-sizing: border-box;
-    border: 1px solid #1f1f1f;
-    border-radius: 20px;
+    border: 1px solid #1c1c1c;
+    border-radius: 14px;
     background: #090909;
-    padding: 28px;
+    padding: 20px;
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 14px;
     min-width: 0;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+
+  .dashboard-exact-stat:hover {
+    border-color: #252525;
+    background: #0c0c0c;
   }
 
   .dashboard-exact-stat-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 15px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     display: grid;
     place-items: center;
     flex: 0 0 auto;
@@ -253,21 +280,22 @@
 
   .dashboard-exact-stat-label {
     color: #5d6168;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     line-height: 1;
-    margin-bottom: 9px;
+    margin-bottom: 7px;
   }
 
   .dashboard-exact-stat-value {
     color: #f4f5f7;
-    font-size: 30px;
-    font-weight: 900;
-    line-height: 0.95;
-    letter-spacing: -0.035em;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-stat-value.blue {
@@ -275,9 +303,9 @@
   }
 
   .dashboard-exact-stat-sub {
-    margin-top: 10px;
+    margin-top: 7px;
     color: #4f5359;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
@@ -287,32 +315,34 @@
     color: #1386ff;
   }
 
+  /* ── Win Rate Card ──────────────────────────────────── */
   .dashboard-exact-win {
     align-items: flex-start;
-    gap: 18px;
+    gap: 14px;
   }
 
   .dashboard-exact-win-body {
     width: 100%;
     min-width: 0;
-    padding-top: 4px;
+    padding-top: 2px;
   }
 
   .dashboard-exact-win-value {
     color: #f4f5f7;
-    font-size: 31px;
-    font-weight: 900;
-    line-height: 0.95;
-    letter-spacing: -0.035em;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-progress {
     width: 100%;
-    height: 7px;
-    margin-top: 17px;
+    height: 5px;
+    margin-top: 14px;
     border-radius: 999px;
     overflow: hidden;
-    background: #242424;
+    background: #1e1e1e;
   }
 
   .dashboard-exact-progress > span {
@@ -320,26 +350,30 @@
     height: 100%;
     border-radius: inherit;
     background: #0c9dff;
+    transition: width 400ms ease-out;
   }
 
+  /* ── Main Grid (Performance + Calendar) ─────────────── */
   .dashboard-exact-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.305fr) minmax(0, 1fr);
-    gap: 29px;
-    margin-top: 30px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 16px;
+    margin-top: 16px;
   }
 
   .dashboard-exact-panel {
     min-width: 0;
-    height: 525px;
+    height: 460px;
     box-sizing: border-box;
-    border: 1px solid #1f1f1f;
-    border-radius: 22px;
+    border: 1px solid #1c1c1c;
+    border-radius: 14px;
     background: #070707;
+    transition: border-color 200ms ease;
   }
 
+  /* ── Performance Panel ──────────────────────────────── */
   .dashboard-exact-performance {
-    padding: 33px 34px 22px;
+    padding: 24px 24px 16px;
     display: flex;
     flex-direction: column;
   }
@@ -353,86 +387,96 @@
   .dashboard-exact-performance-kicker {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 7px;
     color: #656a72;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     line-height: 1;
   }
 
   .dashboard-exact-performance-metric {
-    margin-top: 13px;
+    margin-top: 10px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 14px;
   }
 
   .dashboard-exact-performance-value {
     color: #258bff;
-    font-size: 40px;
-    font-weight: 900;
-    letter-spacing: -0.045em;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
     line-height: 1;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-performance-change {
-    height: 42px;
-    min-width: 119px;
+    height: 34px;
+    min-width: 100px;
     box-sizing: border-box;
-    padding: 0 16px;
+    padding: 0 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    border-radius: 22px;
+    gap: 5px;
+    border-radius: 18px;
     border: 1px solid #0e3b6c;
     background: #071c31;
     color: #1588ff;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
+  /* ── Timeframe Range Picker ─────────────────────────── */
   .dashboard-exact-range {
     display: inline-flex;
     align-items: center;
-    height: 45px;
-    padding: 0 5px;
+    height: 36px;
+    padding: 0 4px;
     box-sizing: border-box;
     background: #111111;
-    border: 1px solid #272727;
-    border-radius: 13px;
+    border: 1px solid #232323;
+    border-radius: 10px;
   }
 
   .dashboard-exact-range button {
-    height: 35px;
-    min-width: 49px;
-    padding: 0 12px;
+    height: 28px;
+    min-width: 38px;
+    padding: 0 10px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 7px;
     background: transparent;
     color: #83878d;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+  }
+
+  .dashboard-exact-range button:hover {
+    color: #b0b4ba;
   }
 
   .dashboard-exact-range button.active {
-    background: #292929;
+    background: #262626;
     color: #f1f1f1;
   }
 
+  /* ── Chart Container ────────────────────────────────── */
   .dashboard-exact-chart {
     flex: 1;
     min-height: 0;
-    margin: 31px -12px -4px;
+    margin: 20px -8px -4px;
   }
 
+  /* ── Calendar Panel ─────────────────────────────────── */
   .dashboard-exact-calendar {
-    padding: 21px 20px 18px;
+    padding: 20px 16px 14px;
     display: flex;
     flex-direction: column;
   }
@@ -441,27 +485,30 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .dashboard-exact-calendar-title {
     color: #f5f6f8;
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.02em;
   }
 
   .dashboard-exact-calendar-head-right {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
   }
 
   .dashboard-exact-monthly {
     color: #6d727a;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-monthly strong {
@@ -472,73 +519,91 @@
   .dashboard-exact-calendar-nav {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
   }
 
   .dashboard-exact-calendar-nav button {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
     border: 1px solid #222222;
     background: #131313;
     color: #70757c;
     display: grid;
     place-items: center;
     cursor: pointer;
+    padding: 0;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  }
+
+  .dashboard-exact-calendar-nav button:hover {
+    background: #1a1a1a;
+    color: #c0c4ca;
+    border-color: #303030;
   }
 
   .dashboard-exact-calendar-nav span {
-    min-width: 119px;
+    min-width: 110px;
     color: #6d727a;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 600;
     text-align: center;
+    white-space: nowrap;
   }
 
+  /* ── Calendar Week Header ──────────────────────────── */
   .dashboard-exact-week-head {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr)) 68px;
-    gap: 5px;
-    margin-top: 41px;
-    color: #60656c;
-    font-size: 12px;
+    grid-template-columns: repeat(7, 1fr) 62px;
+    gap: 4px;
+    margin-top: 16px;
+    color: #545961;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1;
     text-align: center;
+    padding-bottom: 4px;
   }
 
+  /* ── Calendar Body ──────────────────────────────────── */
   .dashboard-exact-calendar-body {
-    margin-top: 19px;
+    margin-top: 4px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    flex: 1;
+    min-height: 0;
   }
 
   .dashboard-exact-week-row {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr)) 68px;
-    gap: 5px;
-    min-height: 70px;
+    grid-template-columns: repeat(7, 1fr) 62px;
+    gap: 4px;
   }
 
+  /* ── Calendar Day Cell ──────────────────────────────── */
   .dashboard-exact-day {
     position: relative;
-    height: 70px;
+    aspect-ratio: auto;
+    min-height: 54px;
     box-sizing: border-box;
-    border-radius: 13px;
-    border: 1px solid #1c1c1c;
-    background: #0d0d0d;
-    padding: 12px 9px 8px;
+    border-radius: 10px;
+    border: 1px solid #1a1a1a;
+    background: #0c0c0c;
+    padding: 7px 6px 5px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #dce0e5;
     cursor: pointer;
+    overflow: hidden;
+    transition: background 150ms ease, border-color 150ms ease;
   }
 
   .dashboard-exact-day:hover {
-    background: #101010;
-    border-color: #292929;
+    background: #111111;
+    border-color: #2a2a2a;
   }
 
   .dashboard-exact-day.empty {
@@ -547,73 +612,108 @@
     cursor: default;
   }
 
+  .dashboard-exact-day.empty:hover {
+    background: transparent;
+    border-color: transparent;
+  }
+
   .dashboard-exact-day.has-profit {
-    border-color: #10385d;
-    background: #09111a;
+    border-color: #0e2f52;
+    background: #08111c;
   }
 
   .dashboard-exact-day.has-profit:hover {
-    background: #0b1420;
+    background: #0b1524;
+    border-color: #123c64;
+  }
+
+  .dashboard-exact-day.has-loss {
+    border-color: #3a1519;
+    background: #150a0c;
+  }
+
+  .dashboard-exact-day.has-loss:hover {
+    background: #1c0e11;
+    border-color: #4a1c21;
   }
 
   .dashboard-exact-day.today {
-    border-color: #0a75ff;
-    box-shadow: 0 0 0 1px rgba(10, 117, 255, 0.18) inset;
+    border-color: #0a68e0;
+    box-shadow: 0 0 0 1px rgba(10, 104, 224, 0.12) inset;
   }
 
+  /* ── Day Number ─────────────────────────────────────── */
   .dashboard-exact-day-num {
     position: absolute;
-    left: 9px;
-    top: 8px;
-    color: #50545b;
-    font-size: 11px;
+    left: 6px;
+    top: 5px;
+    color: #4a4f57;
+    font-size: 10px;
     font-weight: 500;
     line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .dashboard-exact-day.today .dashboard-exact-day-num {
     color: #0b8cff;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .dashboard-exact-day-today-dot {
-    width: 4px;
-    height: 4px;
-    margin: 5px auto 0;
+    display: block;
+    width: 3px;
+    height: 3px;
+    margin-top: 3px;
     border-radius: 50%;
     background: #0b8cff;
   }
 
+  /* ── Day P&L Value ──────────────────────────────────── */
   .dashboard-exact-day-value {
     color: #1487ff;
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: -0.025em;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
   }
 
+  .dashboard-exact-day-value.loss-value {
+    color: #fb4755;
+  }
+
+  /* ── Weekly Summary Cell ────────────────────────────── */
   .dashboard-exact-week-summary {
-    height: 70px;
-    border-radius: 13px;
-    border: 1px solid #1c1c1c;
-    background: #0c0c0c;
-    padding: 8px 7px;
+    min-height: 54px;
+    border-radius: 10px;
+    border: 1px solid #1a1a1a;
+    background: #0a0a0a;
+    padding: 6px 4px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
+    overflow: hidden;
+    transition: background 150ms ease, border-color 150ms ease;
   }
 
   .dashboard-exact-week-summary.active {
-    border-color: #10385d;
+    border-color: #0e2f52;
     background: #081019;
   }
 
   .dashboard-exact-week-summary-label {
-    color: #666a72;
-    font-size: 9px;
+    color: #555961;
+    font-size: 8px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -621,61 +721,62 @@
   }
 
   .dashboard-exact-week-summary-value {
-    margin-top: 5px;
+    margin-top: 4px;
     color: #1487ff;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: 11px;
+    font-weight: 800;
     line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-week-summary-value.muted {
-    color: #63676e;
+    color: #555961;
   }
 
   .dashboard-exact-week-summary-trades {
-    margin-top: 5px;
-    max-width: 58px;
+    margin-top: 3px;
+    max-width: 56px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #666a72;
-    font-size: 8px;
+    color: #555961;
+    font-size: 7px;
     font-weight: 600;
     line-height: 1;
   }
 
+  /* ── Legend ──────────────────────────────────────────── */
   .dashboard-exact-legend {
     margin-top: auto;
-    padding-top: 16px;
+    padding-top: 10px;
     display: flex;
     justify-content: center;
-    gap: 27px;
+    gap: 20px;
     color: #5f646b;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
   }
 
   .dashboard-exact-legend span {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .dashboard-exact-legend-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: #1989ff;
+    display: block;
   }
 
   .dashboard-exact-legend-dot.loss {
     background: #fb4755;
   }
 
-  .dashboard-exact-day-value.loss-value {
-    color: #fb4755;
-  }
-
+  /* ── Loading State ──────────────────────────────────── */
   .dashboard-exact-loading {
     min-height: 400px;
     display: flex;
@@ -683,31 +784,44 @@
     justify-content: center;
     gap: 10px;
     color: #62676f;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
   }
 
+  /* ── Empty State ────────────────────────────────────── */
+  .dashboard-exact-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4a4f57;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* ── Tooltip ────────────────────────────────────────── */
   .dashboard-exact-tooltip {
-    min-width: 180px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: #080808;
-    border: 1px solid #26364a;
-    box-shadow: 0 12px 36px rgba(0,0,0,.35);
+    min-width: 160px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #0a0a0a;
+    border: 1px solid #1e2a3a;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
   }
 
   .dashboard-exact-tooltip > div {
     color: #8b9199;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .dashboard-exact-tooltip strong {
     display: block;
-    font-size: 24px;
+    font-size: 20px;
     line-height: 1;
     letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
   }
 
   .dashboard-exact-tooltip strong.profit { color: #258bff; }
@@ -715,50 +829,54 @@
 
   .dashboard-exact-tooltip small {
     display: block;
-    margin-top: 7px;
+    margin-top: 5px;
     color: #59606a;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .12em;
   }
 }
 
+/* ── Medium Screens (1024–1279px) ────────────────────── */
 @media (max-width: 1279px) {
   .dashboard-exact-search {
     width: 100%;
+    max-width: 100%;
   }
 
   .dashboard-exact-header-row {
-    grid-template-columns: 250px minmax(320px, 1fr) auto;
-    column-gap: 18px;
+    grid-template-columns: 200px minmax(280px, 1fr) auto;
+    column-gap: 16px;
   }
 
   .dashboard-exact-actions {
     gap: 6px;
   }
 
-  .dashboard-exact-time {
-    width: 132px;
-  }
-
   .dashboard-exact-content {
-    width: calc(100% - 36px);
+    width: calc(100% - 32px);
   }
 
   .dashboard-exact-stats {
-    gap: 12px;
+    gap: 10px;
   }
 
   .dashboard-exact-stat {
-    padding: 20px;
+    padding: 16px;
   }
 
   .dashboard-exact-grid {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-exact-panel {
+    height: auto;
+    min-height: 440px;
+  }
 }
 
+/* ── Small Screens (<1024px) ─────────────────────────── */
 @media (max-width: 1023px) {
   .dashboard-exact-shell,
   .dashboard-exact-main,
@@ -779,7 +897,7 @@
 
   .dashboard-exact-header-row {
     height: auto;
-    min-height: 64px;
+    min-height: 56px;
     display: flex;
     flex-wrap: wrap;
     padding: 10px 0;
@@ -790,9 +908,14 @@
     flex: 1;
   }
 
+  .dashboard-exact-title h1 {
+    font-size: 18px;
+  }
+
   .dashboard-exact-search {
     order: 3;
     width: 100%;
+    max-width: 100%;
   }
 
   .dashboard-exact-actions {
@@ -804,16 +927,22 @@
   .dashboard-exact-action,
   .dashboard-exact-time,
   .dashboard-exact-profile {
-    height: 44px;
+    height: 38px;
+  }
+
+  .dashboard-exact-action,
+  .dashboard-exact-theme {
+    width: 38px;
   }
 
   .dashboard-exact-time {
     width: auto;
-    padding: 0 12px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 
   .dashboard-exact-profile {
-    width: 64px;
+    padding: 3px 8px 3px 5px;
   }
 
   .dashboard-exact-profile-chevron {
@@ -822,20 +951,49 @@
 
   .dashboard-exact-stats {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dashboard-exact-stat {
+    height: auto;
+    min-height: 96px;
+    padding: 14px;
+  }
+
+  .dashboard-exact-stat-value {
+    font-size: 20px;
+  }
+
+  .dashboard-exact-win-value {
+    font-size: 22px;
   }
 
   .dashboard-exact-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .dashboard-exact-panel {
     height: auto;
-    min-height: 520px;
+    min-height: 400px;
   }
 
+  .dashboard-exact-performance {
+    padding: 18px 16px 12px;
+  }
+
+  .dashboard-exact-performance-value {
+    font-size: 26px;
+  }
+
+  .dashboard-exact-calendar {
+    padding: 16px 12px 12px;
+  }
+
+  /* Hide weekly summary column on small screens */
   .dashboard-exact-week-head,
   .dashboard-exact-week-row {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, 1fr);
   }
 
   .dashboard-exact-week-head > :last-child,
@@ -844,21 +1002,51 @@
   }
 }
 
+/* ── Mobile (<640px) ─────────────────────────────────── */
 @media (max-width: 640px) {
   .dashboard-exact-stats {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .dashboard-exact-stat {
-    height: 124px;
+    min-height: 88px;
   }
 
   .dashboard-exact-calendar {
     overflow-x: auto;
   }
 
-  .dashboard-exact-week-head,
-  .dashboard-exact-week-row {
-    min-width: 520px;
+  .dashboard-exact-calendar-body,
+  .dashboard-exact-week-head {
+    min-width: 440px;
   }
+
+  .dashboard-exact-day {
+    min-height: 48px;
+    padding: 5px 4px 3px;
+  }
+
+  .dashboard-exact-day-num {
+    font-size: 9px;
+  }
+
+  .dashboard-exact-day-value {
+    font-size: 10px;
+  }
+}
+
+/* ── Recharts Overrides ──────────────────────────────── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  shape-rendering: crispEdges;
+}
+
+.recharts-active-dot circle {
+  filter: drop-shadow(0 0 4px rgba(37, 139, 255, 0.4));
+}
+
+.recharts-tooltip-cursor {
+  stroke: rgba(255, 255, 255, 0.06) !important;
+  stroke-width: 1px !important;
 }

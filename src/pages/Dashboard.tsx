@@ -114,7 +114,7 @@ export default function Dashboard() {
     <div className="dashboard-exact-content">
       <section className="dashboard-exact-stats">
         <div className="dashboard-exact-stat">
-          <div className="dashboard-exact-stat-icon blue"><WalletCards size={25} /></div>
+          <div className="dashboard-exact-stat-icon blue"><WalletCards size={20} /></div>
           <div className="dashboard-exact-stat-body">
             <div className="dashboard-exact-stat-label">TOTAL P&amp;L</div>
             <div className="dashboard-exact-stat-value blue">{money(totalPnl)}</div>
@@ -123,7 +123,7 @@ export default function Dashboard() {
         </div>
 
         <div className="dashboard-exact-stat">
-          <div className="dashboard-exact-stat-icon gold"><Activity size={25} /></div>
+          <div className="dashboard-exact-stat-icon gold"><Activity size={20} /></div>
           <div className="dashboard-exact-stat-body">
             <div className="dashboard-exact-stat-label">UNREALIZED</div>
             <div className="dashboard-exact-stat-value">+$0.00</div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
         </div>
 
         <div className="dashboard-exact-stat">
-          <div className="dashboard-exact-stat-icon blue"><CheckCircle2 size={25} /></div>
+          <div className="dashboard-exact-stat-icon blue"><CheckCircle2 size={20} /></div>
           <div className="dashboard-exact-stat-body">
             <div className="dashboard-exact-stat-label">REALIZED</div>
             <div className="dashboard-exact-stat-value blue">{money(realized)}</div>
@@ -141,7 +141,7 @@ export default function Dashboard() {
         </div>
 
         <div className="dashboard-exact-stat dashboard-exact-win">
-          <div className="dashboard-exact-stat-icon blue"><Trophy size={25} /></div>
+          <div className="dashboard-exact-stat-icon blue"><Trophy size={20} /></div>
           <div className="dashboard-exact-win-body">
             <div className="dashboard-exact-stat-label">WIN RATE</div>
             <div className="dashboard-exact-win-value">{winRate.toFixed(0)}%</div>
@@ -154,11 +154,11 @@ export default function Dashboard() {
         <div className="dashboard-exact-panel dashboard-exact-performance">
           <div className="dashboard-exact-performance-head">
             <div>
-              <div className="dashboard-exact-performance-kicker"><TrendingUp size={17} /> PERFORMANCE</div>
+              <div className="dashboard-exact-performance-kicker"><TrendingUp size={15} /> PERFORMANCE</div>
               <div className="dashboard-exact-performance-metric">
                 <div className="dashboard-exact-performance-value">{money(totalPnl)}</div>
                 <div className="dashboard-exact-performance-change">
-                  <TrendingUp size={15} />
+                  <TrendingUp size={13} />
                   {perfPct === null ? "—" : `${perfPct >= 0 ? "+" : ""}${perfPct.toFixed(1)}%`}
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function Dashboard() {
           {chartData.length ? (
             <div className="dashboard-exact-chart">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 20, right: 40, left: 0, bottom: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 16, right: 36, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="dashboardExactLine" x1="0" y1="0" x2="0" y2="1">
                       <stop offset={gradientOffset} stopColor="#2388ff" />
@@ -186,13 +186,13 @@ export default function Dashboard() {
                       <stop offset="1" stopColor="#fb4755" stopOpacity={0.08} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="rgba(255,255,255,0.035)" strokeDasharray="3 3" />
-                  <ReferenceLine y={0} stroke="rgba(255,255,255,0.14)" strokeDasharray="4 4" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#60656d", fontSize: 12, fontWeight: 600 }} dy={17} />
-                  <YAxis orientation="right" axisLine={false} tickLine={false} width={48}
+                  <CartesianGrid stroke="rgba(255,255,255,0.025)" strokeDasharray="3 6" vertical={false} />
+                  <ReferenceLine y={0} stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#4a4f57", fontSize: 11, fontWeight: 500 }} dy={14} interval="preserveStartEnd" />
+                  <YAxis orientation="right" axisLine={false} tickLine={false} width={52}
                     tick={({ x, y, payload }: any) => (
-                      <text x={x} y={y} dx={10} dy={4} fill={payload.value >= 0 ? "#258bff" : "#fb4755"} fontSize={11} fontWeight={600}>
-                        {payload.value >= 0 ? "" : "-"}${Math.abs(payload.value).toFixed(1).replace(".0", "")}
+                      <text x={x} y={y} dx={8} dy={4} fill={payload.value >= 0 ? "#258bff" : "#fb4755"} fontSize={11} fontWeight={500} opacity={0.85}>
+                        {payload.value >= 0 ? "" : "-"}${Math.abs(payload.value) >= 1000 ? (Math.abs(payload.value) / 1000).toFixed(1) + "K" : Math.abs(payload.value).toFixed(1).replace(".0", "")}
                       </text>
                     )}
                   />
@@ -210,8 +210,8 @@ export default function Dashboard() {
                       );
                     }}
                   />
-                  <Area type="stepAfter" dataKey="cumulative" stroke="url(#dashboardExactLine)" fill="url(#dashboardExactFill)" strokeWidth={3} dot={false}
-                    activeDot={{ r: 5, stroke: "#080808", strokeWidth: 3 }} animationDuration={800} />
+                  <Area type="monotone" dataKey="cumulative" stroke="url(#dashboardExactLine)" fill="url(#dashboardExactFill)" strokeWidth={2.5} dot={false}
+                    activeDot={{ r: 5, stroke: "#0d0d0d", strokeWidth: 2.5, fill: "#258bff" }} animationDuration={600} animationEasing="ease-out" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -255,11 +255,11 @@ export default function Dashboard() {
                     return (
                       <div
                         key={d}
-                        className={`dashboard-exact-day ${value ? "has-profit" : ""} ${today ? "today" : ""}`}
+                        className={`dashboard-exact-day ${value ? (positive ? "has-profit" : "has-loss") : ""} ${today ? "today" : ""}`}
                         onClick={e => setSelectedDay({ date: key, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() })}
                       >
                         <span className="dashboard-exact-day-num">{dayNum}{today && <span className="dashboard-exact-day-today-dot" />}</span>
-                        {value && <span className={`dashboard-exact-day-value ${positive ? "" : "loss-value"}`}>{money(value.pnl, Math.abs(value.pnl) >= 1000 ? 1 : 2)}</span>}
+                        {value && <span className={`dashboard-exact-day-value ${positive ? "" : "loss-value"}`}>{money(value.pnl, Math.abs(value.pnl) >= 1000 ? 1 : 0)}</span>}
                       </div>
                     );
                   })}
