@@ -186,7 +186,7 @@ export default function Dashboard() {
                       <stop offset="1" stopColor="#fb4755" stopOpacity={0.07} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="rgba(255,255,255,0.03)" strokeDasharray="4 6" vertical={false} />
+                  <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 6" vertical={false} />
                   <ReferenceLine y={0} stroke="rgba(255,255,255,0.07)" strokeDasharray="4 4" />
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#464b54", fontSize: 11, fontWeight: 500 }} dy={14} interval="preserveStartEnd" />
                   <YAxis orientation="right" axisLine={false} tickLine={false} width={52}
@@ -249,7 +249,7 @@ export default function Dashboard() {
 
           <div className="dashboard-exact-week-head">
             {["M","T","W","T","F","S","S"].map((d, i) => <div key={i}>{d}</div>)}
-            <div>Wk</div>
+            <div>Weekly</div>
           </div>
 
           <div className="dashboard-exact-calendar-body">
@@ -304,14 +304,14 @@ export default function Dashboard() {
                   {/* Weekly summary cell — color is driven by weeklyColorClass */}
                   <div className={["dashboard-exact-week-summary", wt.trades ? `active ${weeklyColorClass}` : ""].filter(Boolean).join(" ")}>
                     <span className="dashboard-exact-week-summary-label">
-                      <span className="wk-short">Wk</span>
+                      <span className="wk-short">WEEKLY</span>
                       <span className="wk-full">WEEK {w + 1}</span>
                     </span>
                     <span className={`dashboard-exact-week-summary-value${wt.trades ? "" : " muted"}`}>
                       {wt.trades ? money(wt.pnl, Math.abs(wt.pnl) >= 1000 ? 1 : 2) : "$0"}
                     </span>
                     <span className="dashboard-exact-week-summary-trades">
-                      <span className="wk-short">{wt.trades ? `${wt.trades}T` : "—"}</span>
+                      <span className="wk-short">{wt.trades ? `Traded ${wt.trades}` : "Traded 0"}</span>
                       <span className="wk-full">{wt.trades ? `${wt.trades} trades` : "0 trades"}</span>
                     </span>
                   </div>

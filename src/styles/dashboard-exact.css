@@ -377,8 +377,8 @@
 .dashboard-exact-panel {
   min-width: 0;
   box-sizing: border-box;
-  border: 1px solid hsl(var(--border));
-  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
   background: hsl(var(--card));
   transition: border-color 200ms ease;
 }
@@ -457,9 +457,9 @@
   height: 36px;
   padding: 0 4px;
   box-sizing: border-box;
-  background: hsl(var(--muted));
-  border: 1px solid hsl(var(--border));
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
   flex-shrink: 0;
 }
 
@@ -482,9 +482,9 @@
 }
 
 .dashboard-exact-range button.active {
-  background: hsl(var(--card));
+  background: rgba(255, 255, 255, 0.12);
   color: hsl(var(--foreground));
-  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.15);
+  box-shadow: none;
 }
 
 /* ── Chart Container ─────────────────────────────────────── */
@@ -583,7 +583,7 @@
 /* ── Calendar Week Header ────────────────────────────────── */
 .dashboard-exact-week-head {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr)) 58px;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 72px;
   gap: 4px;
   margin-top: 14px;
   color: hsl(var(--muted-foreground));
@@ -608,7 +608,7 @@
 
 .dashboard-exact-week-row {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr)) 58px;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 72px;
   gap: 4px;
 }
 
@@ -617,9 +617,9 @@
   position: relative;
   min-height: 52px;
   box-sizing: border-box;
-  border-radius: 9px;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--muted));
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   padding: 6px 5px 4px;
   display: flex;
   flex-direction: column;
@@ -633,8 +633,8 @@
 }
 
 .dashboard-exact-day:hover {
-  background: hsl(var(--card));
-  border-color: hsl(var(--border));
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
   transform: scale(1.02);
 }
 
@@ -646,28 +646,28 @@
 }
 
 .dashboard-exact-day.has-profit {
-  border-color: hsl(var(--profit) / 0.3);
-  background: hsl(var(--profit) / 0.06);
+  border-color: hsl(var(--profit) / 0.2);
+  background: hsl(var(--profit) / 0.07);
 }
 
 .dashboard-exact-day.has-profit:hover {
-  background: hsl(var(--profit) / 0.1);
-  border-color: hsl(var(--profit) / 0.4);
+  background: hsl(var(--profit) / 0.12);
+  border-color: hsl(var(--profit) / 0.3);
 }
 
 .dashboard-exact-day.has-loss {
-  border-color: hsl(var(--loss) / 0.3);
-  background: hsl(var(--loss) / 0.06);
+  border-color: hsl(var(--loss) / 0.2);
+  background: hsl(var(--loss) / 0.07);
 }
 
 .dashboard-exact-day.has-loss:hover {
-  background: hsl(var(--loss) / 0.1);
-  border-color: hsl(var(--loss) / 0.4);
+  background: hsl(var(--loss) / 0.12);
+  border-color: hsl(var(--loss) / 0.3);
 }
 
 .dashboard-exact-day.has-neutral {
-  border-color: hsl(var(--border));
-  background: hsl(var(--muted));
+  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .dashboard-exact-day.today {
@@ -728,9 +728,9 @@
 /* ── Weekly Summary Cell ─────────────────────────────────── */
 .dashboard-exact-week-summary {
   min-height: 52px;
-  border-radius: 9px;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--muted));
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   padding: 5px 3px;
   box-sizing: border-box;
   display: flex;
@@ -745,26 +745,26 @@
 
 /* Weekly summary: active with no color class = neutral */
 .dashboard-exact-week-summary.active {
-  border-color: hsl(var(--border));
-  background: hsl(var(--card));
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Weekly summary: PROFIT state (weekly pnl > 0) */
 .dashboard-exact-week-summary.active.weekly-profit {
-  border-color: hsl(var(--profit) / 0.35);
-  background: hsl(var(--profit) / 0.07);
+  border-color: hsl(var(--profit) / 0.3);
+  background: hsl(var(--profit) / 0.1);
 }
 
 /* Weekly summary: LOSS state (weekly pnl < 0) */
 .dashboard-exact-week-summary.active.weekly-loss {
-  border-color: hsl(var(--loss) / 0.35);
-  background: hsl(var(--loss) / 0.07);
+  border-color: hsl(var(--loss) / 0.3);
+  background: hsl(var(--loss) / 0.1);
 }
 
 /* Weekly summary: NEUTRAL state (weekly pnl = 0, has trades) */
 .dashboard-exact-week-summary.active.weekly-neutral {
-  border-color: hsl(var(--border));
-  background: hsl(var(--card));
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .dashboard-exact-week-summary-label {
@@ -1210,14 +1210,14 @@
 
   /* Keep weekly column on tablet but compact */
   .dashboard-exact-week-head {
-    grid-template-columns: repeat(7, minmax(0, 1fr)) 46px;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) 56px;
     gap: 3px;
     margin-top: 10px;
     font-size: 10px;
   }
 
   .dashboard-exact-week-row {
-    grid-template-columns: repeat(7, minmax(0, 1fr)) 46px;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) 56px;
     gap: 3px;
   }
 
