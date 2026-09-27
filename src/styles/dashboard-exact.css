@@ -774,6 +774,10 @@
   opacity: 0.7;
 }
 
+.dashboard-exact-week-summary .wk-full {
+  display: none;
+}
+
 .dashboard-exact-week-summary-value {
   margin-top: 3px;
   font-size: 11px;
@@ -1305,10 +1309,10 @@
     height: 32px;
   }
 
-  /* Stat cards: compact 2x2 */
+  /* Stat cards: stacked 1 column */
   .dashboard-exact-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .dashboard-exact-stat {
@@ -1349,8 +1353,14 @@
   }
 
   .dashboard-exact-performance {
-    height: 290px;
+    height: 320px;
     padding: 14px 14px 8px;
+  }
+
+  .dashboard-exact-performance-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .dashboard-exact-performance-value {
@@ -1379,7 +1389,36 @@
   }
 
   .dashboard-exact-week-row > .dashboard-exact-week-summary {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    margin: 4px 0 2px;
+    min-height: auto;
+  }
+
+  .dashboard-exact-week-summary .wk-short {
     display: none;
+  }
+
+  .dashboard-exact-week-summary .wk-full {
+    display: inline;
+  }
+
+  .dashboard-exact-week-summary-label {
+    font-size: 10px;
+  }
+  
+  .dashboard-exact-week-summary-value {
+    font-size: 12px;
+    margin-top: 0;
+  }
+  
+  .dashboard-exact-week-summary-trades {
+    font-size: 9px;
+    margin-top: 0;
   }
 
   .dashboard-exact-calendar-body {
@@ -1416,10 +1455,10 @@
     padding-bottom: 20px;
   }
 
-  /* Stats: compact 2×2 grid */
+  /* Stats: 1 column */
   .dashboard-exact-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .dashboard-exact-stat {
@@ -1448,7 +1487,9 @@
   }
 
   .dashboard-exact-stat-sub {
-    display: none;
+    display: block;
+    font-size: 11px;
+    margin-top: 4px;
   }
 
   .dashboard-exact-win-value {
@@ -1467,16 +1508,14 @@
   }
 
   .dashboard-exact-performance {
-    height: 260px;
+    height: 300px;
     padding: 12px 12px 8px;
   }
 
   .dashboard-exact-performance-head {
-    flex-direction: row;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 10px;
   }
 
   .dashboard-exact-performance-kicker {
@@ -1576,7 +1615,36 @@
   }
 
   .dashboard-exact-week-row > .dashboard-exact-week-summary {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    margin: 3px 0 2px;
+    min-height: auto;
+  }
+
+  .dashboard-exact-week-summary .wk-short {
     display: none;
+  }
+
+  .dashboard-exact-week-summary .wk-full {
+    display: inline;
+  }
+  
+  .dashboard-exact-week-summary-label {
+    font-size: 9px;
+  }
+  
+  .dashboard-exact-week-summary-value {
+    font-size: 11px;
+    margin-top: 0;
+  }
+  
+  .dashboard-exact-week-summary-trades {
+    font-size: 8px;
+    margin-top: 0;
   }
 
   .dashboard-exact-calendar-body {
@@ -1697,7 +1765,7 @@
   }
 
   .dashboard-exact-performance {
-    height: 240px;
+    height: 280px;
     padding: 10px 10px 6px;
   }
 
@@ -1807,7 +1875,7 @@
   }
 
   .dashboard-exact-performance {
-    height: 220px;
+    height: 260px;
   }
 
   .dashboard-exact-performance-value {
