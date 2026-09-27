@@ -1,11 +1,13 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import { SidebarProvider } from "@/contexts/SidebarContext";
-import { Search, Plus, Clock3, Bell, Moon, ChevronDown } from "lucide-react";
+import { Search, Plus, Clock3, Bell, Moon, ChevronDown, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSidebar } from "@/contexts/SidebarContext";
+import TopHeader from "@/components/TopHeader";
 
 const titleMap: Record<string, { title: string; subtitle?: string }> = {
   "/": { title: "Dashboard" },
@@ -21,6 +23,7 @@ const titleMap: Record<string, { title: string; subtitle?: string }> = {
 function ExactDashboardHeader() {
   const { user } = useAuth();
   const { settings } = useUserSettings();
+  const { setMobileOpen } = useSidebar();
   const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
   const [query, setQuery] = useState("");
@@ -37,6 +40,16 @@ function ExactDashboardHeader() {
   return (
     <header className="dashboard-exact-header">
       <div className="dashboard-exact-header-row">
+        {/* Mobile: hamburger menu button */}
+        <button
+          className="dashboard-exact-action dashboard-exact-mobile-menu lg:hidden"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          style={{ display: "none" }}
+        >
+          <Menu size={20} />
+        </button>
+
         <div className="dashboard-exact-title">
           <h1>Dashboard</h1>
           <p>{dateText}</p>
@@ -49,10 +62,10 @@ function ExactDashboardHeader() {
         </div>
 
         <div className="dashboard-exact-actions">
-          <button className="dashboard-exact-theme" aria-label="Theme"><Moon size={21} strokeWidth={1.8} /></button>
-          <button className="dashboard-exact-action dashboard-exact-add" onClick={() => navigate("/trades?add=true")} aria-label="Add trade"><Plus size={25} /></button>
-          <div className="dashboard-exact-time"><Clock3 size={20} strokeWidth={1.8} /><span>{timeText}</span></div>
-          <button className="dashboard-exact-action" aria-label="Notifications"><Bell size={21} strokeWidth={1.8} /></button>
+          <button className="dashboard-exact-theme" aria-label="Theme"><Moon size={19} strokeWidth={1.8} /></button>
+          <button className="dashboard-exact-action dashboard-exact-add" onClick={() => navigate("/trades?add=true")} aria-label="Add trade"><Plus size={22} /></button>
+          <div className="dashboard-exact-time dashboard-exact-time-hide-sm"><Clock3 size={18} strokeWidth={1.8} /><span>{timeText}</span></div>
+          <button className="dashboard-exact-action" aria-label="Notifications"><Bell size={19} strokeWidth={1.8} /></button>
           <div className="dashboard-exact-profile">
             <Avatar className="dashboard-exact-profile-avatar">
               <AvatarImage src={settings?.avatar_url ?? undefined} />
@@ -66,25 +79,34 @@ function ExactDashboardHeader() {
   );
 }
 
+function DashboardLayout() {
+  return (
+    <div className="dashboard-exact-page">
+      <ExactDashboardHeader />
+      <Outlet />
+    </div>
+  );
+}
+
 export default function AppLayout() {
   const location = useLocation();
   const meta = titleMap[location.pathname] ?? { title: "DaddyFXBook" };
   const today = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const isDashboard = location.pathname === "/";
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-background">
         <AppSidebar />
         <main className="flex-1 min-w-0 overflow-x-hidden">
-          {location.pathname === "/" ? (
-            <div className="dashboard-exact-page">
-              <ExactDashboardHeader />
-              <Outlet />
-            </div>
+          {isDashboard ? (
+            <DashboardLayout />
           ) : (
-            <div className="page-container space-y-4 md:space-y-6 overflow-guard">
-              <header className="sr-only"><h1>{meta.title}</h1><p>{meta.subtitle ?? today}</p></header>
-              <Outlet />
+            <div className="flex flex-col min-h-screen">
+              <TopHeader title={meta.title} subtitle={meta.subtitle ?? today} />
+              <div className="page-container flex-1 space-y-4 md:space-y-6 overflow-guard">
+                <Outlet />
+              </div>
             </div>
           )}
         </main>

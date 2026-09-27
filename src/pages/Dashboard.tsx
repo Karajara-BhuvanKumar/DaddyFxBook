@@ -180,18 +180,18 @@ export default function Dashboard() {
                       <stop offset={gradientOffset} stopColor="#fb4755" />
                     </linearGradient>
                     <linearGradient id="dashboardExactFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stopColor="#2388ff" stopOpacity={0.25} />
+                      <stop offset="0" stopColor="#2388ff" stopOpacity={0.22} />
                       <stop offset={gradientOffset} stopColor="#2388ff" stopOpacity={0} />
                       <stop offset={gradientOffset} stopColor="#fb4755" stopOpacity={0} />
-                      <stop offset="1" stopColor="#fb4755" stopOpacity={0.08} />
+                      <stop offset="1" stopColor="#fb4755" stopOpacity={0.07} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="rgba(255,255,255,0.025)" strokeDasharray="3 6" vertical={false} />
-                  <ReferenceLine y={0} stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#4a4f57", fontSize: 11, fontWeight: 500 }} dy={14} interval="preserveStartEnd" />
+                  <CartesianGrid stroke="rgba(255,255,255,0.03)" strokeDasharray="4 6" vertical={false} />
+                  <ReferenceLine y={0} stroke="rgba(255,255,255,0.07)" strokeDasharray="4 4" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#464b54", fontSize: 11, fontWeight: 500 }} dy={14} interval="preserveStartEnd" />
                   <YAxis orientation="right" axisLine={false} tickLine={false} width={52}
                     tick={({ x, y, payload }: any) => (
-                      <text x={x} y={y} dx={8} dy={4} fill={payload.value >= 0 ? "#258bff" : "#fb4755"} fontSize={11} fontWeight={500} opacity={0.85}>
+                      <text x={x} y={y} dx={8} dy={4} fill={payload.value >= 0 ? "#258bff" : "#fb4755"} fontSize={11} fontWeight={500} opacity={0.8}>
                         {payload.value >= 0 ? "" : "-"}${Math.abs(payload.value) >= 1000 ? (Math.abs(payload.value) / 1000).toFixed(1) + "K" : Math.abs(payload.value).toFixed(1).replace(".0", "")}
                       </text>
                     )}
@@ -210,8 +210,17 @@ export default function Dashboard() {
                       );
                     }}
                   />
-                  <Area type="monotone" dataKey="cumulative" stroke="url(#dashboardExactLine)" fill="url(#dashboardExactFill)" strokeWidth={2.5} dot={false}
-                    activeDot={{ r: 5, stroke: "#0d0d0d", strokeWidth: 2.5, fill: "#258bff" }} animationDuration={600} animationEasing="ease-out" />
+                  <Area
+                    type="monotoneX"
+                    dataKey="cumulative"
+                    stroke="url(#dashboardExactLine)"
+                    fill="url(#dashboardExactFill)"
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 5, stroke: "#0d0d0d", strokeWidth: 2.5, fill: "#258bff" }}
+                    animationDuration={600}
+                    animationEasing="ease-out"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -224,7 +233,12 @@ export default function Dashboard() {
           <div className="dashboard-exact-calendar-head">
             <div className="dashboard-exact-calendar-title">Monthly P&amp;L</div>
             <div className="dashboard-exact-calendar-head-right">
-              <div className="dashboard-exact-monthly">Monthly: <strong>{money(monthlyPnl)}</strong></div>
+              <div className="dashboard-exact-monthly">
+                Monthly:{" "}
+                <strong className={monthlyPnl > 0 ? "profit" : monthlyPnl < 0 ? "loss" : ""}>
+                  {money(monthlyPnl)}
+                </strong>
+              </div>
               <div className="dashboard-exact-calendar-nav">
                 <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))}><ChevronLeft size={16} /></button>
                 <span>{currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
@@ -235,12 +249,22 @@ export default function Dashboard() {
 
           <div className="dashboard-exact-week-head">
             {["M","T","W","T","F","S","S"].map((d, i) => <div key={i}>{d}</div>)}
-            <div>Weekly</div>
+            <div>Wk</div>
           </div>
 
           <div className="dashboard-exact-calendar-body">
             {Array.from({ length: weeks }).map((_, w) => {
               const wt = weeklyTotals[w];
+              // Weekly color is determined by the ACTUAL aggregated weekly PnL sum
+              const weeklyColorClass =
+                wt.trades === 0
+                  ? ""
+                  : wt.pnl > 0
+                  ? "weekly-profit"
+                  : wt.pnl < 0
+                  ? "weekly-loss"
+                  : "weekly-neutral";
+
               return (
                 <div className="dashboard-exact-week-row" key={w}>
                   {Array.from({ length: 7 }).map((__, d) => {
@@ -250,23 +274,42 @@ export default function Dashboard() {
                     }
                     const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
                     const value = calendarData[key];
-                    const positive = value ? value.pnl >= 0 : false;
+                    // Daily P&L: strictly positive = profit, strictly negative = loss, zero = neutral
+                    const isProfit = value ? value.pnl > 0 : false;
+                    const isLoss = value ? value.pnl < 0 : false;
                     const today = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                     return (
                       <div
                         key={d}
-                        className={`dashboard-exact-day ${value ? (positive ? "has-profit" : "has-loss") : ""} ${today ? "today" : ""}`}
+                        className={[
+                          "dashboard-exact-day",
+                          value ? (isProfit ? "has-profit" : isLoss ? "has-loss" : "has-neutral") : "",
+                          today ? "today" : "",
+                        ].filter(Boolean).join(" ")}
                         onClick={e => setSelectedDay({ date: key, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() })}
                       >
-                        <span className="dashboard-exact-day-num">{dayNum}{today && <span className="dashboard-exact-day-today-dot" />}</span>
-                        {value && <span className={`dashboard-exact-day-value ${positive ? "" : "loss-value"}`}>{money(value.pnl, Math.abs(value.pnl) >= 1000 ? 1 : 0)}</span>}
+                        <span className="dashboard-exact-day-num">
+                          {dayNum}
+                          {today && <span className="dashboard-exact-day-today-dot" />}
+                        </span>
+                        {value && (
+                          <span className={`dashboard-exact-day-value${isLoss ? " loss-value" : ""}`}>
+                            {money(value.pnl, Math.abs(value.pnl) >= 1000 ? 1 : 0)}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
-                  <div className={`dashboard-exact-week-summary ${wt.trades ? "active" : ""}`}>
-                    <span className="dashboard-exact-week-summary-label">Weekly</span>
-                    <span className={`dashboard-exact-week-summary-value ${wt.trades ? "" : "muted"}`}>{wt.trades ? money(wt.pnl, Math.abs(wt.pnl) >= 1000 ? 1 : 2) : "$0"}</span>
-                    <span className="dashboard-exact-week-summary-trades">{wt.trades ? `${wt.trades} Traded D...` : "Traded D..."}</span>
+
+                  {/* Weekly summary cell — color is driven by weeklyColorClass */}
+                  <div className={["dashboard-exact-week-summary", wt.trades ? `active ${weeklyColorClass}` : ""].filter(Boolean).join(" ")}>
+                    <span className="dashboard-exact-week-summary-label">Wk</span>
+                    <span className={`dashboard-exact-week-summary-value${wt.trades ? "" : " muted"}`}>
+                      {wt.trades ? money(wt.pnl, Math.abs(wt.pnl) >= 1000 ? 1 : 2) : "$0"}
+                    </span>
+                    <span className="dashboard-exact-week-summary-trades">
+                      {wt.trades ? `${wt.trades}T` : "—"}
+                    </span>
                   </div>
                 </div>
               );

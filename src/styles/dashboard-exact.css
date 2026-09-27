@@ -1,853 +1,974 @@
 /* ===========================================================
-   Dashboard — Polished Exact CSS
-   Matches reference visual proportions from app.tradefxbook.com
+   Dashboard — Fully Responsive, Polished CSS
+   Theme tokens consumed from index.css variables
    =========================================================== */
 
-/* ── Base Layout (≥1024px) ──────────────────────────────── */
-@media (min-width: 1024px) {
-  .dashboard-exact-shell {
-    min-height: 100vh;
-    width: 100%;
-    background: #020202;
-  }
+/* ── Shared theme-aware values ─────────────────────────────
+   These map to the CSS custom props defined in index.css:
+   --background  --card  --border  --foreground
+   --muted  --muted-foreground  --primary
+   --profit  --loss
+   ========================================================= */
 
-  .dashboard-exact-main {
-    width: 100%;
-    min-width: 0;
-  }
+/* ── Dashboard page shell ─────────────────────────────────── */
+.dashboard-exact-page {
+  width: 100%;
+  min-width: 0;
+}
 
-  .dashboard-exact-page {
-    width: 100%;
-    min-width: 0;
-  }
+/* ── Header ─────────────────────────────────────────────── */
+.dashboard-exact-header {
+  width: 100%;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--background) / 0.95);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-sizing: border-box;
+}
 
-  /* ── Header ─────────────────────────────────────────── */
-  .dashboard-exact-header {
-    width: 100%;
-    height: 64px;
-    padding: 0 24px;
-    border-bottom: 1px solid #1a1a1a;
-    background: rgba(2, 2, 2, 0.92);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-  }
+.dashboard-exact-header-row {
+  height: 64px;
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  align-items: center;
+  column-gap: 20px;
+}
 
-  .dashboard-exact-header-row {
-    height: 64px;
-    display: grid;
-    grid-template-columns: 220px 1fr auto;
-    align-items: center;
-    column-gap: 20px;
-  }
+.dashboard-exact-title {
+  min-width: 0;
+}
 
-  .dashboard-exact-title {
-    min-width: 0;
-  }
+.dashboard-exact-title h1 {
+  margin: 0;
+  color: hsl(var(--foreground));
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
 
-  .dashboard-exact-title h1 {
-    margin: 0;
-    color: #f5f7fa;
-    font-size: 20px;
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-  }
+.dashboard-exact-title p {
+  margin: 4px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 500;
+}
 
-  .dashboard-exact-title p {
-    margin: 4px 0 0;
-    color: #6a6f78;
-    font-size: 12px;
-    line-height: 1;
-    font-weight: 500;
-  }
+/* ── Search ──────────────────────────────────────────────── */
+.dashboard-exact-search {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 40px;
+  justify-self: center;
+}
 
-  /* ── Search ──────────────────────────────────────────── */
-  .dashboard-exact-search {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    height: 40px;
-    justify-self: center;
-  }
+.dashboard-exact-search input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  background: hsl(var(--input));
+  color: hsl(var(--foreground));
+  padding: 0 72px 0 40px;
+  outline: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
 
-  .dashboard-exact-search input {
-    width: 100%;
-    height: 40px;
-    box-sizing: border-box;
-    border: 1px solid #1e1e1e;
-    border-radius: 10px;
-    background: #0b0b0b;
-    color: #d7dbe1;
-    padding: 0 72px 0 40px;
-    outline: none;
-    font-size: 13px;
-    font-weight: 500;
-    transition: border-color 200ms ease, box-shadow 200ms ease;
-  }
+.dashboard-exact-search input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
 
-  .dashboard-exact-search input::placeholder {
-    color: #535861;
-  }
+.dashboard-exact-search input:focus {
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.08);
+}
 
-  .dashboard-exact-search input:focus {
-    border-color: #2a2a2a;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.06);
-  }
+.dashboard-exact-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--muted-foreground));
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
 
-  .dashboard-exact-search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #565b64;
-    width: 16px;
-    height: 16px;
-    pointer-events: none;
-  }
+.dashboard-exact-kbd {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 6px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  white-space: nowrap;
+}
 
-  .dashboard-exact-kbd {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-radius: 6px;
-    background: #181818;
-    color: #6f737a;
-    padding: 3px 8px;
-    font-size: 11px;
-    line-height: 1;
-    font-weight: 500;
-    border: 1px solid #1e1e1e;
-  }
+/* ── Header Actions ──────────────────────────────────────── */
+.dashboard-exact-actions {
+  display: flex;
+  justify-self: end;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+}
 
-  /* ── Header Actions ──────────────────────────────────── */
-  .dashboard-exact-actions {
-    display: flex;
-    justify-self: end;
-    align-items: center;
-    gap: 8px;
-    height: 40px;
-  }
+.dashboard-exact-action,
+.dashboard-exact-theme {
+  width: 40px;
+  height: 40px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  background: hsl(var(--input));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+  padding: 0;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+  flex-shrink: 0;
+}
 
-  .dashboard-exact-action,
-  .dashboard-exact-theme {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #1e1e1e;
-    border-radius: 10px;
-    background: #0b0b0b;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #8c9199;
-    padding: 0;
-    box-sizing: border-box;
-    cursor: pointer;
-    transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
-  }
+.dashboard-exact-action:hover,
+.dashboard-exact-theme:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
 
-  .dashboard-exact-action:hover,
-  .dashboard-exact-theme:hover {
-    background: #131313;
-    color: #e8eaee;
-    border-color: #282828;
-  }
+.dashboard-exact-add {
+  border: 0;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 2px 12px hsl(var(--primary) / 0.2);
+}
 
-  .dashboard-exact-add {
-    border: 0;
-    background: #0b71ff;
-    color: white;
-    box-shadow: 0 2px 12px rgba(11, 113, 255, 0.15);
-  }
+.dashboard-exact-add:hover {
+  background: hsl(var(--primary) / 0.85);
+}
 
-  .dashboard-exact-add:hover {
-    background: #1a7fff;
-  }
+.dashboard-exact-time {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  background: hsl(var(--input));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
 
-  .dashboard-exact-time {
-    height: 40px;
-    padding: 0 14px;
-    border: 1px solid #1e1e1e;
-    border-radius: 10px;
-    background: #0b0b0b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #8b9098;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
+.dashboard-exact-profile {
+  height: 40px;
+  padding: 4px 10px 4px 6px;
+  box-sizing: border-box;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  background: hsl(var(--input));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease;
+  flex-shrink: 0;
+}
 
-  .dashboard-exact-profile {
-    height: 40px;
-    padding: 4px 10px 4px 6px;
-    box-sizing: border-box;
-    border: 1px solid #1e1e1e;
-    border-radius: 10px;
-    background: #0b0b0b;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: background 180ms ease, border-color 180ms ease;
-  }
+.dashboard-exact-profile:hover {
+  background: hsl(var(--muted));
+}
 
-  .dashboard-exact-profile:hover {
-    background: #131313;
-    border-color: #282828;
-  }
+.dashboard-exact-profile-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(var(--primary));
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+}
 
-  .dashboard-exact-profile-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: #8d766a;
-    color: #f6f2ee;
-    display: grid;
-    place-items: center;
-    font-size: 13px;
-    font-weight: 600;
-  }
+.dashboard-exact-profile-chevron {
+  width: 14px;
+  height: 14px;
+  color: hsl(var(--muted-foreground));
+}
 
-  .dashboard-exact-profile-chevron {
-    width: 14px;
-    height: 14px;
-    color: #747981;
-  }
+/* ── Content Area ────────────────────────────────────────── */
+.dashboard-exact-content {
+  width: calc(100% - 48px);
+  margin: 20px auto 0;
+  padding-bottom: 32px;
+  box-sizing: border-box;
+  min-width: 0;
+}
 
-  /* ── Content Area ────────────────────────────────────── */
+/* ── Stat Cards ──────────────────────────────────────────── */
+.dashboard-exact-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-exact-stat {
+  box-sizing: border-box;
+  border: 1px solid hsl(var(--border));
+  border-radius: 14px;
+  background: hsl(var(--card));
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 110px;
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+}
+
+.dashboard-exact-stat:hover {
+  border-color: hsl(var(--border) / 1.5);
+  background: hsl(var(--card));
+  transform: translateY(-1px);
+}
+
+.dashboard-exact-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+}
+
+.dashboard-exact-stat-icon.blue {
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+
+.dashboard-exact-stat-icon.gold {
+  background: hsl(var(--warning) / 0.15);
+  color: hsl(var(--warning));
+}
+
+.dashboard-exact-stat-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-exact-stat-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 7px;
+  opacity: 0.7;
+}
+
+.dashboard-exact-stat-value {
+  color: hsl(var(--foreground));
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-exact-stat-value.blue {
+  color: hsl(var(--profit));
+}
+
+.dashboard-exact-stat-sub {
+  margin-top: 7px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-exact-stat-sub.blue {
+  color: hsl(var(--profit));
+  opacity: 0.8;
+}
+
+/* ── Win Rate Card ────────────────────────────────────────── */
+.dashboard-exact-win {
+  align-items: flex-start;
+}
+
+.dashboard-exact-win-body {
+  width: 100%;
+  min-width: 0;
+  padding-top: 2px;
+  flex: 1;
+}
+
+.dashboard-exact-win-value {
+  color: hsl(var(--foreground));
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-exact-progress {
+  width: 100%;
+  height: 5px;
+  margin-top: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: hsl(var(--border));
+}
+
+.dashboard-exact-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: hsl(var(--profit));
+  transition: width 400ms ease-out;
+  min-width: 2px;
+}
+
+/* ── Main Grid (Performance + Calendar) ─────────────────── */
+.dashboard-exact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+.dashboard-exact-panel {
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid hsl(var(--border));
+  border-radius: 14px;
+  background: hsl(var(--card));
+  transition: border-color 200ms ease;
+}
+
+/* ── Performance Panel ────────────────────────────────────── */
+.dashboard-exact-performance {
+  padding: 24px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  height: 460px;
+}
+
+.dashboard-exact-performance-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-exact-performance-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.dashboard-exact-performance-metric {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.dashboard-exact-performance-value {
+  color: hsl(var(--profit));
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-exact-performance-change {
+  height: 34px;
+  min-width: 90px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 18px;
+  border: 1px solid hsl(var(--primary) / 0.25);
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Timeframe Range Picker ──────────────────────────────── */
+.dashboard-exact-range {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.dashboard-exact-range button {
+  height: 28px;
+  min-width: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.dashboard-exact-range button:hover {
+  color: hsl(var(--foreground));
+}
+
+.dashboard-exact-range button.active {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.15);
+}
+
+/* ── Chart Container ─────────────────────────────────────── */
+.dashboard-exact-chart {
+  flex: 1;
+  min-height: 0;
+  margin: 20px -8px -4px;
+  overflow: hidden;
+}
+
+/* ── Calendar Panel ──────────────────────────────────────── */
+.dashboard-exact-calendar {
+  padding: 20px 16px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-exact-calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-exact-calendar-title {
+  color: hsl(var(--foreground));
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-exact-calendar-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-exact-monthly {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-exact-monthly strong {
+  font-weight: 800;
+}
+
+.dashboard-exact-monthly strong.profit {
+  color: hsl(var(--profit));
+}
+
+.dashboard-exact-monthly strong.loss {
+  color: hsl(var(--loss));
+}
+
+.dashboard-exact-calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dashboard-exact-calendar-nav button {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.dashboard-exact-calendar-nav button:hover {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.dashboard-exact-calendar-nav span {
+  min-width: 108px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── Calendar Week Header ────────────────────────────────── */
+.dashboard-exact-week-head {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 58px;
+  gap: 4px;
+  margin-top: 14px;
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  padding-bottom: 4px;
+  opacity: 0.6;
+  letter-spacing: 0.04em;
+}
+
+/* ── Calendar Body ───────────────────────────────────────── */
+.dashboard-exact-calendar-body {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+}
+
+.dashboard-exact-week-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 58px;
+  gap: 4px;
+}
+
+/* ── Calendar Day Cell ───────────────────────────────────── */
+.dashboard-exact-day {
+  position: relative;
+  min-height: 52px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  padding: 6px 5px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+  min-width: 0;
+}
+
+.dashboard-exact-day:hover {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  transform: scale(1.02);
+}
+
+.dashboard-exact-day.empty {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+.dashboard-exact-day.has-profit {
+  border-color: hsl(var(--profit) / 0.3);
+  background: hsl(var(--profit) / 0.06);
+}
+
+.dashboard-exact-day.has-profit:hover {
+  background: hsl(var(--profit) / 0.1);
+  border-color: hsl(var(--profit) / 0.4);
+}
+
+.dashboard-exact-day.has-loss {
+  border-color: hsl(var(--loss) / 0.3);
+  background: hsl(var(--loss) / 0.06);
+}
+
+.dashboard-exact-day.has-loss:hover {
+  background: hsl(var(--loss) / 0.1);
+  border-color: hsl(var(--loss) / 0.4);
+}
+
+.dashboard-exact-day.has-neutral {
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted));
+}
+
+.dashboard-exact-day.today {
+  border-color: hsl(var(--primary) / 0.6);
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.1) inset;
+}
+
+/* ── Day Number ──────────────────────────────────────────── */
+.dashboard-exact-day-num {
+  position: absolute;
+  left: 5px;
+  top: 4px;
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.7;
+}
+
+.dashboard-exact-day.today .dashboard-exact-day-num {
+  color: hsl(var(--primary));
+  font-weight: 700;
+  opacity: 1;
+}
+
+.dashboard-exact-day-today-dot {
+  display: block;
+  width: 3px;
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+}
+
+/* ── Day P&L Value ───────────────────────────────────────── */
+.dashboard-exact-day-value {
+  color: hsl(var(--profit));
+  font-size: clamp(9px, 1.1vw, 12px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+}
+
+.dashboard-exact-day-value.loss-value {
+  color: hsl(var(--loss));
+}
+
+/* ── Weekly Summary Cell ─────────────────────────────────── */
+.dashboard-exact-week-summary {
+  min-height: 52px;
+  border-radius: 9px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  padding: 5px 3px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  transition: background 150ms ease, border-color 150ms ease;
+  min-width: 0;
+}
+
+/* Weekly summary: active with no color class = neutral */
+.dashboard-exact-week-summary.active {
+  border-color: hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+/* Weekly summary: PROFIT state (weekly pnl > 0) */
+.dashboard-exact-week-summary.active.weekly-profit {
+  border-color: hsl(var(--profit) / 0.35);
+  background: hsl(var(--profit) / 0.07);
+}
+
+/* Weekly summary: LOSS state (weekly pnl < 0) */
+.dashboard-exact-week-summary.active.weekly-loss {
+  border-color: hsl(var(--loss) / 0.35);
+  background: hsl(var(--loss) / 0.07);
+}
+
+/* Weekly summary: NEUTRAL state (weekly pnl = 0, has trades) */
+.dashboard-exact-week-summary.active.weekly-neutral {
+  border-color: hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+.dashboard-exact-week-summary-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.dashboard-exact-week-summary-value {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 2px;
+  /* Default color for active without profit/loss class */
+  color: hsl(var(--foreground));
+}
+
+/* Color the weekly value based on P&L direction */
+.dashboard-exact-week-summary.weekly-profit .dashboard-exact-week-summary-value {
+  color: hsl(var(--profit));
+}
+
+.dashboard-exact-week-summary.weekly-loss .dashboard-exact-week-summary-value {
+  color: hsl(var(--loss));
+}
+
+.dashboard-exact-week-summary-value.muted {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.5;
+}
+
+.dashboard-exact-week-summary-trades {
+  margin-top: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: hsl(var(--muted-foreground));
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+/* ── Legend ──────────────────────────────────────────────── */
+.dashboard-exact-legend {
+  margin-top: 10px;
+  padding-top: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.dashboard-exact-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-exact-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--profit));
+  display: block;
+  flex-shrink: 0;
+}
+
+.dashboard-exact-legend-dot.loss {
+  background: hsl(var(--loss));
+}
+
+/* ── Loading State ───────────────────────────────────────── */
+.dashboard-exact-loading {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Empty State ─────────────────────────────────────────── */
+.dashboard-exact-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.6;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────── */
+.dashboard-exact-tooltip {
+  min-width: 150px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 8px 28px hsl(0 0% 0% / 0.35);
+}
+
+.dashboard-exact-tooltip > div {
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.dashboard-exact-tooltip strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-exact-tooltip strong.profit { color: hsl(var(--profit)); }
+.dashboard-exact-tooltip strong.loss { color: hsl(var(--loss)); }
+
+.dashboard-exact-tooltip small {
+  display: block;
+  margin-top: 5px;
+  color: hsl(var(--muted-foreground));
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  opacity: 0.6;
+}
+
+/* ==========================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================== */
+
+/* ── ≥1440px: Full Desktop ─────────────────────────────── */
+@media (min-width: 1440px) {
   .dashboard-exact-content {
-    width: calc(100% - 48px);
-    margin: 20px auto 0;
-    padding-bottom: 24px;
-    box-sizing: border-box;
+    width: calc(100% - 64px);
   }
 
-  /* ── Stat Cards ──────────────────────────────────────── */
   .dashboard-exact-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+    gap: 18px;
   }
 
   .dashboard-exact-stat {
-    height: 110px;
-    box-sizing: border-box;
-    border: 1px solid #1c1c1c;
-    border-radius: 14px;
-    background: #090909;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-    transition: border-color 200ms ease, background 200ms ease;
-  }
-
-  .dashboard-exact-stat:hover {
-    border-color: #252525;
-    background: #0c0c0c;
-  }
-
-  .dashboard-exact-stat-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
-  }
-
-  .dashboard-exact-stat-icon.blue {
-    background: #071c31;
-    color: #1685ff;
-  }
-
-  .dashboard-exact-stat-icon.gold {
-    background: #2f2507;
-    color: #e0aa00;
-  }
-
-  .dashboard-exact-stat-body {
-    min-width: 0;
-  }
-
-  .dashboard-exact-stat-label {
-    color: #5d6168;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    line-height: 1;
-    margin-bottom: 7px;
+    min-height: 120px;
+    padding: 22px;
   }
 
   .dashboard-exact-stat-value {
-    color: #f4f5f7;
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard-exact-stat-value.blue {
-    color: #258bff;
-  }
-
-  .dashboard-exact-stat-sub {
-    margin-top: 7px;
-    color: #4f5359;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1;
-    white-space: nowrap;
-  }
-
-  .dashboard-exact-stat-sub.blue {
-    color: #1386ff;
-  }
-
-  /* ── Win Rate Card ──────────────────────────────────── */
-  .dashboard-exact-win {
-    align-items: flex-start;
-    gap: 14px;
-  }
-
-  .dashboard-exact-win-body {
-    width: 100%;
-    min-width: 0;
-    padding-top: 2px;
-  }
-
-  .dashboard-exact-win-value {
-    color: #f4f5f7;
     font-size: 26px;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard-exact-progress {
-    width: 100%;
-    height: 5px;
-    margin-top: 14px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: #1e1e1e;
-  }
-
-  .dashboard-exact-progress > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: #0c9dff;
-    transition: width 400ms ease-out;
-  }
-
-  /* ── Main Grid (Performance + Calendar) ─────────────── */
-  .dashboard-exact-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    gap: 16px;
-    margin-top: 16px;
-  }
-
-  .dashboard-exact-panel {
-    min-width: 0;
-    height: 460px;
-    box-sizing: border-box;
-    border: 1px solid #1c1c1c;
-    border-radius: 14px;
-    background: #070707;
-    transition: border-color 200ms ease;
-  }
-
-  /* ── Performance Panel ──────────────────────────────── */
-  .dashboard-exact-performance {
-    padding: 24px 24px 16px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .dashboard-exact-performance-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
-
-  .dashboard-exact-performance-kicker {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    color: #656a72;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-
-  .dashboard-exact-performance-metric {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
   }
 
   .dashboard-exact-performance-value {
-    color: #258bff;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
+    font-size: 34px;
   }
 
-  .dashboard-exact-performance-change {
-    height: 34px;
-    min-width: 100px;
-    box-sizing: border-box;
-    padding: 0 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    border-radius: 18px;
-    border: 1px solid #0e3b6c;
-    background: #071c31;
-    color: #1588ff;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── Timeframe Range Picker ─────────────────────────── */
-  .dashboard-exact-range {
-    display: inline-flex;
-    align-items: center;
-    height: 36px;
-    padding: 0 4px;
-    box-sizing: border-box;
-    background: #111111;
-    border: 1px solid #232323;
-    border-radius: 10px;
-  }
-
-  .dashboard-exact-range button {
-    height: 28px;
-    min-width: 38px;
-    padding: 0 10px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: #83878d;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 150ms ease, color 150ms ease;
-  }
-
-  .dashboard-exact-range button:hover {
-    color: #b0b4ba;
-  }
-
-  .dashboard-exact-range button.active {
-    background: #262626;
-    color: #f1f1f1;
-  }
-
-  /* ── Chart Container ────────────────────────────────── */
-  .dashboard-exact-chart {
-    flex: 1;
-    min-height: 0;
-    margin: 20px -8px -4px;
-  }
-
-  /* ── Calendar Panel ─────────────────────────────────── */
-  .dashboard-exact-calendar {
-    padding: 20px 16px 14px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .dashboard-exact-calendar-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .dashboard-exact-calendar-title {
-    color: #f5f6f8;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-
-  .dashboard-exact-calendar-head-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .dashboard-exact-monthly {
-    color: #6d727a;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard-exact-monthly strong {
-    color: #1685ff;
-    font-weight: 800;
-  }
-
-  .dashboard-exact-calendar-nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .dashboard-exact-calendar-nav button {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    border: 1px solid #222222;
-    background: #131313;
-    color: #70757c;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    padding: 0;
-    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
-  }
-
-  .dashboard-exact-calendar-nav button:hover {
-    background: #1a1a1a;
-    color: #c0c4ca;
-    border-color: #303030;
-  }
-
-  .dashboard-exact-calendar-nav span {
-    min-width: 110px;
-    color: #6d727a;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* ── Calendar Week Header ──────────────────────────── */
-  .dashboard-exact-week-head {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr) 62px;
-    gap: 4px;
-    margin-top: 16px;
-    color: #545961;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
-    text-align: center;
-    padding-bottom: 4px;
-  }
-
-  /* ── Calendar Body ──────────────────────────────────── */
-  .dashboard-exact-calendar-body {
-    margin-top: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .dashboard-exact-week-row {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr) 62px;
-    gap: 4px;
-  }
-
-  /* ── Calendar Day Cell ──────────────────────────────── */
-  .dashboard-exact-day {
-    position: relative;
-    aspect-ratio: auto;
-    min-height: 54px;
-    box-sizing: border-box;
-    border-radius: 10px;
-    border: 1px solid #1a1a1a;
-    background: #0c0c0c;
-    padding: 7px 6px 5px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #dce0e5;
-    cursor: pointer;
-    overflow: hidden;
-    transition: background 150ms ease, border-color 150ms ease;
-  }
-
-  .dashboard-exact-day:hover {
-    background: #111111;
-    border-color: #2a2a2a;
-  }
-
-  .dashboard-exact-day.empty {
-    border-color: transparent;
-    background: transparent;
-    cursor: default;
-  }
-
-  .dashboard-exact-day.empty:hover {
-    background: transparent;
-    border-color: transparent;
-  }
-
-  .dashboard-exact-day.has-profit {
-    border-color: #0e2f52;
-    background: #08111c;
-  }
-
-  .dashboard-exact-day.has-profit:hover {
-    background: #0b1524;
-    border-color: #123c64;
-  }
-
-  .dashboard-exact-day.has-loss {
-    border-color: #3a1519;
-    background: #150a0c;
-  }
-
-  .dashboard-exact-day.has-loss:hover {
-    background: #1c0e11;
-    border-color: #4a1c21;
-  }
-
-  .dashboard-exact-day.today {
-    border-color: #0a68e0;
-    box-shadow: 0 0 0 1px rgba(10, 104, 224, 0.12) inset;
-  }
-
-  /* ── Day Number ─────────────────────────────────────── */
-  .dashboard-exact-day-num {
-    position: absolute;
-    left: 6px;
-    top: 5px;
-    color: #4a4f57;
-    font-size: 10px;
-    font-weight: 500;
-    line-height: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .dashboard-exact-day.today .dashboard-exact-day-num {
-    color: #0b8cff;
-    font-weight: 700;
-  }
-
-  .dashboard-exact-day-today-dot {
-    display: block;
-    width: 3px;
-    height: 3px;
-    margin-top: 3px;
-    border-radius: 50%;
-    background: #0b8cff;
-  }
-
-  /* ── Day P&L Value ──────────────────────────────────── */
-  .dashboard-exact-day-value {
-    color: #1487ff;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    margin-top: 2px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard-exact-day-value.loss-value {
-    color: #fb4755;
-  }
-
-  /* ── Weekly Summary Cell ────────────────────────────── */
-  .dashboard-exact-week-summary {
-    min-height: 54px;
-    border-radius: 10px;
-    border: 1px solid #1a1a1a;
-    background: #0a0a0a;
-    padding: 6px 4px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    overflow: hidden;
-    transition: background 150ms ease, border-color 150ms ease;
-  }
-
-  .dashboard-exact-week-summary.active {
-    border-color: #0e2f52;
-    background: #081019;
-  }
-
-  .dashboard-exact-week-summary-label {
-    color: #555961;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-
-  .dashboard-exact-week-summary-value {
-    margin-top: 4px;
-    color: #1487ff;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard-exact-week-summary-value.muted {
-    color: #555961;
-  }
-
-  .dashboard-exact-week-summary-trades {
-    margin-top: 3px;
-    max-width: 56px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: #555961;
-    font-size: 7px;
-    font-weight: 600;
-    line-height: 1;
-  }
-
-  /* ── Legend ──────────────────────────────────────────── */
-  .dashboard-exact-legend {
-    margin-top: auto;
-    padding-top: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    color: #5f646b;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .dashboard-exact-legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .dashboard-exact-legend-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #1989ff;
-    display: block;
-  }
-
-  .dashboard-exact-legend-dot.loss {
-    background: #fb4755;
-  }
-
-  /* ── Loading State ──────────────────────────────────── */
-  .dashboard-exact-loading {
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    color: #62676f;
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  /* ── Empty State ────────────────────────────────────── */
-  .dashboard-exact-empty {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #4a4f57;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  /* ── Tooltip ────────────────────────────────────────── */
-  .dashboard-exact-tooltip {
-    min-width: 160px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: #0a0a0a;
-    border: 1px solid #1e2a3a;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
-  }
-
-  .dashboard-exact-tooltip > div {
-    color: #8b9199;
-    font-size: 10px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .dashboard-exact-tooltip strong {
-    display: block;
-    font-size: 20px;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard-exact-tooltip strong.profit { color: #258bff; }
-  .dashboard-exact-tooltip strong.loss { color: #fb4755; }
-
-  .dashboard-exact-tooltip small {
-    display: block;
-    margin-top: 5px;
-    color: #59606a;
-    font-size: 8px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .12em;
+  .dashboard-exact-performance {
+    height: 480px;
   }
 }
 
-/* ── Medium Screens (1024–1279px) ────────────────────── */
-@media (max-width: 1279px) {
-  .dashboard-exact-search {
-    width: 100%;
-    max-width: 100%;
+/* ── 1280–1439px ─────────────────────────────────────────── */
+@media (max-width: 1439px) and (min-width: 1280px) {
+  .dashboard-exact-content {
+    width: calc(100% - 48px);
   }
 
   .dashboard-exact-header-row {
-    grid-template-columns: 200px minmax(280px, 1fr) auto;
+    grid-template-columns: 200px 1fr auto;
     column-gap: 16px;
+  }
+
+  .dashboard-exact-performance {
+    height: 450px;
+  }
+}
+
+/* ── 1024–1279px: Medium Desktop ────────────────────────── */
+@media (max-width: 1279px) and (min-width: 1024px) {
+  .dashboard-exact-header-row {
+    grid-template-columns: 180px 1fr auto;
+    column-gap: 14px;
+  }
+
+  .dashboard-exact-search {
+    max-width: 100%;
   }
 
   .dashboard-exact-actions {
@@ -870,16 +991,17 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-exact-panel {
-    height: auto;
-    min-height: 440px;
+  .dashboard-exact-performance {
+    height: 380px;
+  }
+
+  .dashboard-exact-day-value {
+    font-size: 11px;
   }
 }
 
-/* ── Small Screens (<1024px) ─────────────────────────── */
+/* ── <1024px: Tablet & Mobile ────────────────────────────── */
 @media (max-width: 1023px) {
-  .dashboard-exact-shell,
-  .dashboard-exact-main,
   .dashboard-exact-page {
     min-width: 0;
     width: 100%;
@@ -890,9 +1012,10 @@
     margin-top: 16px;
   }
 
+  /* Header collapses to a flex row on tablet/mobile */
   .dashboard-exact-header {
     height: auto;
-    padding: 0 12px;
+    padding: 0 16px;
   }
 
   .dashboard-exact-header-row {
@@ -901,11 +1024,13 @@
     display: flex;
     flex-wrap: wrap;
     padding: 10px 0;
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
   }
 
   .dashboard-exact-title {
     flex: 1;
+    min-width: 0;
   }
 
   .dashboard-exact-title h1 {
@@ -916,32 +1041,34 @@
     order: 3;
     width: 100%;
     max-width: 100%;
+    height: 38px;
+    flex-shrink: 0;
+  }
+
+  .dashboard-exact-search input {
+    height: 38px;
   }
 
   .dashboard-exact-actions {
     flex: 0 0 auto;
     margin-left: auto;
+    gap: 6px;
   }
 
   .dashboard-exact-theme,
-  .dashboard-exact-action,
-  .dashboard-exact-time,
-  .dashboard-exact-profile {
-    height: 38px;
-  }
-
-  .dashboard-exact-action,
-  .dashboard-exact-theme {
-    width: 38px;
+  .dashboard-exact-action {
+    width: 36px;
+    height: 36px;
   }
 
   .dashboard-exact-time {
-    width: auto;
-    padding: 0 10px;
+    height: 36px;
     font-size: 12px;
+    padding: 0 10px;
   }
 
   .dashboard-exact-profile {
+    height: 36px;
     padding: 3px 8px 3px 5px;
   }
 
@@ -949,8 +1076,9 @@
     display: none;
   }
 
+  /* Stats: 2-col on tablet */
   .dashboard-exact-stats {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -968,18 +1096,20 @@
     font-size: 22px;
   }
 
+  /* Grid stacks to single column */
   .dashboard-exact-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
 
-  .dashboard-exact-panel {
-    height: auto;
-    min-height: 400px;
+  .dashboard-exact-performance {
+    height: 360px;
   }
 
-  .dashboard-exact-performance {
-    padding: 18px 16px 12px;
+  .dashboard-exact-performance-head {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
   }
 
   .dashboard-exact-performance-value {
@@ -990,41 +1120,105 @@
     padding: 16px 12px 12px;
   }
 
-  /* Hide weekly summary column on small screens */
-  .dashboard-exact-week-head,
-  .dashboard-exact-week-row {
-    grid-template-columns: repeat(7, 1fr);
+  /* Keep weekly column on tablet but smaller */
+  .dashboard-exact-week-head {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) 50px;
+    font-size: 10px;
   }
 
-  .dashboard-exact-week-head > :last-child,
-  .dashboard-exact-week-row > :last-child {
-    display: none;
+  .dashboard-exact-week-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) 50px;
+  }
+
+  .dashboard-exact-day {
+    min-height: 46px;
+    padding: 5px 4px 3px;
+  }
+
+  .dashboard-exact-day-value {
+    font-size: 10px;
+  }
+
+  .dashboard-exact-week-summary {
+    min-height: 46px;
+  }
+
+  .dashboard-exact-week-summary-value {
+    font-size: 10px;
   }
 }
 
-/* ── Mobile (<640px) ─────────────────────────────────── */
-@media (max-width: 640px) {
+/* ── <768px: Small Tablet ─────────────────────────────────── */
+@media (max-width: 767px) {
+  .dashboard-exact-content {
+    width: calc(100% - 16px);
+    margin-top: 12px;
+  }
+
   .dashboard-exact-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
   .dashboard-exact-stat {
     min-height: 88px;
+    padding: 12px;
+    gap: 10px;
   }
 
-  .dashboard-exact-calendar {
-    overflow-x: auto;
+  .dashboard-exact-stat-icon {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border-radius: 10px;
   }
 
-  .dashboard-exact-calendar-body,
+  .dashboard-exact-stat-value {
+    font-size: 18px;
+  }
+
+  .dashboard-exact-stat-label {
+    font-size: 10px;
+  }
+
+  .dashboard-exact-stat-sub {
+    font-size: 11px;
+  }
+
+  .dashboard-exact-performance {
+    height: 320px;
+  }
+
+  .dashboard-exact-performance-value {
+    font-size: 24px;
+  }
+
+  /* Calendar: hide weekly column on small tablet, simplify */
   .dashboard-exact-week-head {
-    min-width: 440px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    font-size: 10px;
+  }
+
+  .dashboard-exact-week-head > :last-child {
+    display: none;
+  }
+
+  .dashboard-exact-week-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .dashboard-exact-week-row > .dashboard-exact-week-summary {
+    display: none;
+  }
+
+  /* Show weekly summary as a full-width row below each week */
+  .dashboard-exact-week-row::after {
+    display: none; /* we rely on the weekly-row-mobile wrapper below */
   }
 
   .dashboard-exact-day {
-    min-height: 48px;
-    padding: 5px 4px 3px;
+    min-height: 44px;
+    border-radius: 8px;
   }
 
   .dashboard-exact-day-num {
@@ -1032,21 +1226,206 @@
   }
 
   .dashboard-exact-day-value {
-    font-size: 10px;
+    font-size: 9px;
   }
 }
 
-/* ── Recharts Overrides ──────────────────────────────── */
+/* ── <640px: Mobile ───────────────────────────────────────── */
+@media (max-width: 639px) {
+  .dashboard-exact-content {
+    width: calc(100% - 12px);
+    margin-top: 10px;
+    padding-bottom: 24px;
+  }
+
+  /* Stats: 2-column on mobile (don't stack to 1, keeps proportions) */
+  .dashboard-exact-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .dashboard-exact-stat {
+    min-height: 80px;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .dashboard-exact-stat-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 8px;
+  }
+
+  .dashboard-exact-stat-value {
+    font-size: 16px;
+  }
+
+  .dashboard-exact-stat-sub {
+    display: none;
+  }
+
+  .dashboard-exact-performance {
+    height: 280px;
+  }
+
+  .dashboard-exact-performance-value {
+    font-size: 22px;
+  }
+
+  .dashboard-exact-performance-change {
+    height: 28px;
+    min-width: 70px;
+    font-size: 12px;
+    padding: 0 8px;
+  }
+
+  .dashboard-exact-calendar-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-exact-calendar-head-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Calendar grid: 7 columns, hide weekly summary */
+  .dashboard-exact-week-head {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+    font-size: 9px;
+  }
+
+  .dashboard-exact-week-head > :last-child {
+    display: none;
+  }
+
+  .dashboard-exact-week-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  /* Hide weekly summary column cells */
+  .dashboard-exact-week-row > .dashboard-exact-week-summary {
+    display: none;
+  }
+
+  .dashboard-exact-day {
+    min-height: 40px;
+    border-radius: 6px;
+    padding: 3px 2px 2px;
+  }
+
+  .dashboard-exact-day-num {
+    font-size: 8px;
+    left: 3px;
+    top: 3px;
+  }
+
+  .dashboard-exact-day-value {
+    font-size: 8px;
+    letter-spacing: -0.03em;
+  }
+}
+
+/* ── <480px: Narrow Mobile ────────────────────────────────── */
+@media (max-width: 479px) {
+  .dashboard-exact-actions .dashboard-exact-time {
+    display: none;
+  }
+
+  .dashboard-exact-stat-value {
+    font-size: 14px;
+  }
+
+  .dashboard-exact-stat-label {
+    font-size: 9px;
+  }
+
+  .dashboard-exact-performance {
+    height: 250px;
+  }
+
+  .dashboard-exact-day {
+    min-height: 36px;
+  }
+
+  .dashboard-exact-day-value {
+    font-size: 7px;
+  }
+
+  .dashboard-exact-day-num {
+    font-size: 7px;
+  }
+}
+
+/* ── <390px: Very Narrow ──────────────────────────────────── */
+@media (max-width: 389px) {
+  .dashboard-exact-content {
+    width: calc(100% - 8px);
+  }
+
+  .dashboard-exact-stats {
+    gap: 4px;
+  }
+
+  .dashboard-exact-stat {
+    padding: 8px;
+    gap: 6px;
+    min-height: 72px;
+  }
+
+  .dashboard-exact-stat-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+  }
+
+  .dashboard-exact-stat-value {
+    font-size: 13px;
+  }
+
+  .dashboard-exact-performance {
+    height: 230px;
+  }
+
+  .dashboard-exact-day {
+    min-height: 32px;
+  }
+}
+
+/* ── Mobile dashboard header extras ─────────────────────── */
+@media (max-width: 1023px) {
+  .dashboard-exact-mobile-menu {
+    display: inline-flex !important;
+    order: -1;
+  }
+
+  .dashboard-exact-header-row {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+}
+
+/* Hide clock on very small screens */
+@media (max-width: 479px) {
+  .dashboard-exact-time-hide-sm {
+    display: none !important;
+  }
+}
+
+/* ── Recharts Global Overrides ───────────────────────────── */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   shape-rendering: crispEdges;
 }
 
 .recharts-active-dot circle {
-  filter: drop-shadow(0 0 4px rgba(37, 139, 255, 0.4));
+  filter: none;
 }
 
 .recharts-tooltip-cursor {
-  stroke: rgba(255, 255, 255, 0.06) !important;
+  stroke: hsl(var(--border)) !important;
   stroke-width: 1px !important;
 }
