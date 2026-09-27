@@ -1565,8 +1565,26 @@
     margin: 2px 0 4px;
     min-height: auto;
     border-radius: 8px;
-    background: #141414 !important; /* solid background */
+    background: #141414; /* solid background fallback */
     border: none !important;
+  }
+
+  .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-profit {
+    background: hsl(var(--profit) / 0.15) !important;
+  }
+  .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-profit .dashboard-exact-week-summary-label,
+  .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-profit .dashboard-exact-week-summary-trades {
+    color: hsl(var(--profit));
+    opacity: 0.8;
+  }
+
+  .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-loss {
+    background: hsl(var(--loss) / 0.15) !important;
+  }
+  .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-loss .dashboard-exact-week-summary-label,
+  .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-loss .dashboard-exact-week-summary-trades {
+    color: hsl(var(--loss));
+    opacity: 0.8;
   }
 
   .dashboard-exact-week-summary .wk-short {
