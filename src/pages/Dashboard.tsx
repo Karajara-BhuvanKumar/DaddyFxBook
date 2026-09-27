@@ -210,7 +210,7 @@ export default function Dashboard() {
                       );
                     }}
                   />
-                  <Area type="monotone" dataKey="cumulative" stroke="url(#dashboardExactLine)" fill="url(#dashboardExactFill)" strokeWidth={3} dot={false}
+                  <Area type="stepAfter" dataKey="cumulative" stroke="url(#dashboardExactLine)" fill="url(#dashboardExactFill)" strokeWidth={3} dot={false}
                     activeDot={{ r: 5, stroke: "#080808", strokeWidth: 3 }} animationDuration={800} />
                 </AreaChart>
               </ResponsiveContainer>
