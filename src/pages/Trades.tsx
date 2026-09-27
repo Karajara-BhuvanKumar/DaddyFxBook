@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import TradeCard from "@/components/TradeCard";
 import EditTradeModal from "@/components/EditTradeModal";
 import ShareTradeModal from "@/components/ShareTradeModal";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
 
 /** Return current local time as YYYY-MM-DDThh:mm for datetime-local inputs. */
 function localNow(): string {
@@ -30,6 +33,89 @@ export default function Trades() {
     openDate: localNow(),
     closeDate: localNow(),
   });
+
+  const [filterDirection, setFilterDirection] = useState({ long: true, short: true });
+  const [filterOutcome, setFilterOutcome] = useState({ profit: true, loss: true });
+  const [filterDatePreset, setFilterDatePreset] = useState('all');
+  const [filterDateRange, setFilterDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [selectedSymbols, setSelectedSymbols] = useState<string[] | null>(null);
+  const [sortOrder, setSortOrder] = useState('newest');
+
+  const distinctSymbols = useMemo(() => Array.from(new Set(trades.map(t => t.symbol))).sort(), [trades]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (!filterDirection.long || !filterDirection.short) count++;
+    if (!filterOutcome.profit || !filterOutcome.loss) count++;
+    if (filterDatePreset !== 'all') count++;
+    if (selectedSymbols !== null && selectedSymbols.length < distinctSymbols.length) count++;
+    return count;
+  }, [filterDirection, filterOutcome, filterDatePreset, selectedSymbols, distinctSymbols]);
+
+  const resetFilters = () => {
+    setFilterDirection({ long: true, short: true });
+    setFilterOutcome({ profit: true, loss: true });
+    setFilterDatePreset('all');
+    setFilterDateRange({});
+    setSelectedSymbols(null);
+  };
+
+  const filteredTrades = useMemo(() => {
+    let result = trades.filter(t => {
+      const isLong = t.direction === 'Long';
+      if (!filterDirection.long && isLong) return false;
+      if (!filterDirection.short && !isLong) return false;
+
+      const isProfit = Number(t.pnl) >= 0;
+      if (!filterOutcome.profit && isProfit) return false;
+      if (!filterOutcome.loss && !isProfit) return false;
+
+      if (filterDatePreset !== 'all') {
+        const closeDate = new Date(t.close_time);
+        closeDate.setHours(0, 0, 0, 0);
+
+        if (filterDatePreset === '7d') {
+          const limit = new Date();
+          limit.setDate(limit.getDate() - 7);
+          limit.setHours(0, 0, 0, 0);
+          if (closeDate < limit) return false;
+        } else if (filterDatePreset === '30d') {
+          const limit = new Date();
+          limit.setDate(limit.getDate() - 30);
+          limit.setHours(0, 0, 0, 0);
+          if (closeDate < limit) return false;
+        } else if (filterDatePreset === 'month') {
+          const today = new Date();
+          if (closeDate.getMonth() !== today.getMonth() || closeDate.getFullYear() !== today.getFullYear()) return false;
+        } else if (filterDatePreset === 'custom' && filterDateRange.from) {
+          const from = new Date(filterDateRange.from);
+          from.setHours(0, 0, 0, 0);
+          if (closeDate < from) return false;
+          if (filterDateRange.to) {
+            const to = new Date(filterDateRange.to);
+            to.setHours(23, 59, 59, 999);
+            if (new Date(t.close_time) > to) return false;
+          }
+        }
+      }
+
+      if (selectedSymbols !== null && !selectedSymbols.includes(t.symbol)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    result = [...result].sort((a, b) => {
+      if (sortOrder === 'newest') return new Date(b.close_time).getTime() - new Date(a.close_time).getTime();
+      if (sortOrder === 'oldest') return new Date(a.close_time).getTime() - new Date(b.close_time).getTime();
+      if (sortOrder === 'highest-pnl') return Number(b.pnl) - Number(a.pnl);
+      if (sortOrder === 'lowest-pnl') return Number(a.pnl) - Number(b.pnl);
+      return 0;
+    });
+
+    return result;
+  }, [trades, filterDirection, filterOutcome, filterDatePreset, filterDateRange, selectedSymbols, sortOrder]);
 
   // Auto-open form when navigated with ?add=true
   useEffect(() => {
@@ -177,17 +263,131 @@ export default function Trades() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h3 className="text-base sm:text-[18px] font-bold text-foreground tracking-tight">Trade History</h3>
-            <span className="text-[13px] text-muted-foreground font-medium">{trades.length} of {trades.length} trades</span>
+            <span className="text-[13px] text-muted-foreground font-medium">{filteredTrades.length} of {trades.length} trades</span>
           </div>
-          <button className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[20px] border border-border text-muted-foreground hover:text-foreground text-[13px] font-semibold bg-secondary hover:bg-muted transition-all">
-            <SlidersHorizontal className="w-3.5 h-3.5" /> Filters <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[20px] border border-border text-muted-foreground hover:text-foreground text-[13px] font-semibold bg-secondary hover:bg-muted transition-all">
+                <SlidersHorizontal className="w-3.5 h-3.5" /> 
+                Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+                {activeFilterCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm p-4 overflow-y-auto max-h-[80vh] rounded-[20px] bg-card border-border shadow-lg" align="end">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-foreground text-sm">Filters</h4>
+                  {activeFilterCount > 0 && (
+                    <button onClick={resetFilters} className="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors">
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+                
+                <div className="space-y-3">
+                  <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Direction</h5>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-[13px] font-semibold text-foreground cursor-pointer">
+                      <Checkbox checked={filterDirection.long} onCheckedChange={(c) => setFilterDirection(prev => ({...prev, long: !!c}))} />
+                      Long
+                    </label>
+                    <label className="flex items-center gap-2 text-[13px] font-semibold text-foreground cursor-pointer">
+                      <Checkbox checked={filterDirection.short} onCheckedChange={(c) => setFilterDirection(prev => ({...prev, short: !!c}))} />
+                      Short
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Outcome</h5>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-[13px] font-semibold text-foreground cursor-pointer">
+                      <Checkbox checked={filterOutcome.profit} onCheckedChange={(c) => setFilterOutcome(prev => ({...prev, profit: !!c}))} />
+                      Profit
+                    </label>
+                    <label className="flex items-center gap-2 text-[13px] font-semibold text-foreground cursor-pointer">
+                      <Checkbox checked={filterOutcome.loss} onCheckedChange={(c) => setFilterOutcome(prev => ({...prev, loss: !!c}))} />
+                      Loss
+                    </label>
+                  </div>
+                </div>
+
+                {distinctSymbols.length > 1 && (
+                  <div className="space-y-3">
+                    <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Symbol</h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      {distinctSymbols.map(sym => {
+                        const isChecked = selectedSymbols === null ? true : selectedSymbols.includes(sym);
+                        return (
+                          <label key={sym} className="flex items-center gap-2 text-[13px] font-semibold text-foreground cursor-pointer">
+                            <Checkbox 
+                              checked={isChecked} 
+                              onCheckedChange={(c) => {
+                                let next = selectedSymbols === null ? [...distinctSymbols] : [...selectedSymbols];
+                                if (c) {
+                                  if (!next.includes(sym)) next.push(sym);
+                                } else {
+                                  next = next.filter(s => s !== sym);
+                                }
+                                setSelectedSymbols(next.length === distinctSymbols.length ? null : next);
+                              }} 
+                            />
+                            {sym}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Date Range</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {['all', '7d', '30d', 'month', 'custom'].map(preset => {
+                      const labels: Record<string, string> = { all: 'All time', '7d': 'Last 7 days', '30d': 'Last 30 days', month: 'This month', custom: 'Custom' };
+                      return (
+                        <button
+                          key={preset}
+                          onClick={() => setFilterDatePreset(preset)}
+                          className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${filterDatePreset === preset ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+                        >
+                          {labels[preset]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {filterDatePreset === 'custom' && (
+                    <div className="pt-2 flex justify-center">
+                      <Calendar
+                        mode="range"
+                        selected={filterDateRange as import("react-day-picker").DateRange}
+                        onSelect={(range: import("react-day-picker").DateRange | undefined) => setFilterDateRange(range || {})}
+                        className="rounded-xl border border-border"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Sort By</h5>
+                  <select
+                    value={sortOrder}
+                    onChange={e => setSortOrder(e.target.value)}
+                    className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-2 text-[13px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="highest-pnl">Highest P&L</option>
+                    <option value="lowest-pnl">Lowest P&L</option>
+                  </select>
+                </div>
+
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* Pro Banner */}
-        <div className="bg-profit-tint text-foreground/80 text-xs sm:text-[13px] px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl flex items-center justify-between mb-6 md:mb-8">
-          <span>Free plan loads <strong className="text-foreground font-bold">your last 15 trades.</strong> Upgrade to Pro to unlock full history and longer timeframes.</span>
-        </div>
+
 
         {/* Mobile cards */}
         <div className="md:hidden space-y-3">
@@ -196,8 +396,14 @@ export default function Trades() {
               <Activity className="w-10 h-10 mx-auto mb-3 opacity-20" />
               <p className="text-sm font-medium">No trades yet. Click "+ Add Trade" to get started.</p>
             </div>
+          ) : filteredTrades.length === 0 ? (
+            <div className="text-center text-muted-foreground py-16">
+              <Activity className="w-10 h-10 mx-auto mb-3 opacity-20" />
+              <p className="text-sm font-medium mb-3">No trades match these filters.</p>
+              <button onClick={resetFilters} className="text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors">Clear filters</button>
+            </div>
           ) : (
-            trades.map(t => (
+            filteredTrades.map(t => (
               <TradeCard 
                 key={t.id} 
                 trade={t as any} 
@@ -228,8 +434,16 @@ export default function Trades() {
                     <p className="text-sm font-medium">No trades yet. Click "+ Add Trade" to get started.</p>
                   </td>
                 </tr>
+              ) : filteredTrades.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="text-center text-muted-foreground py-16">
+                    <Activity className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                    <p className="text-sm font-medium mb-3">No trades match these filters.</p>
+                    <button onClick={resetFilters} className="text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors">Clear filters</button>
+                  </td>
+                </tr>
               ) : (
-                trades.map(t => (
+                filteredTrades.map(t => (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors group border-b border-border last:border-0">
                     <td className="px-4 py-5 text-left">
                       <div className="text-[12px] text-muted-foreground font-medium space-y-1">
