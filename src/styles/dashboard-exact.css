@@ -1570,21 +1570,21 @@
   }
 
   .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-profit {
-    background: hsl(var(--profit) / 0.15) !important;
+    background: rgba(20, 80, 180, 0.35) !important;
   }
   .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-profit .dashboard-exact-week-summary-label,
   .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-profit .dashboard-exact-week-summary-trades {
     color: hsl(var(--profit));
-    opacity: 0.8;
+    opacity: 0.9;
   }
 
   .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-loss {
-    background: hsl(var(--loss) / 0.15) !important;
+    background: rgba(180, 50, 55, 0.35) !important;
   }
   .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-loss .dashboard-exact-week-summary-label,
   .dashboard-exact-week-row > .dashboard-exact-week-summary.weekly-loss .dashboard-exact-week-summary-trades {
     color: hsl(var(--loss));
-    opacity: 0.8;
+    opacity: 0.9;
   }
 
   .dashboard-exact-week-summary .wk-short {
@@ -1620,7 +1620,7 @@
     border-radius: 10px;
     padding: 5px 3px 3px;
     border: none !important;
-    background: #161616 !important;
+    background: #1a1a1e !important;
   }
 
   .dashboard-exact-day.empty {
@@ -1628,11 +1628,15 @@
   }
   
   .dashboard-exact-day.has-profit {
-    background: rgba(35, 136, 255, 0.25) !important;
+    background: rgba(20, 70, 160, 0.45) !important;
   }
   
   .dashboard-exact-day.has-loss {
-    background: rgba(251, 71, 85, 0.2) !important;
+    background: rgba(160, 30, 40, 0.45) !important;
+  }
+
+  .dashboard-exact-day.has-neutral {
+    background: #1a1a1e !important;
   }
 
   .dashboard-exact-day-num {
