@@ -368,7 +368,7 @@
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   gap: 16px;
   margin-top: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .dashboard-exact-panel {
@@ -385,7 +385,7 @@
   padding: 24px 24px 16px;
   display: flex;
   flex-direction: column;
-  height: 460px;
+  min-height: 460px;
 }
 
 .dashboard-exact-performance-head {
