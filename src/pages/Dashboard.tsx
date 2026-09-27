@@ -303,12 +303,16 @@ export default function Dashboard() {
 
                   {/* Weekly summary cell — color is driven by weeklyColorClass */}
                   <div className={["dashboard-exact-week-summary", wt.trades ? `active ${weeklyColorClass}` : ""].filter(Boolean).join(" ")}>
-                    <span className="dashboard-exact-week-summary-label">Wk</span>
+                    <span className="dashboard-exact-week-summary-label">
+                      <span className="wk-short">Wk</span>
+                      <span className="wk-full">WEEK {w + 1}</span>
+                    </span>
                     <span className={`dashboard-exact-week-summary-value${wt.trades ? "" : " muted"}`}>
                       {wt.trades ? money(wt.pnl, Math.abs(wt.pnl) >= 1000 ? 1 : 2) : "$0"}
                     </span>
                     <span className="dashboard-exact-week-summary-trades">
-                      {wt.trades ? `${wt.trades}T` : "—"}
+                      <span className="wk-short">{wt.trades ? `${wt.trades}T` : "—"}</span>
+                      <span className="wk-full">{wt.trades ? `${wt.trades} trades` : "0 trades"}</span>
                     </span>
                   </div>
                 </div>
