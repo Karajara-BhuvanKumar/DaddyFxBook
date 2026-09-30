@@ -209,9 +209,10 @@ export default function Analysis() {
         }
       }
       if (!raw) return; // no session data — skip
-      // Fold killzones into parent session
-      if (raw === 'London Killzone') raw = 'London';
-      else if (raw === 'New York Killzone') raw = 'New York';
+      // Fold killzones and off-session variants into parent session
+      if (raw === 'London Killzone' || raw === 'Off Session London') raw = 'London';
+      else if (raw === 'New York Killzone' || raw === 'Off Session New York') raw = 'New York';
+      else if (raw === 'Off Session Asian') raw = 'Asian';
       const bucket = buckets[raw];
       if (!bucket) return; // unknown session value — skip
       bucket.pnl += Number(t.pnl);

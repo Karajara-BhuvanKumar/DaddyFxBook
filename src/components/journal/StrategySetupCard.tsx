@@ -22,6 +22,8 @@ import {
   CONFLUENCES,
   MARKET_SESSIONS,
   EXECUTION_TYPES,
+  DEMAND_SUPPLY_TYPES,
+  DEMAND_SUPPLY_TIMEFRAMES,
   buildStrategySummary,
 } from "@/lib/strategySetup";
 
@@ -135,6 +137,15 @@ export function StrategySetupCard({ value, onChange }: Props) {
 
   const update = (patch: Partial<StrategySetup>) => onChange({ ...value, ...patch });
 
+  // Parse demand_supply "Type — TF" composite value
+  const dsParts = value.demand_supply ? value.demand_supply.split(" — ") : ["", ""];
+  const dsType = dsParts[0] || "";
+  const dsTf = dsParts[1] || "";
+  const updateDemandSupply = (type: string, tf: string) => {
+    const val = type && tf ? `${type} — ${tf}` : type || "";
+    update({ demand_supply: val });
+  };
+
   const toggleConfluence = (c: string) => {
     const next = value.confluences.includes(c)
       ? value.confluences.filter((x) => x !== c)
@@ -224,6 +235,38 @@ export function StrategySetupCard({ value, onChange }: Props) {
                 options={EXECUTION_TYPES}
                 onChange={(v) => update({ execution_type: v })}
               />
+            </div>
+
+            <div>
+              <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Demand / Supply</Label>
+              <FieldSelect
+                label="Type"
+                value={dsType}
+                options={DEMAND_SUPPLY_TYPES}
+                onValueChange={(v) => updateDemandSupply(v, dsTf)}
+                placeholder="Select"
+              />
+              <AnimatePresence>
+                {dsType && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 max-w-xs">
+                      <FieldSelect
+                        label="Time Frame"
+                        value={dsTf}
+                        options={DEMAND_SUPPLY_TIMEFRAMES}
+                        onValueChange={(v) => updateDemandSupply(dsType, v)}
+                        placeholder="Select"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div>
