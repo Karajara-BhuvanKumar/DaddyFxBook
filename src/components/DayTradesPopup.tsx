@@ -45,16 +45,17 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
   // Positioning: prefer right; fallback below; clamp to viewport
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const popupWidth = Math.min(POPUP_WIDTH, vw - 16);
   const estHeight = Math.min(480, 180 + trades.length * 64);
   let left = anchorRect.right + GAP;
   let top = anchorRect.top;
-  if (left + POPUP_WIDTH + 8 > vw) {
+  if (left + popupWidth + 8 > vw) {
     // place below
     left = anchorRect.left;
     top = anchorRect.bottom + GAP;
   }
-  left = Math.min(Math.max(8, left), vw - POPUP_WIDTH - 8);
-  top = Math.min(Math.max(8, top), vh - estHeight - 8);
+  left = Math.max(8, Math.min(left, vw - popupWidth - 8));
+  top = Math.max(8, Math.min(top, vh - estHeight - 8));
 
   const [y, m, d] = dateStr.split("-").map(Number);
   const dateLabel = new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -64,14 +65,18 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
   return createPortal(
     <div
       ref={ref}
+      role="dialog"
+      aria-label={`Trades on ${dateLabel}`}
       style={{
         position: "fixed",
         top,
         left,
-        width: POPUP_WIDTH,
+        width: popupWidth,
         maxWidth: "calc(100vw - 16px)",
-        background: "linear-gradient(180deg, rgba(18,20,30,.98), rgba(12,14,22,.98))",
-        border: "1px solid rgba(255,255,255,.06)",
+        maxHeight: "calc(100dvh - 16px)",
+        overflowY: "auto",
+        background: "hsl(var(--popover))",
+        border: "1px solid hsl(var(--border))",
         borderRadius: 24,
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
@@ -86,7 +91,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
     >
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: "#F8FAFC", letterSpacing: "-0.02em" }}>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
             Trades on {dateLabel}
           </h3>
           <p style={{ fontSize: 14, color: "#94A3B8", marginTop: 4 }}>
@@ -131,7 +136,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
                     style={{
                       fontSize: 14,
                       fontWeight: 700,
-                      color: "#F8FAFC",
+                      color: "hsl(var(--foreground))",
                       letterSpacing: "0.02em",
                     }}
                   >
@@ -180,7 +185,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
           background: "rgba(255,255,255,.05)",
           border: "1px solid rgba(255,255,255,.06)",
           borderRadius: 16,
-          color: "#F8FAFC",
+          color: "hsl(var(--foreground))",
           fontSize: 14,
           fontWeight: 600,
           display: "flex",

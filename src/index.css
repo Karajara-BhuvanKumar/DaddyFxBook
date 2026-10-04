@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -65,7 +65,7 @@
 
   .dark {
     /* Dark Mode palette */
-    --background: 0 0% 2%; /* #050505 */
+    --background: 0 0% 0%;
     --foreground: 210 40% 98%;
     
     --card: 0 0% 4%; /* #0a0a0a */
@@ -82,7 +82,7 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 0 0% 8%; /* darker muted for subtle backgrounds */
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 0 0% 55%;
 
     --accent: 222 40% 12%;
     --accent-foreground: 210 40% 98%;
@@ -99,14 +99,14 @@
     --loss: 0 100% 65%;
     --warning: 45 100% 42%;
 
-    --border: 0 0% 12%; /* soft borders in dark mode */
+    --border: 0 0% 10%;
     --input: 0 0% 7%; /* dark input background */
     --ring: 212 100% 50%;
 
     --radius: 1.5rem;
 
     --sidebar-background: 0 0% 2%;
-    --sidebar-foreground: 215 20% 65%;
+    --sidebar-foreground: 0 0% 55%;
     --sidebar-primary: 212 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 212 100% 50%;
@@ -115,8 +115,8 @@
     --sidebar-ring: 212 100% 50%;
 
     /* Legacy Custom Theme variables */
-    --bg-primary: #050505;
-    --bg-secondary: #050505;
+    --bg-primary: #000000;
+    --bg-secondary: #080808;
     --card-bg: #0a0a0a;
     --border-color: rgba(255, 255, 255, 0.06);
   }
@@ -134,7 +134,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: clamp(0.8125rem, 0.75rem + 0.25vw, 0.875rem);
     overflow-x: hidden;
     line-height: 1.55;
@@ -149,7 +149,7 @@
   h4,
   h5,
   h6 {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', 'Inter', sans-serif;
     letter-spacing: -0.02em;
     font-weight: 700;
     color: hsl(var(--foreground));
@@ -170,12 +170,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(220, 25%, 16%);
+    background: #202020;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(220, 25%, 22%);
+    background: #343434;
   }
 }
 

@@ -1,0 +1,232 @@
+.trading-dashboard {
+  --dashboard-muted: #6d6d70;
+  --dashboard-line: #29292c;
+  --chart-grid: #151518;
+  --dashboard-blue: #2985f5;
+  --dashboard-cell: #101010;
+  --dashboard-surface: linear-gradient(125deg, #0b0b0c 0%, #070707 100%);
+  width: 100%;
+  min-width: 0;
+}
+.local-preview { position: relative; }
+.local-preview-notice { position: absolute; top: 12px; left: 0; max-width: calc(100% - 145px); display: flex; flex-wrap: wrap; align-items: center; gap: 5px 20px; color: hsl(var(--muted-foreground)); font-size: 11px; z-index: 1; }
+.dashboard-toolbar { display: flex; justify-content: flex-end; align-items: center; min-height: 46px; margin-bottom: 12px; }
+.customize-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 40px; padding: 8px 15px; border: 1px solid hsl(var(--border)); border-radius: 14px; color: #a0a0a3; background: transparent; font-size: 14px; transition: color .2s, background .2s; }
+.customize-button:hover { color: hsl(var(--foreground)); background: hsl(var(--secondary)); }
+.dashboard-customize { padding: 20px; border-radius: 18px; }
+.dashboard-customize h3 { display: flex; gap: 9px; align-items: center; font-size: 15px; }
+.dashboard-customize p { margin: 6px 0 18px; color: hsl(var(--muted-foreground)); font-size: 12px; }
+.dashboard-customize label { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 13px; cursor: pointer; }
+.dashboard-customize input { accent-color: #2985f5; width: 16px; height: 16px; }
+.dashboard-customize > button { margin-top: 12px; color: #2985f5; font-size: 12px; padding: 6px 0; }
+.dashboard-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin-bottom: 30px; }
+.dashboard-stat { min-width: 0; min-height: 144px; display: flex; gap: 18px; align-items: flex-start; padding: 28px; border: 1px solid hsl(var(--border)); border-radius: 22px; background: var(--dashboard-surface); }
+.dashboard-stat-icon { width: 52px; height: 52px; display: flex; justify-content: center; align-items: center; flex: 0 0 52px; border-radius: 16px; color: #008dff; background: #081e2d; }
+.dashboard-stat-icon.is-warning { color: #ffd000; background: #312607; }
+.dashboard-stat-content { min-width: 0; flex: 1; }
+.dashboard-stat h2 { color: var(--dashboard-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 1px; line-height: 20px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; }
+.dashboard-stat-value { font-size: clamp(24px, 1.75vw, 34px); font-weight: 800; line-height: 1.3; letter-spacing: .1px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trading-dashboard .is-profit { color: var(--dashboard-blue); }
+.trading-dashboard .is-loss { color: #f2444b; }
+.trading-dashboard .is-neutral { color: hsl(var(--foreground)); }
+.dashboard-stat-note, .dashboard-stat-link { margin-top: 4px; font-size: 13px; line-height: 22px; white-space: nowrap; }
+.dashboard-stat-note { color: var(--dashboard-muted); }
+.dashboard-stat-link { display: flex; align-items: center; gap: 5px; color: #168bff; }
+.dashboard-stat-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.win-rate-track { height: 7px; overflow: hidden; border-radius: 10px; background: #191919; margin-top: 12px; width: 100%; max-width: 190px; }
+.win-rate-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0067ff, #00b1f1); transition: width .3s ease; }
+.dashboard-panels { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 30px; }
+.dashboard-panels.single-panel { grid-template-columns: minmax(0, 1fr); }
+.dashboard-panel { min-width: 0; min-height: 550px; border-radius: 30px; border: 1px solid hsl(var(--border)); background: var(--dashboard-surface); }
+.performance-panel { display: flex; flex-direction: column; padding: 35px 35px 27px; }
+.performance-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 46px; }
+.performance-summary { min-width: 0; }
+.performance-summary h2 { display: flex; align-items: center; gap: 10px; color: #848487; font-size: 14px; font-weight: 600; line-height: 24px; text-transform: uppercase; letter-spacing: .2px; }
+.performance-summary h2 svg { color: #626267; }
+.performance-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 7px; }
+.performance-value { font-size: clamp(32px, 2.6vw, 49px); font-weight: 800; letter-spacing: -.8px; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.performance-change { display: flex; align-items: center; gap: 5px; padding: 9px 15px; border-radius: 24px; font-weight: 650; font-size: 14px; color: #2985f5; background: #0c1929; border: 1px solid #143f6c; }
+.performance-change.is-loss { background: #241012; border-color: #4a2023; }
+.performance-timeframes { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; padding: 5px; border: 1px solid #262629; border-radius: 12px; background: #121213; }
+.performance-timeframes button { min-width: 48px; min-height: 32px; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #858589; transition: background .2s, color .2s; }
+.performance-timeframes button:hover { color: #fff; }
+.performance-timeframes button.selected { background: #2a2a2d; color: #fff; }
+.performance-chart { width: 100%; height: 346px; min-height: 230px; margin-top: auto; }
+.performance-chart:focus, .recharts-wrapper:focus { outline: none; }
+.performance-tooltip { padding: 14px 18px; border: 1px solid hsl(var(--border)); background: hsl(var(--popover)); box-shadow: 0 8px 26px #0003; border-radius: 14px; font-size: 12px; }
+.performance-tooltip p { color: hsl(var(--muted-foreground)); }
+.performance-tooltip strong { display: block; font-size: 24px; margin: 4px 0; }
+.performance-tooltip span { color: hsl(var(--muted-foreground)); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.calendar-panel { padding: 21px 20px 20px; display: flex; flex-direction: column; }
+.calendar-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; column-gap: 12px; row-gap: 12px; min-height: 32px; }
+.calendar-heading h2 { font-size: 20px; font-weight: 700; letter-spacing: -.5px; white-space: nowrap; }
+.calendar-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; }
+.calendar-total { color: var(--dashboard-muted); font-size: 12px; white-space: nowrap; }
+.calendar-total strong { font-weight: 650; }
+.calendar-navigation { display: flex; align-items: center; gap: 8px; }
+.calendar-navigation button { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid #242426; border-radius: 10px; background: #111112; color: #7b7b80; transition: background .2s; }
+.calendar-navigation button:hover { background: #222225; color: #fff; }
+.calendar-navigation span { text-align: center; min-width: 114px; font-size: 13px; font-weight: 600; color: var(--dashboard-muted); white-space: nowrap; }
+.pnl-calendar { margin-top: 31px; flex: 1; display: flex; flex-direction: column; --calendar-columns: repeat(8, minmax(0, 1fr)); }
+.pnl-calendar.without-weekly { --calendar-columns: repeat(7, minmax(0, 1fr)); }
+.calendar-weekdays, .calendar-week { display: grid; grid-template-columns: var(--calendar-columns); gap: 5px; }
+.calendar-weekdays { text-align: center; color: var(--dashboard-muted); font-size: 12px; margin-bottom: 12px; line-height: 20px; }
+.calendar-weekdays .weekly-heading { font-size: 10px; letter-spacing: .4px; }
+.calendar-weeks { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.calendar-week { flex: 1; min-height: 58px; }
+.pnl-day, .pnl-week-total { min-width: 0; min-height: 58px; border: 1px solid #1d1d1e; border-radius: 13px; background: var(--dashboard-cell); }
+.pnl-day { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 6px 8px 7px; text-align: left; position: relative; transition: border-color .15s, background .15s; }
+.pnl-day:hover { border-color: #46464c; background: #18181a; }
+.pnl-day-number { font-size: 12px; line-height: 16px; color: #707075; }
+.pnl-day strong { align-self: center; font-size: clamp(10px, .8vw, 14px); font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pnl-day.today .pnl-day-number { color: #2985f5; }
+.pnl-day.today::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: #2985f5; position: absolute; top: 10px; right: 7px; }
+.pnl-day.profit-day, .pnl-week-total.profit-day { background: #0b141d; border-color: #17334f; color: #2985f5; }
+.pnl-day.loss-day, .pnl-week-total.loss-day { background: #1d1010; border-color: #4b2224; color: #f2444b; }
+.pnl-day.profit-day:hover { background: #102134; border-color: #285580; }
+.pnl-day.loss-day:hover { background: #32191b; border-color: #733336; }
+.pnl-day.flat-day { color: #a5a5aa; }
+.pnl-week-total { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #626266; text-align: center; padding: 3px; background: #0d0d0e; }
+.pnl-week-total > span { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; line-height: 12px; }
+.pnl-week-total > strong { font-size: 12px; font-weight: 700; line-height: 16px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pnl-week-total > small { font-size: 9px; opacity: .65; line-height: 12px; white-space: nowrap; }
+.calendar-legend { display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 12px; color: var(--dashboard-muted); margin-top: 13px; }
+.calendar-legend span { display: flex; gap: 7px; align-items: center; }
+.calendar-legend i { width: 9px; height: 9px; border-radius: 50%; background: #2985f5; }
+.calendar-legend span:last-child i { background: #f2444b; }
+.dashboard-empty { flex: 1; min-height: 280px; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; padding: 24px; text-align: center; color: hsl(var(--muted-foreground)); }
+.dashboard-empty > svg { color: #2985f5; opacity: .65; margin-bottom: 6px; }
+.dashboard-empty h3 { font-size: 17px; }
+.dashboard-empty p { font-size: 13px; }
+.dashboard-empty a { display: flex; align-items: center; gap: 8px; color: #2985f5; margin-top: 9px; }
+.dashboard-loading { min-height: 60vh; display: flex; align-items: center; justify-content: center; gap: 12px; color: hsl(var(--muted-foreground)); }
+.dashboard-hidden-state { padding: 50px 20px; color: hsl(var(--muted-foreground)); text-align: center; }
+.trading-dashboard button:focus-visible, .trading-dashboard a:focus-visible { outline: 2px solid #2985f5; outline-offset: 3px; }
+.light .trading-dashboard { --dashboard-surface: #fff; --dashboard-muted: #6b7079; --chart-grid: #eef0f4; --dashboard-line: #d8dde5; --dashboard-cell: #f6f7fa; }
+.light .dashboard-stat-icon { background: #eaf4ff; }
+.light .dashboard-stat-icon.is-warning { background: #fff7d7; color: #b48200; }
+.light .performance-timeframes { background: #f4f5f8; border-color: #e5e7eb; }
+.light .performance-timeframes button.selected { background: #fff; color: #171717; box-shadow: 0 1px 3px #0001; }
+.light .performance-timeframes button:hover { color: #111; }
+.light .calendar-navigation button { background: #f8f9fb; border-color: #e1e4ea; }
+.light .calendar-navigation button:hover { background: #e9edf5; color: #111; }
+.light .pnl-day, .light .pnl-week-total { border-color: #e8eaf0; }
+.light .pnl-day:hover { background: #edeff5; border-color: #d4d9e4; }
+.light .pnl-week-total { background: #f6f7fa; }
+.light .pnl-day.profit-day, .light .pnl-week-total.profit-day { background: #edf5ff; border-color: #cbdffb; }
+.light .pnl-day.loss-day, .light .pnl-week-total.loss-day { background: #fff0f0; border-color: #ffd2d2; }
+.light .win-rate-track { background: #e8ebf1; }
+@media (max-width: 1699px) {
+  .dashboard-stat { padding: 23px 20px; gap: 14px; }
+  .dashboard-stat-icon { width: 46px; height: 46px; flex-basis: 46px; border-radius: 14px; }
+  .dashboard-stats { gap: 18px; }
+  .dashboard-panels { gap: 22px; }
+  .performance-panel { padding: 28px 26px 23px; }
+  .performance-heading { flex-wrap: wrap; margin-bottom: 24px; }
+  .performance-timeframes { margin-left: auto; }
+  .performance-chart { height: 340px; }
+  .calendar-heading { align-items: flex-start; }
+  .calendar-controls { justify-content: flex-start; gap: 8px; }
+  .pnl-calendar { margin-top: 24px; }
+}
+@media (min-width: 1700px) {
+  .calendar-heading { flex-wrap: nowrap; }
+  .calendar-controls { flex-wrap: nowrap; }
+}
+@media (max-width: 1399px) and (min-width: 1024px) {
+  .dashboard-stat { min-height: 126px; padding: 20px 16px; gap: 11px; }
+  .dashboard-stat-icon { width: 39px; height: 39px; flex-basis: 39px; border-radius: 12px; }
+  .dashboard-stat-icon svg { width: 21px; height: 21px; }
+  .dashboard-stat h2 { font-size: 10px; letter-spacing: .6px; }
+  .dashboard-stat-value { font-size: 24px; }
+  .dashboard-stat-note, .dashboard-stat-link { font-size: 11px; }
+  .dashboard-panels { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-panel { min-height: 440px; }
+  .performance-heading { flex-wrap: nowrap; }
+  .performance-chart { height: 290px; }
+  .calendar-heading { align-items: center; }
+  .calendar-controls { flex-wrap: nowrap; }
+  .calendar-panel { min-height: 560px; padding: 25px; }
+  .pnl-day strong { font-size: 15px; }
+}
+@media (max-width: 1023px) {
+  .dashboard-toolbar { min-height: 36px; margin-bottom: 18px; }
+  .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+  .dashboard-stat { min-height: 126px; padding: 23px; gap: 18px; }
+  .dashboard-stat-value { font-size: 30px; }
+  .dashboard-panels { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .performance-heading { flex-wrap: nowrap; }
+  .dashboard-panel { min-height: 450px; border-radius: 24px; }
+  .performance-value { font-size: 40px; }
+  .performance-chart { height: 300px; }
+  .calendar-panel { min-height: 520px; padding: 24px; }
+  .calendar-heading { align-items: center; }
+  .calendar-controls { flex-wrap: nowrap; }
+  .pnl-day strong { font-size: 14px; }
+  .calendar-navigation button { width: 36px; height: 36px; }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-stat { min-height: 124px; padding: 24px; }
+  .dashboard-stat-value { font-size: 29px; }
+}
+@media (min-width: 600px) and (max-width: 767px) {
+  .dashboard-stat { padding: 19px; gap: 13px; }
+  .dashboard-stat-value { font-size: 26px; }
+  .dashboard-stat-note, .dashboard-stat-link { font-size: 11px; }
+  .performance-heading { flex-wrap: wrap; }
+}
+@media (max-width: 599px) {
+  .local-preview-notice { top: 2px; max-width: calc(100% - 118px); font-size: 9px; gap: 3px; }
+  .dashboard-toolbar { margin-bottom: 14px; }
+  .customize-button { font-size: 12px; min-height: 36px; padding: 7px 11px; border-radius: 11px; }
+  .dashboard-stats { gap: 10px; margin-bottom: 16px; }
+  .dashboard-stat { min-height: 142px; padding: 15px; gap: 11px; flex-direction: column; border-radius: 18px; }
+  .dashboard-stat-icon { width: 33px; height: 33px; flex-basis: 33px; border-radius: 10px; }
+  .dashboard-stat-icon svg { width: 19px; height: 19px; }
+  .dashboard-stat-content { width: 100%; }
+  .dashboard-stat h2 { font-size: 9px; letter-spacing: .8px; line-height: 14px; }
+  .dashboard-stat-value { font-size: clamp(20px, 5.6vw, 29px); line-height: 1.3; letter-spacing: -.3px; }
+  .dashboard-stat-note, .dashboard-stat-link { margin-top: 3px; font-size: 10px; line-height: 18px; }
+  .dashboard-stat-link svg { width: 12px; height: 12px; }
+  .win-rate-track { height: 5px; margin-top: 10px; }
+  .dashboard-panels { gap: 16px; }
+  .dashboard-panel { border-radius: 22px; }
+  .performance-panel { min-height: 392px; padding: 21px 16px 18px; }
+  .performance-heading { flex-direction: column; gap: 19px; margin-bottom: 20px; }
+  .performance-summary h2 { font-size: 11px; gap: 7px; }
+  .performance-summary h2 svg { width: 17px; height: 17px; }
+  .performance-value { font-size: 34px; }
+  .performance-value-row { gap: 12px; margin-top: 6px; }
+  .performance-change { font-size: 12px; padding: 6px 11px; }
+  .performance-timeframes { margin-left: 0; width: 100%; padding: 4px; gap: 3px; }
+  .performance-timeframes button { flex: 1; min-width: 0; min-height: 34px; padding: 3px 8px; font-size: 12px; }
+  .performance-chart { height: 221px; min-height: 221px; }
+  .performance-chart .recharts-cartesian-axis-tick text { font-size: 10px; }
+  .calendar-panel { min-height: 450px; padding: 20px 12px 16px; }
+  .calendar-heading { gap: 9px; padding: 0 3px; }
+  .calendar-heading h2 { font-size: 17px; }
+  .calendar-controls { display: contents; }
+  .calendar-total { font-size: 11px; margin-left: auto; }
+  .calendar-navigation { width: 100%; justify-content: space-between; margin-top: 6px; }
+  .calendar-navigation button { width: 34px; height: 34px; }
+  .calendar-navigation span { font-size: 12px; }
+  .pnl-calendar { margin-top: 19px; }
+  .calendar-weekdays, .calendar-week { gap: 3px; }
+  .calendar-weekdays { font-size: 10px; margin-bottom: 7px; }
+  .calendar-weekdays .weekly-heading { font-size: 8px; letter-spacing: 0; }
+  .calendar-weeks { gap: 4px; }
+  .calendar-week { min-height: 48px; }
+  .pnl-day, .pnl-week-total { min-height: 48px; border-radius: 9px; }
+  .pnl-day { padding: 4px 3px 6px; }
+  .pnl-day-number { font-size: 10px; line-height: 12px; }
+  .pnl-day strong { font-size: clamp(8px, 2.3vw, 11px); }
+  .pnl-day.today::after { top: 7px; right: 4px; width: 3px; height: 3px; }
+  .pnl-week-total { padding: 1px; }
+  .pnl-week-total > span { font-size: 6px; letter-spacing: 0; line-height: 9px; }
+  .pnl-week-total > strong { font-size: clamp(8px, 2.3vw, 11px); line-height: 13px; }
+  .pnl-week-total > small { font-size: 7px; line-height: 10px; }
+  .calendar-legend { font-size: 10px; margin-top: 14px; gap: 17px; }
+  .calendar-legend i { width: 7px; height: 7px; }
+}
+@media (prefers-reduced-motion: reduce) { .trading-dashboard * { transition: none !important; } }

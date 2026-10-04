@@ -20,6 +20,7 @@ const Backtesting = lazy(() => import("./pages/Backtesting"));
 const BacktestSession = lazy(() => import("./pages/BacktestSession"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ShareTrade = lazy(() => import("./pages/ShareTrade"));
+const Preview = import.meta.env.DEV ? lazy(() => import("./pages/Preview")) : null;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,11 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/auth" element={<AuthRoute />} />
+                {import.meta.env.DEV && Preview && (
+                  <Route path="/preview" element={<AppLayout />}>
+                    <Route index element={<Preview />} />
+                  </Route>
+                )}
                 <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/trades" element={<Trades />} />
