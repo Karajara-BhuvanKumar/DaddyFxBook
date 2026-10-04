@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useTrades, useJournal, useSaveJournal, useChecklist, useSaveChecklist, useScreenshots, useUploadScreenshot } from "@/hooks/useTrades";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useTrades, useJournal, useSaveJournal, useChecklist, useSaveChecklist, useScreenshots, useUploadScreenshot, useAllJournals } from "@/hooks/useTrades";
 import { BookOpen, Save, Star, Check, Activity, ArrowUpRight, ArrowDownRight, RefreshCw, FileText, SlidersHorizontal, DollarSign, Smile, Tag, Image, Plus, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { AITradeReviewPanel } from "@/components/ai-report/AITradeReviewPanel";
@@ -9,7 +9,24 @@ import { emptyStrategySetup, parseStrategySetup, serializeStrategySetup, type St
 import { cn } from "@/lib/utils";
 
 export default function Journal() {
-  const { data: trades = [], isLoading } = useTrades();
+  const { data: trades = [], isLoading: isTradesLoading } = useTrades();
+  const { data: allJournals = [], isLoading: isJournalsLoading } = useAllJournals();
+  const isLoading = isTradesLoading || isJournalsLoading;
+
+  const [activeTab, setActiveTab] = useState<'ALL' | 'JOURNALED' | 'PENDING'>('ALL');
+  
+  const journaledTradeIds = useMemo(() => new Set(allJournals.map(j => j.trade_id)), [allJournals]);
+  const journaledTrades = useMemo(() => trades.filter(t => journaledTradeIds.has(t.id)), [trades, journaledTradeIds]);
+  const pendingTrades = useMemo(() => trades.filter(t => !journaledTradeIds.has(t.id)), [trades, journaledTradeIds]);
+  
+  const displayedTrades = useMemo(() => {
+    switch (activeTab) {
+      case 'JOURNALED': return journaledTrades;
+      case 'PENDING': return pendingTrades;
+      default: return trades;
+    }
+  }, [activeTab, trades, journaledTrades, pendingTrades]);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: existingJournal } = useJournal(selectedId);
   const { data: existingChecklist } = useChecklist(selectedId);
@@ -28,7 +45,13 @@ export default function Journal() {
   const [customChecklist, setCustomChecklist] = useState<{ id: string; label: string; checked: boolean }[]>([]);
   const [newCustomLabel, setNewCustomLabel] = useState("");
 
-  useEffect(() => { if (!selectedId && trades.length > 0) setSelectedId(trades[0].id); }, [trades, selectedId]);
+  useEffect(() => { 
+    if (displayedTrades.length > 0 && (!selectedId || !displayedTrades.some(t => t.id === selectedId))) {
+      setSelectedId(displayedTrades[0].id); 
+    } else if (displayedTrades.length === 0) {
+      setSelectedId(null);
+    }
+  }, [displayedTrades, selectedId]);
 
   useEffect(() => {
     if (existingJournal) {
@@ -125,25 +148,45 @@ export default function Journal() {
           </div>
 
           <div className="p-2 border-b border-white/[0.05] flex items-center gap-1.5 overflow-x-auto select-none">
-            <button className="px-2.5 py-1 rounded-lg bg-secondary text-foreground text-[10px] font-bold tracking-wider uppercase border border-white/[0.08]">
-              AI {trades.length}
+            <button 
+              onClick={() => setActiveTab('ALL')}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-200",
+                activeTab === 'ALL'
+                  ? "bg-secondary text-foreground border border-white/[0.08]"
+                  : "bg-transparent text-muted-foreground hover:text-foreground border border-transparent"
+              )}>
+              ALL {trades.length}
             </button>
-            <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
-              Journaled 0
+            <button 
+              onClick={() => setActiveTab('JOURNALED')}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-200",
+                activeTab === 'JOURNALED'
+                  ? "bg-secondary text-foreground border border-white/[0.08]"
+                  : "bg-transparent text-muted-foreground hover:text-foreground border border-transparent"
+              )}>
+              JOURNALED {journaledTrades.length}
             </button>
-            <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
-              Pending {trades.length}
-            </button>
-            <button className="px-2.5 py-1 rounded-lg bg-transparent text-muted-foreground hover:text-foreground text-[10px] font-bold tracking-wider uppercase">
-              L...
+            <button 
+              onClick={() => setActiveTab('PENDING')}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-200",
+                activeTab === 'PENDING'
+                  ? "bg-secondary text-foreground border border-white/[0.08]"
+                  : "bg-transparent text-muted-foreground hover:text-foreground border border-transparent"
+              )}>
+              PENDING {pendingTrades.length}
             </button>
           </div>
 
           <div className="flex-1 overflow-auto p-3 space-y-2">
-            {trades.length === 0 ? (
-              <p className="text-center text-zinc-500 py-12 text-xs font-semibold">Add trades first</p>
+            {displayedTrades.length === 0 ? (
+              <p className="text-center text-zinc-500 py-12 text-xs font-semibold">
+                {trades.length === 0 ? "Add trades first" : "No trades found"}
+              </p>
             ) : (
-              trades.map(t => (
+              displayedTrades.map(t => (
                 <button key={t.id} onClick={() => setSelectedId(t.id)}
                   className={cn(
                     "w-full text-left p-4 rounded-[20px] border transition-all duration-200 flex flex-col",

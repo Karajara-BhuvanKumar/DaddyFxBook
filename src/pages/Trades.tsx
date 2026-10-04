@@ -1,11 +1,16 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTrades, useAddTrade, useDeleteTrade, calculatePnl, Trade } from "@/hooks/useTrades";
-import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X, SlidersHorizontal, DollarSign, Share2, Pencil } from "lucide-react";
+import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X, DollarSign, Share2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import TradeCard from "@/components/TradeCard";
 import EditTradeModal from "@/components/EditTradeModal";
 import ShareTradeModal from "@/components/ShareTradeModal";
+import TradeHistoryFilters, {
+  TradeFilters,
+  DEFAULT_FILTERS,
+  isFiltersActive,
+} from "@/components/TradeHistoryFilters";
 
 /** Return current local time as YYYY-MM-DDThh:mm for datetime-local inputs. */
 function localNow(): string {
@@ -14,6 +19,93 @@ function localNow(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// ─── Filtering / Sorting helpers (pure functions) ─────────────
+function getDateCutoff(preset: TradeFilters["dateRange"]): Date | null {
+  const now = new Date();
+  switch (preset) {
+    case "1W": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 7);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    case "1M": {
+      const d = new Date(now);
+      d.setMonth(d.getMonth() - 1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    case "3M": {
+      const d = new Date(now);
+      d.setMonth(d.getMonth() - 3);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    default:
+      return null;
+  }
+}
+
+function applyFilters(trades: Trade[], filters: TradeFilters): Trade[] {
+  let result = trades;
+
+  // Direction filter
+  if (filters.direction !== "All") {
+    result = result.filter((t) => t.direction === filters.direction);
+  }
+
+  // Date range filter
+  if (filters.dateRange === "Custom") {
+    const start = filters.customStart;
+    const end = filters.customEnd;
+    if (start) {
+      const startMs = new Date(start).setHours(0, 0, 0, 0);
+      result = result.filter((t) => {
+        const tradeDate = new Date(t.close_time).getTime();
+        return tradeDate >= startMs;
+      });
+    }
+    if (end) {
+      const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999);
+      const endMs = endDate.getTime();
+      result = result.filter((t) => {
+        const tradeDate = new Date(t.close_time).getTime();
+        return tradeDate <= endMs;
+      });
+    }
+  } else if (filters.dateRange !== "All Time") {
+    const cutoff = getDateCutoff(filters.dateRange);
+    if (cutoff) {
+      const cutoffMs = cutoff.getTime();
+      result = result.filter((t) => {
+        const tradeDate = new Date(t.close_time).getTime();
+        return tradeDate >= cutoffMs;
+      });
+    }
+  }
+
+  // Sorting
+  const sorted = [...result];
+  switch (filters.sortBy) {
+    case "newest":
+      sorted.sort((a, b) => new Date(b.close_time).getTime() - new Date(a.close_time).getTime());
+      break;
+    case "oldest":
+      sorted.sort((a, b) => new Date(a.close_time).getTime() - new Date(b.close_time).getTime());
+      break;
+    case "pnl-desc":
+      sorted.sort((a, b) => Number(b.pnl) - Number(a.pnl));
+      break;
+    case "pnl-asc":
+      sorted.sort((a, b) => Number(a.pnl) - Number(b.pnl));
+      break;
+  }
+
+  return sorted;
+}
+
+// ─── Main Component ────────────────────────────────────────────
 export default function Trades() {
   const { data: trades = [], isLoading } = useTrades();
   const addTrade = useAddTrade();
@@ -22,6 +114,7 @@ export default function Trades() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [sharingTrade, setSharingTrade] = useState<Trade | null>(null);
+  const [filters, setFilters] = useState<TradeFilters>(DEFAULT_FILTERS);
   const [form, setForm] = useState({
     direction: 'Long' as 'Long' | 'Short',
     entryPrice: '',
@@ -46,6 +139,13 @@ export default function Trades() {
     if (isNaN(entry) || isNaN(exit) || isNaN(lot)) return null;
     return calculatePnl(form.direction, entry, exit, lot);
   }, [form]);
+
+  // Derived filtered/sorted trades — only recomputed when trades or filters change
+  const filteredTrades = useMemo(() => applyFilters(trades, filters), [trades, filters]);
+
+  const handleApplyFilters = useCallback((newFilters: TradeFilters) => {
+    setFilters(newFilters);
+  }, []);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -177,27 +277,26 @@ export default function Trades() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h3 className="text-base sm:text-[18px] font-bold text-foreground tracking-tight">Trade History</h3>
-            <span className="text-[13px] text-muted-foreground font-medium">{trades.length} of {trades.length} trades</span>
+            <span className="text-[13px] text-muted-foreground font-medium">
+              {filteredTrades.length} of {trades.length} trades
+            </span>
           </div>
-          <button className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[20px] border border-border text-muted-foreground hover:text-foreground text-[13px] font-semibold bg-secondary hover:bg-muted transition-all">
-            <SlidersHorizontal className="w-3.5 h-3.5" /> Filters <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />
-          </button>
-        </div>
-
-        {/* Pro Banner */}
-        <div className="bg-profit-tint text-foreground/80 text-xs sm:text-[13px] px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl flex items-center justify-between mb-6 md:mb-8">
-          <span>Free plan loads <strong className="text-foreground font-bold">your last 15 trades.</strong> Upgrade to Pro to unlock full history and longer timeframes.</span>
+          <TradeHistoryFilters filters={filters} onApply={handleApplyFilters} />
         </div>
 
         {/* Mobile cards */}
         <div className="md:hidden space-y-3">
-          {trades.length === 0 ? (
+          {filteredTrades.length === 0 ? (
             <div className="text-center text-muted-foreground py-16">
               <Activity className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p className="text-sm font-medium">No trades yet. Click "+ Add Trade" to get started.</p>
+              <p className="text-sm font-medium">
+                {trades.length === 0
+                  ? 'No trades yet. Click "+ Add Trade" to get started.'
+                  : "No trades match the selected filters."}
+              </p>
             </div>
           ) : (
-            trades.map(t => (
+            filteredTrades.map(t => (
               <TradeCard 
                 key={t.id} 
                 trade={t as any} 
@@ -221,15 +320,19 @@ export default function Trades() {
               </tr>
             </thead>
             <tbody>
-              {trades.length === 0 ? (
+              {filteredTrades.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="text-center text-muted-foreground py-16">
                     <Activity className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                    <p className="text-sm font-medium">No trades yet. Click "+ Add Trade" to get started.</p>
+                    <p className="text-sm font-medium">
+                      {trades.length === 0
+                        ? 'No trades yet. Click "+ Add Trade" to get started.'
+                        : "No trades match the selected filters."}
+                    </p>
                   </td>
                 </tr>
               ) : (
-                trades.map(t => (
+                filteredTrades.map(t => (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors group border-b border-border last:border-0">
                     <td className="px-4 py-5 text-left">
                       <div className="text-[12px] text-muted-foreground font-medium space-y-1">
