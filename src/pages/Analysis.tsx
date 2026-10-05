@@ -1,19 +1,39 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useTrades, useAllJournals } from "@/hooks/useTrades";
+import { useTrades, useAllJournals, type Trade, type Journal } from "@/hooks/useTrades";
 import { parseStrategySetup, buildSetupKey, buildBroadSetupKey } from "@/lib/strategySetup";
-import { BreakdownList, type BreakdownItem } from "@/components/BreakdownList";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { type BreakdownItem } from "@/components/BreakdownList";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { 
-  Activity, TrendingUp, TrendingDown, BarChart3, Calendar, Globe, 
-  DollarSign, CheckCircle2, Star, SlidersHorizontal, Moon, Coffee, 
-  Building2, ChevronLeft, ChevronRight, FileText, X, Layers 
+  Activity, TrendingUp, TrendingDown, Calendar, Globe, CheckCircle2, Trophy,
+  Sunrise, Landmark, Building2, ChevronLeft, ChevronRight, ClipboardList, X, Layers, ArrowLeftRight, Flame
 } from "lucide-react";
+import "@/styles/analysis.css";
+
+const periods = ['Today', '7 Days', '30 Days', '3 Months', '1 Year', 'All Time'] as const;
+const outcomes = ['All Trades', 'Winners', 'Losers'] as const;
+
+interface AnalysisViewProps {
+  trades: Trade[];
+  allJournals: Journal[];
+  isLoading?: boolean;
+  initialDate?: Date;
+}
 
 export default function Analysis() {
   const { data: trades = [], isLoading } = useTrades();
   const { data: allJournals = [] } = useAllJournals();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  return <AnalysisView trades={trades} allJournals={allJournals} isLoading={isLoading} />;
+}
+
+export function AnalysisView({ trades, allJournals, isLoading = false, initialDate }: AnalysisViewProps) {
+  const [currentDate, setCurrentDate] = useState(() => initialDate ?? new Date());
+  const [chartMode, setChartMode] = useState<'Equity' | 'Drawdown'>('Equity');
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [timePeriod, setTimePeriod] = useState<'Today' | '7 Days' | '30 Days' | '3 Months' | '1 Year' | 'All Time'>('30 Days');
   const [filterBy, setFilterBy] = useState<'All Trades' | 'Winners' | 'Losers'>('All Trades');
   const now = new Date();
@@ -66,7 +86,7 @@ export default function Analysis() {
   const grossLoss = losers.reduce((s, t) => s + Number(t.pnl), 0);
   
   const winRate = filteredTrades.length ? (winners.length / filteredTrades.length) * 100 : 0;
-  const profitFactor = Math.abs(grossLoss) > 0 ? grossProfit / Math.abs(grossLoss) : grossProfit;
+  const profitFactor = Math.abs(grossLoss) > 0 ? grossProfit / Math.abs(grossLoss) : grossProfit > 0 ? Infinity : 0;
   const expectancy = filteredTrades.length ? totalPnl / filteredTrades.length : 0;
   
   const avgWin = winners.length ? grossProfit / winners.length : 0;
@@ -291,8 +311,6 @@ export default function Analysis() {
   const winCount = winners.length;
   const lossCount = losers.length;
   const totalCount = winCount + lossCount;
-  const winPct = totalCount ? (winCount / totalCount) * 100 : 50;
-  const lossPct = totalCount ? (lossCount / totalCount) * 100 : 50;
 
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(null);
   const selectedDayTrades = useMemo(() => {
@@ -309,455 +327,8 @@ export default function Analysis() {
     return `${isNeg ? '-' : ''}$${abs.toFixed(2)}`;
   };
 
-  const formatK = (val: number) => {
-    const isNeg = val < 0;
-    const abs = Math.abs(val);
-    if (abs >= 1000) {
-      return `${isNeg ? '-' : ''}$${(abs / 1000).toFixed(1)}k`;
-    }
-    return `${isNeg ? '+' : ''}$${abs.toFixed(2)}`;
-  };
 
-  if (isLoading) return (
-    <div className="flex items-center justify-center h-96">
-      <div className="flex items-center gap-3 text-muted-foreground"><Activity className="w-5 h-5 animate-pulse" /><span className="text-base font-medium">Loading analysis...</span></div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-6 md:space-y-8 overflow-guard">
-      {/* Top Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-white/[0.05] pb-4 md:pb-5">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-[20px] bg-blue-500/10 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-5 h-5 text-blue-500" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Performance Analytics</h1>
-            <p className="text-[12px] text-zinc-500 font-semibold mt-0.5">Analyze your trading patterns and improve your strategy</p>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-4 sm:gap-6">
-          <div className="flex flex-col gap-1 min-w-0">
-            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Time Period</span>
-            <div className="flex flex-wrap items-center gap-1">
-              {['Today', '7 Days', '30 Days', '3 Months', '1 Year', 'All Time'].map(tf => (
-                <button
-                  key={tf}
-                  onClick={() => setTimePeriod(tf as any)}
-                  className={`px-3.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 ${
-                    tf === timePeriod ? 'bg-[#3B82F6] text-white shadow-sm' : 'bg-[#121212] text-zinc-500 hover:text-white hover:bg-[#1A1A1A]'
-                  }`}
-                >
-                  {tf}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Filter By</span>
-            <div className="flex flex-wrap items-center gap-1">
-              {['All Trades', 'Winners', 'Losers'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilterBy(f as any)}
-                  className={`px-3.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 ${
-                    f === filterBy ? 'bg-[#3B82F6] text-white shadow-sm' : 'bg-[#121212] text-zinc-500 hover:text-white hover:bg-[#1A1A1A]'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total P&L */}
-        <div className="bg-[#0B0B0B] border-t border-t-[#3B82F6]/30 rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total P&L</span>
-            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#3B82F6]">
-              <DollarSign className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className={`text-2xl font-black tracking-tight leading-none ${totalPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(totalPnl)}</h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-2">From {filteredTrades.length} closed trades</p>
-          </div>
-          <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Your net profit/loss for the selected period</span>
-        </div>
-
-        {/* Win Rate */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] hover:bg-[#0F0F0F] transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Win Rate</span>
-            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#3B82F6]">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-[#3B82F6] tracking-tight leading-none">{winRate.toFixed(1)}%</h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-2">{winners.length} wins · {losers.length} losses</p>
-            <div className="mt-2.5 h-1 rounded-full bg-zinc-800 overflow-hidden max-w-[150px]">
-              <div className="h-full bg-[#3B82F6] transition-all" style={{ width: `${winRate}%` }} />
-            </div>
-          </div>
-          <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Percentage of profitable trades</span>
-        </div>
-
-        {/* Profit Factor */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] hover:bg-[#0F0F0F] transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Profit Factor</span>
-            <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-[#A855F7]">
-              <BarChart3 className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-[#3B82F6] tracking-tight leading-none">{profitFactor.toFixed(2)}</h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-2">{profitFactor >= 2 ? 'Excellent' : profitFactor >= 1.5 ? 'Good' : 'Needs Work'}</p>
-          </div>
-          <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Gross profit · Gross loss (above 1.5 is good)</span>
-        </div>
-
-        {/* Expectancy */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] hover:bg-[#0F0F0F] transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Expectancy</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-              <Star className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className={`text-2xl font-black tracking-tight leading-none ${expectancy >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(expectancy)}</h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-2">Average per trade</p>
-          </div>
-          <span className="text-[9px] text-zinc-600 font-bold uppercase mt-2">Expected profit per trade based on stats</span>
-        </div>
-      </div>
-
-      {/* Quick Stats + Equity Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Stats */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[280px] sm:min-h-[420px]">
-          <h3 className="text-xs font-bold text-white mb-4 flex items-center gap-1.5 uppercase tracking-wider">
-            <SlidersHorizontal className="w-4 h-4 text-[#3B82F6]" /> Quick Stats
-          </h3>
-          <div className="grid grid-cols-2 gap-2.5 flex-1">
-            {[
-              { label: 'Avg Winner', value: formatCompactVal(avgWin), color: 'text-[#3B82F6]' },
-              { label: 'Avg Loser', value: `-$${Math.abs(avgLoss).toFixed(2)}`, color: 'text-[#EF4444]' },
-              { label: 'Best Trade', value: formatCompactVal(bestTrade), color: bestTrade >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
-              { label: 'Worst Trade', value: worstTrade < 0 ? `-$${Math.abs(worstTrade).toFixed(2)}` : '$0.00', color: worstTrade < 0 ? 'text-[#EF4444]' : 'text-[#3B82F6]' },
-              { label: 'Win Streak', value: `${winStreak} trades`, color: 'text-white' },
-              { label: 'Loss Streak', value: `${lossStreak} trades`, color: 'text-white' },
-              { label: 'Risk:Reward', value: `1:${avgLoss !== 0 ? Math.abs(avgWin / avgLoss).toFixed(2) : '∞'}`, color: 'text-[#3B82F6]' },
-              { label: 'Open Trades', value: '0', color: 'text-white' },
-            ].map(s => (
-              <div key={s.label} className="bg-[#0B0B0B] rounded-[20px] p-3.5 flex flex-col justify-between hover:bg-[#0F0F0F] transition-colors">
-                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">{s.label}</span>
-                <span className={`text-[14px] font-black mt-1.5 ${s.color}`}>{s.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Equity Curve */}
-        <div className="lg:col-span-2 bg-[#0B0B0B] rounded-[20px] p-4 sm:p-5 flex flex-col justify-between min-h-[280px] sm:min-h-[420px]">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-                <TrendingUp className="w-4 h-4 text-[#3B82F6]" /> Equity Curve
-              </h3>
-              <p className="text-[11px] text-zinc-500 font-semibold mt-1">Cumulative P&L progression</p>
-            </div>
-            <div className="flex items-center gap-1">
-              {['Equity', 'Drawdown'].map(b => (
-                <button
-                  key={b}
-                  className={`px-3.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 ${
-                    b === 'Equity' ? 'bg-[#3B82F6] text-white shadow-sm' : 'bg-[#121212] text-zinc-500 hover:text-white hover:bg-[#1A1A1A]'
-                  }`}
-                >
-                  {b}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex-1 flex items-end">
-            {equityData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={equityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: "#71717a", fontSize: 10, fontFamily: "Inter" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: "#71717a", fontSize: 10, fontFamily: "Inter" }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={v => `$${v}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "#080808",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: "12px",
-                      color: "white",
-                      fontSize: "12px",
-                    }}
-                    formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "P&L"]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="cumulative"
-                    stroke="#3B82F6"
-                    fill="none"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-zinc-500 text-xs font-semibold">
-                Add trades to see equity curve
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Long vs Short + Day Perf + Top Symbols */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Long vs Short */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-              <SlidersHorizontal className="w-4 h-4 text-[#3B82F6]" /> Long vs Short
-            </h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mb-4">Performance by trade direction</p>
-          </div>
-          <div className="space-y-3">
-            {/* Long Card */}
-            <div className="bg-[#0B0B0B] border-l-2 border-l-[#3B82F6] rounded-[20px] p-4 bg-gradient-to-r from-[#3B82F6]/5 to-transparent">
-              <span className="text-[10px] font-bold text-[#3B82F6] uppercase tracking-wider flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5" /> Long
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-center mt-3">
-                <div>
-                  <p className="text-[9px] text-zinc-500 font-bold uppercase">Trades</p>
-                  <p className="text-[14px] font-bold text-white mt-1">{longTrades.length}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-zinc-500 font-bold uppercase">P&L</p>
-                  <p className={`text-[14px] font-bold mt-1 ${longPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
-                    ${longPnl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-zinc-500 font-bold uppercase">Win %</p>
-                  <p className={`text-[14px] font-bold mt-1 ${longWinRate > 0 ? 'text-[#3B82F6]' : 'text-white'}`}>{longWinRate.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-            {/* Short Card */}
-            <div className="bg-[#0B0B0B] border-l-2 border-l-[#EF4444] rounded-[20px] p-4 bg-gradient-to-r from-[#EF4444]/5 to-transparent">
-              <span className="text-[10px] font-bold text-[#EF4444] uppercase tracking-wider flex items-center gap-1">
-                <TrendingDown className="w-3.5 h-3.5" /> Short
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-center mt-3">
-                <div>
-                  <p className="text-[9px] text-zinc-500 font-bold uppercase">Trades</p>
-                  <p className="text-[14px] font-bold text-white mt-1">{shortTrades.length}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-zinc-500 font-bold uppercase">P&L</p>
-                  <p className={`text-[14px] font-bold mt-1 ${shortPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
-                    ${shortPnl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-zinc-500 font-bold uppercase">Win %</p>
-                  <p className={`text-[14px] font-bold mt-1 ${shortWinRate > 0 ? 'text-[#3B82F6]' : 'text-white'}`}>{shortWinRate.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Day Performance */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-              <Calendar className="w-4 h-4 text-[#3B82F6]" /> Day Performance
-            </h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mb-4">Find your best trading days</p>
-          </div>
-          <div className="space-y-3">
-            {dayPerf.map(d => {
-              const maxPnl = Math.max(...dayPerf.map(x => Math.abs(x.pnl)), 1);
-              const percentage = Math.min((Math.abs(d.pnl) / maxPnl) * 100, 100);
-              return (
-                <div key={d.day} className="flex items-center gap-3">
-                  <span className="text-xs text-zinc-500 font-semibold w-8">{d.day}</span>
-                  <div className="flex-1 h-[22px] bg-[#121212] rounded-md overflow-hidden relative border border-white/[0.02]">
-                    {d.count > 0 && (
-                      <div 
-                        className={`h-full transition-all duration-500 rounded-md ${d.pnl >= 0 ? 'bg-[#3B82F6]' : 'bg-[#EF4444]'}`}
-                        style={{ width: `${percentage}%` }} 
-                      />
-                    )}
-                  </div>
-                  <span className={`text-[12px] font-bold w-16 text-right ${d.count > 0 ? (d.pnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]') : 'text-zinc-600'}`}>
-                    {d.count > 0 ? `${d.pnl >= 0 ? '' : '-'}$${Math.abs(d.pnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Top Symbols */}
-        <div className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-              <Star className="w-4 h-4 text-[#3B82F6]" /> Top Symbols
-            </h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mb-4">Best performing assets</p>
-          </div>
-          <div className="space-y-2.5">
-            {Object.entries(
-              filteredTrades.reduce((acc, t) => {
-                if (!acc[t.symbol]) acc[t.symbol] = { pnl: 0, count: 0, wins: 0 };
-                acc[t.symbol].pnl += Number(t.pnl);
-                acc[t.symbol].count++;
-                if (Number(t.pnl) > 0) acc[t.symbol].wins++;
-                return acc;
-              }, {} as Record<string, { pnl: number; count: number; wins: number }>)
-            )
-              .sort(([, a], [, b]) => b.pnl - a.pnl)
-              .slice(0, 3)
-              .map(([sym, data], idx) => (
-                <div key={sym} className="bg-[#0B0B0B] rounded-[20px] p-3.5 flex items-center justify-between hover:bg-[#0F0F0F] transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-lg bg-blue-500/10 text-[#3B82F6] text-[10px] font-black flex items-center justify-center">{idx + 1}</span>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center scale-90">
-                          <DollarSign className="w-2.5 h-2.5 text-black stroke-[3]" />
-                        </div>
-                        <span className="font-bold text-white text-xs">{sym}</span>
-                      </div>
-                      <p className="text-[10px] text-zinc-500 font-semibold mt-1">
-                        {data.count} trades · {((data.wins / data.count) * 100).toFixed(0)}% win
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`text-[13px] font-black ${data.pnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
-                    ${data.pnl.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Session Performance */}
-      <div className="bg-[#0B0B0B] rounded-[20px] p-5">
-        <h3 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5 uppercase tracking-wider">
-          <Globe className="w-4 h-4 text-[#3B82F6]" /> Session Performance
-        </h3>
-        <p className="text-[11px] text-zinc-500 font-semibold">Breakdown by trading session - Asian, London & New York</p>
-
-        {/* Timeline */}
-        <div className="w-full h-7 rounded-lg overflow-hidden flex text-[9px] font-black text-white select-none mt-5">
-          <div className="bg-[#5c4004] border-r border-[#0B0B0B] flex items-center justify-center tracking-wider" style={{ width: '41.6%' }}>ASIAN</div>
-          <div className="bg-[#102a5c] border-r border-[#0B0B0B] flex items-center justify-center tracking-wider" style={{ width: '20.8%' }}>LONDON</div>
-          <div className="bg-[#064e3b] flex items-center justify-center tracking-wider" style={{ width: '37.6%' }}>NEW YORK</div>
-        </div>
-        <div className="relative w-full text-[9px] text-zinc-600 font-bold select-none h-4 mt-1.5">
-          <span className="absolute left-0">00:00</span>
-          <span className="absolute" style={{ left: '41.6%' }}>08:30</span>
-          <span className="absolute" style={{ left: '62.4%' }}>13:30</span>
-          <span className="absolute right-0">22:00</span>
-        </div>
-
-        {/* Session cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
-          {sessionPerf.map(s => {
-            const hasData = s.count > 0;
-            const volumePct = filteredTrades.length ? Math.round((s.count / filteredTrades.length) * 100) : 0;
-            const winRate = s.count ? (s.wins / s.count * 100) : 0;
-            const avgTradeVal = s.count ? s.pnl / s.count : 0;
-            
-            let iconColor = "text-amber-500 bg-amber-500/10";
-            let Icon = Moon;
-            if (s.name === 'London') {
-              iconColor = "text-[#3B82F6] bg-blue-500/10";
-              Icon = Coffee;
-            } else if (s.name === 'New York') {
-              iconColor = "text-emerald-500 bg-[#064e3b]/20";
-              Icon = Building2;
-            }
-
-            return (
-              <div key={s.name} className="bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between hover:bg-[#0F0F0F] transition-colors">
-                <div>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">{s.name}</h4>
-                      <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">{s.start}:00 - {s.end}:00 UTC</p>
-                    </div>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                  </div>
-
-                  {hasData && (
-                    <div className="mt-4">
-                      <span className={`text-base font-black ${s.pnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
-                        {s.pnl >= 0 ? '+' : '-'}${Math.abs(s.pnl).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
-                      <div className="mt-2.5 h-1 rounded-full bg-zinc-800 overflow-hidden w-full">
-                        <div className={`h-full transition-all ${s.pnl >= 0 ? 'bg-[#3B82F6]' : 'bg-[#EF4444]'}`} style={{ width: `${winRate}%` }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-6 border-t border-white/[0.05] pt-4 text-left">
-                  <div>
-                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Trades</span>
-                    <p className="text-xs font-bold text-white mt-1">{s.count}</p>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Win Rate</span>
-                    <p className={`text-xs font-bold mt-1 ${winRate > 0 ? 'text-[#3B82F6]' : 'text-white'}`}>{hasData ? `${winRate.toFixed(1)}%` : '—'}</p>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Avg Trade</span>
-                    <p className={`text-xs font-bold mt-1 ${hasData ? (avgTradeVal >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]') : 'text-white'}`}>
-                      {hasData ? `${avgTradeVal >= 0 ? '+' : '-'}$${Math.abs(avgTradeVal).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Volume</span>
-                    <p className="text-xs font-bold text-white mt-1">{volumePct}%</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* By Setup Performance */}
-      {(() => {
+  const setupRows: BreakdownItem[] = useMemo(() => {
         // Build a map of trade_id -> journal for quick lookup
         const journalMap = new Map(allJournals.map(j => [j.trade_id, j]));
 
@@ -801,7 +372,7 @@ export default function Analysis() {
           }
         }
 
-        const setupRows: BreakdownItem[] = Array.from(setupMap.entries())
+        return Array.from(setupMap.entries())
           .map(([key, data]) => {
             const children: BreakdownItem[] = Array.from(data.children.entries())
               .map(([childKey, childMetrics]) => ({
@@ -826,382 +397,198 @@ export default function Analysis() {
           })
           .sort((a, b) => b.netValue - a.netValue);
 
-        return (
-          <div className="bg-[#0B0B0B] rounded-[20px] p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Layers className="w-4 h-4 text-[#3B82F6]" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Performance by Setup</h3>
-            </div>
-            <p className="text-[11px] text-zinc-500 font-semibold mb-5">
-              Breakdown by strategy setup from journal entries
-            </p>
-            {setupRows.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
-                <Layers className="w-8 h-8 mb-2 opacity-20" />
-                <p className="text-[11px] font-semibold leading-relaxed text-center">
-                  Log strategy setups in the Journal to see breakdown here
-                </p>
-              </div>
-            ) : (
-              <BreakdownList rows={setupRows} />
-            )}
-          </div>
-        );
-      })()}
 
-      {/* Trading Calendar + Day Trades */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 md:gap-6">
-        {/* Trading Calendar */}
-        <div className="lg:col-span-7 bg-[#0B0B0B] rounded-[20px] p-3 sm:p-4 md:p-6 flex flex-col min-w-0 overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 md:mb-4">
-            <div className="min-w-0">
-              <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-                <Calendar className="w-4 h-4 text-[#3B82F6]" /> Trading Calendar
-              </h3>
-              <p className="text-[10px] sm:text-[11px] text-zinc-500 font-semibold mt-1">Daily P&L heatmap - Click on days to see trades</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                className="w-7 h-7 rounded-full bg-[#121212] hover:bg-[#1A1A1A] flex items-center justify-center transition-colors"
-              >
-                <ChevronLeft className="w-3.5 h-3.5 text-zinc-400" />
-              </button>
-              <span className="text-white font-bold text-[11px] sm:text-[12px] min-w-[80px] sm:min-w-[90px] text-center">
-                {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-              </span>
-              <button
-                onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                className="w-7 h-7 rounded-full bg-[#121212] hover:bg-[#1A1A1A] flex items-center justify-center transition-colors"
-              >
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* Day-of-week headers — 7 columns only */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 text-center mb-1.5">
-            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-              <div key={i} className="py-1 font-bold text-[9px] sm:text-[10px] text-zinc-500 uppercase">
-                <span className="hidden sm:inline">{["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][i]}</span>
-                <span className="sm:hidden">{d}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar grid — week rows with weekly summary below each */}
-          <div className="flex-1 flex flex-col gap-1 sm:gap-1.5 min-h-0">
-            {Array.from({ length: weeks }).map((_, w) => {
-              const wt = weeklyTotals[w];
-              const wPositive = wt.pnl >= 0;
-              const weeklyColor = wt.trades === 0
-                ? "text-zinc-500"
-                : wPositive ? "text-[#3B82F6]" : "text-[#EF4444]";
-              return (
-                <div key={w} className="flex flex-col gap-1 sm:gap-1.5">
-                  {/* 7-column day grid */}
-                  <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-                    {Array.from({ length: 7 }).map((__, d) => {
-                      const cellIdx = w * 7 + d;
-                      const dayNum = cellIdx - startDow + 1;
-                      const inMonth = dayNum >= 1 && dayNum <= daysInMonth;
-                      if (!inMonth) {
-                        return (
-                          <div
-                            key={d}
-                            className="min-h-[48px] sm:min-h-[56px] md:min-h-[64px] lg:min-h-[72px] rounded-[8px] sm:rounded-[10px]"
-                          />
-                        );
-                      }
-                      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-                      const data = calendarData[dateStr];
-                      const hasData = !!data;
-                      const isProfit = hasData && data.pnl >= 0;
-                      const isToday = dayNum === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-
-                      return (
-                        <div
-                          key={d}
-                          className={cn(
-                            "flex flex-col items-center justify-between cursor-pointer group transition-all duration-200 rounded-[8px] sm:rounded-[10px] border overflow-hidden",
-                            "min-h-[48px] sm:min-h-[56px] md:min-h-[64px] lg:min-h-[72px] py-1 px-0.5 sm:p-1.5",
-                            hasData
-                              ? isProfit
-                                ? "bg-[#0A1224] border-[#3B82F6]/20 hover:bg-[#0F1A3A] hover:border-[#3B82F6]/40"
-                                : "bg-[#240A0A] border-[#EF4444]/20 hover:bg-[#330F0F] hover:border-[#EF4444]/40"
-                              : "bg-[#0B0B0B] border-white/[0.05] hover:bg-[#0F0F0F] hover:border-white/[0.1]",
-                            isToday && !hasData && "ring-1 ring-white/10"
-                          )}
-                          onClick={() => setSelectedCalendarDay(dateStr)}
-                        >
-                          {/* Day number */}
-                          <span className={cn(
-                            "w-full text-left font-bold leading-none pl-0.5",
-                            "text-[9px] sm:text-[10px] md:text-[11px]",
-                            isToday ? "text-[#3B82F6]" : "text-zinc-500"
-                          )}>
-                            {dayNum}
-                          </span>
-                          
-                          {/* P&L value */}
-                          <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
-                            {hasData && (
-                              <span
-                                className={cn(
-                                  "font-bold leading-none truncate max-w-full px-0.5",
-                                  "text-[10px] sm:text-[12px] md:text-[14px] lg:text-[16px]",
-                                  isProfit ? "text-[#3B82F6]" : "text-[#EF4444]"
-                                )}
-                              >
-                                {isProfit ? "+" : "-"}${Math.abs(data.pnl).toFixed(0)}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Trade count */}
-                          <div className="w-full h-3 flex items-end justify-center">
-                            {hasData && (
-                              <span className="hidden sm:block text-[8px] md:text-[9px] text-zinc-500 font-bold leading-none truncate max-w-full pb-0.5">
-                                {data.count} trade{data.count > 1 ? 's' : ''}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Weekly summary — always below the week row */}
-                  <div
-                    className={cn(
-                      "flex items-center justify-between rounded-lg sm:rounded-[10px] px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all duration-200",
-                      wt.trades > 0
-                        ? wPositive ? "bg-[#0A1224]/60" : "bg-[#240A0A]/60"
-                        : "bg-[#080808]",
-                    )}
-                  >
-                    <span className={cn("font-bold uppercase tracking-wider", weeklyColor, "text-[8px] sm:text-[9px] md:text-[10px]")}>
-                      Week {w + 1}
-                    </span>
-                    <span className={cn("font-bold text-num", weeklyColor, "text-[10px] sm:text-xs md:text-sm")}>
-                      {wt.trades === 0 ? "$0" : `${wPositive ? "+" : "-"}$${Math.abs(wt.pnl).toFixed(0)}`}
-                    </span>
-                    <span className={cn("font-medium opacity-60", weeklyColor, "text-[8px] sm:text-[9px] md:text-[10px]")}>
-                      {wt.trades} trade{wt.trades !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap gap-3 sm:gap-6 justify-center mt-3 sm:mt-5 text-[10px] sm:text-[11px] font-bold text-[#94A3B8]">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#3B82F6]" /> Profitable Day
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#EF4444]" /> Losing Day
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-zinc-700" /> No Trades
-            </span>
-          </div>
-        </div>
-
-        {/* Day Trades (Right Panel) */}
-        <div className="lg:col-span-3 bg-[#0B0B0B] rounded-[20px] p-6 flex flex-col">
-          <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-            <FileText className="w-4 h-4 text-[#3B82F6]" /> Day Trades
-          </h3>
-          <div className="flex-1 overflow-auto mt-4 space-y-2" style={{ maxHeight: "340px" }}>
-            {selectedDayTrades.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-500 text-center p-4">
-                <Calendar className="w-8 h-8 mb-2 opacity-20" />
-                <p className="text-[11px] font-semibold leading-relaxed">Click on a day with trades to view details</p>
-              </div>
-            ) : (
-              selectedDayTrades.map(t => (
-                <div key={t.id} className="bg-[#0B0B0B] border border-white/[0.05] rounded-[20px] p-3.5 flex items-center justify-between hover:bg-[#0F0F0F] transition-colors">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center scale-90">
-                        <DollarSign className="w-2.5 h-2.5 text-black stroke-[3]" />
-                      </div>
-                      <span className="font-bold text-white text-xs">{t.symbol}</span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                        t.direction === 'Long' ? 'bg-[#0A1224] text-[#3B82F6]' : 'bg-[#240A0A] text-[#EF4444]'
-                      }`}>{t.direction}</span>
-                    </div>
-                    <p className="text-[10px] text-zinc-500 font-semibold mt-1">
-                      Size: {t.lot_size} · Entry: ${Number(t.entry_price).toFixed(2)}
-                    </p>
-                  </div>
-                  <span className={`text-[13px] font-black ${Number(t.pnl) >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
-                    {Number(t.pnl) >= 0 ? '+' : '-'}${Math.abs(Number(t.pnl)).toFixed(2)}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Win/Loss Distribution & Recent Trades */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-        {/* Win/Loss Distribution */}
-        <div className="lg:col-span-4 bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-              <BarChart3 className="w-4 h-4 text-[#3B82F6]" /> Win/Loss Distribution
-            </h3>
-            {/* Dual Bar */}
-            <div className="w-full h-8 rounded-lg overflow-hidden flex text-[10px] font-black text-white select-none mt-5">
-              {winCount > 0 && (
-                <div className="bg-[#3B82F6] flex items-center justify-center transition-all" style={{ width: `${winPct}%` }}>
-                  {winCount}W
-                </div>
-              )}
-              {lossCount > 0 && (
-                <div className="bg-[#EF4444] flex items-center justify-center transition-all" style={{ width: `${lossPct}%` }}>
-                  {lossCount}L
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4 mt-6">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="flex items-center gap-2 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Gross Profit
-                </span>
-                <span className="text-[#3B82F6] font-bold">{formatK(grossProfit)}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="flex items-center gap-2 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-[#EF4444]" /> Gross Loss
-                </span>
-                <span className="text-[#EF4444] font-bold">-${Math.abs(grossLoss).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-semibold border-t border-white/[0.05] pt-4">
-                <span className="flex items-center gap-2 text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Net Result
-                </span>
-                <span className={`font-bold ${totalPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatK(totalPnl)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Trades */}
-        <div className="lg:col-span-6 bg-[#0B0B0B] rounded-[20px] p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
-              <Activity className="w-4 h-4 text-[#3B82F6]" /> Recent Trades
-            </h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-0.5">Your last 10 trades</p>
-            <div className="space-y-2 mt-4">
-              {filteredTrades.slice(0, 10).map(t => (
-                <div key={t.id} className="bg-[#0B0B0B] rounded-[20px] p-3 flex items-center justify-between hover:bg-[#0F0F0F] transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-[#3B82F6] flex items-center justify-center">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-white text-sm">{t.symbol}</span>
-                      <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">
-                        {new Date(t.close_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`font-black text-sm ${Number(t.pnl) >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
-                    {Number(t.pnl) >= 0 ? '+' : '-'}${Math.abs(Number(t.pnl)).toFixed(2)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Statistics */}
-      <div className="bg-[#0B0B0B] rounded-[20px] p-5">
-        <div className="flex items-center gap-2 mb-6">
-          <h3 className="text-[15px] font-bold text-white tracking-tight uppercase">Your Stats</h3>
-          <span className="text-[10px] font-extrabold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded uppercase tracking-wider">{timePeriod}</span>
-        </div>
-
-        {/* Large Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-[#0B0B0B] rounded-[20px] p-5 hover:bg-[#0F0F0F] transition-colors">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Best Month</span>
-            <h4 className="text-xl font-black text-[#3B82F6] mt-2">{formatCompactVal(bestMonthStr.value)}</h4>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-1">{bestMonthStr.label}</p>
-          </div>
-          <div className="bg-[#0B0B0B] rounded-[20px] p-5 hover:bg-[#0F0F0F] transition-colors">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Worst Month</span>
-            <h4 className={`text-xl font-black mt-2 ${worstMonthStr.value >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(worstMonthStr.value)}</h4>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-1">{worstMonthStr.label}</p>
-          </div>
-          <div className="bg-[#0B0B0B] rounded-[20px] p-5 hover:bg-[#0F0F0F] transition-colors">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Average</span>
-            <h4 className={`text-xl font-black mt-2 ${avgMonthPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>{formatCompactVal(avgMonthPnl)}</h4>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-1">per Month</p>
-          </div>
-        </div>
-
-        {/* Two-Column Stats List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 border-t border-white/[0.05] pt-6">
-          <div className="space-y-3.5">
-            {[
-              { l: 'Total P&L', v: formatCompactVal(totalPnl), c: totalPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
+  }, [filteredTrades, allJournals]);
+  const chartData = useMemo(() => {
+    let high = 0;
+    return equityData.map(point => {
+      high = Math.max(high, point.cumulative);
+      return { ...point, drawdown: point.cumulative - high };
+    });
+  }, [equityData]);
+  const tone = (value: number) => value > 0 ? "an-profit" : value < 0 ? "an-loss" : "";
+  const money = (value: number) => `${value < 0 ? "-" : ""}$${Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const maxDayPnl = Math.max(...dayPerf.map(day => Math.abs(day.pnl)), 1);
+  const symbols = Object.entries(filteredTrades.reduce((groups, trade) => {
+    const group = groups[trade.symbol] ??= { pnl: 0, count: 0, wins: 0 };
+    group.pnl += Number(trade.pnl);
+    group.count++;
+    if (Number(trade.pnl) > 0) group.wins++;
+    return groups;
+  }, {} as Record<string, { pnl: number; count: number; wins: number }>)).sort(([, a], [, b]) => b.pnl - a.pnl).slice(0, 3);
+  const utcProgress = (clock.getUTCHours() * 60 + clock.getUTCMinutes()) / 1440 * 100;
+  const quickStats = [
+    { label: "Avg Winner", value: money(avgWin), color: tone(avgWin) },
+    { label: "Avg Loser", value: money(avgLoss), color: tone(avgLoss) },
+    { label: "Best Trade", value: money(bestTrade), color: tone(bestTrade) },
+    { label: "Worst Trade", value: money(worstTrade), color: tone(worstTrade) },
+    { label: "Win Streak", value: winStreak },
+    { label: "Loss Streak", value: lossStreak },
+    { label: "Risk:Reward", value: avgLoss ? `1:${Math.abs(avgWin / avgLoss).toFixed(2)}` : "—", color: "an-profit" },
+    { label: "Open Trades", value: 0 },
+  ];
+  const statsColumns = [[
+              { l: 'Total P&L', v: formatCompactVal(totalPnl), c: totalPnl >= 0 ? 'an-profit' : 'an-loss' },
               { l: 'Average daily volume', v: dailyPnl.length ? (filteredTrades.length / dailyPnl.length).toFixed(2) : '0.00' },
-              { l: 'Average winning trade', v: formatCompactVal(avgWin), c: 'text-[#3B82F6]' },
-              { l: 'Average losing trade', v: avgLoss < 0 ? `-${formatCompactVal(Math.abs(avgLoss))}` : '$0.00', c: 'text-[#EF4444]' },
+              { l: 'Average winning trade', v: formatCompactVal(avgWin), c: 'an-profit' },
+              { l: 'Average losing trade', v: avgLoss < 0 ? `-${formatCompactVal(Math.abs(avgLoss))}` : '$0.00', c: 'an-loss' },
               { l: 'Total number of trades', v: `${filteredTrades.length}` },
-              { l: 'Number of winning trades', v: `${winners.length}`, c: 'text-[#3B82F6]' },
-              { l: 'Number of losing trades', v: `${losers.length}`, c: 'text-[#EF4444]' },
+              { l: 'Number of winning trades', v: `${winners.length}`, c: 'an-profit' },
+              { l: 'Number of losing trades', v: `${losers.length}`, c: 'an-loss' },
               { l: 'Number of break even trades', v: `${filteredTrades.length - winners.length - losers.length}` },
               { l: 'Max consecutive wins', v: `${winStreak}` },
               { l: 'Max consecutive losses', v: `${lossStreak}` },
               { l: 'Total commissions', v: '$0.00' },
               { l: 'Total swap', v: '$0.00' },
-              { l: 'Largest profit', v: formatCompactVal(bestTrade), c: 'text-[#3B82F6]' },
-              { l: 'Largest loss', v: worstTrade < 0 ? `-${formatCompactVal(Math.abs(worstTrade))}` : '$0.00', c: 'text-[#EF4444]' },
+              { l: 'Largest profit', v: formatCompactVal(bestTrade), c: 'an-profit' },
+              { l: 'Largest loss', v: worstTrade < 0 ? `-${formatCompactVal(Math.abs(worstTrade))}` : '$0.00', c: 'an-loss' },
               { l: 'Avg hold time (All)', v: formatDuration(avgHoldAll) },
               { l: 'Avg hold time (Winners)', v: formatDuration(avgHoldWinners) },
               { l: 'Avg hold time (Losers)', v: formatDuration(avgHoldLosers) },
-            ].map(s => (
-              <div key={s.l} className="flex justify-between py-1.5 border-b border-white/[0.02] last:border-0 text-xs font-semibold">
-                <span className="text-zinc-500">{s.l}</span>
-                <span className={s.c || 'text-white'}>{s.v}</span>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-3.5">
-            {[
+            ], [
               { l: 'Open trades', v: '0' },
               { l: 'Total trading days', v: `${dailyPnl.length}` },
-              { l: 'Winning days', v: `${winningDays}`, c: 'text-[#3B82F6]' },
-              { l: 'Losing days', v: `${losingDays}`, c: 'text-[#EF4444]' },
+              { l: 'Winning days', v: `${winningDays}`, c: 'an-profit' },
+              { l: 'Losing days', v: `${losingDays}`, c: 'an-loss' },
               { l: 'Breakeven days', v: `${dailyPnl.length - winningDays - losingDays}` },
               { l: 'Max consecutive winning days', v: `${winDayStreak}` },
               { l: 'Max consecutive losing days', v: `${lossDayStreak}` },
-              { l: 'Average daily P&L', v: formatCompactVal(avgDailyPnl), c: avgDailyPnl >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
-              { l: 'Average winning day P&L', v: formatCompactVal(avgWinningDayPnl), c: 'text-[#3B82F6]' },
-              { l: 'Average losing day P&L', v: avgLosingDayPnl < 0 ? `-${formatCompactVal(Math.abs(avgLosingDayPnl))}` : '$0.00', c: 'text-[#EF4444]' },
-              { l: 'Largest profitable day', v: formatCompactVal(largestProfitableDay), c: 'text-[#3B82F6]' },
-              { l: 'Largest losing day', v: largestLosingDay < 0 ? `-${formatCompactVal(Math.abs(largestLosingDay))}` : '$0.00', c: 'text-[#EF4444]' },
-              { l: 'Trade expectancy', v: formatCompactVal(expectancy), c: expectancy >= 0 ? 'text-[#3B82F6]' : 'text-[#EF4444]' },
-              { l: 'Max drawdown', v: maxDD < 0 ? `-${formatCompactVal(Math.abs(maxDD))}` : '$0.00', c: 'text-[#EF4444]' },
-              { l: 'Max drawdown %', v: peak > 0 ? `-${(maxDD / peak * 100).toFixed(2)}%` : '0%', c: 'text-[#EF4444]' },
-            ].map(s => (
-              <div key={s.l} className="flex justify-between py-1.5 border-b border-white/[0.02] last:border-0 text-xs font-semibold">
-                <span className="text-zinc-500">{s.l}</span>
-                <span className={s.c || 'text-white'}>{s.v}</span>
-              </div>
-            ))}
-          </div>
+              { l: 'Average daily P&L', v: formatCompactVal(avgDailyPnl), c: avgDailyPnl >= 0 ? 'an-profit' : 'an-loss' },
+              { l: 'Average winning day P&L', v: formatCompactVal(avgWinningDayPnl), c: 'an-profit' },
+              { l: 'Average losing day P&L', v: avgLosingDayPnl < 0 ? `-${formatCompactVal(Math.abs(avgLosingDayPnl))}` : '$0.00', c: 'an-loss' },
+              { l: 'Largest profitable day', v: formatCompactVal(largestProfitableDay), c: 'an-profit' },
+              { l: 'Largest losing day', v: largestLosingDay < 0 ? `-${formatCompactVal(Math.abs(largestLosingDay))}` : '$0.00', c: 'an-loss' },
+              { l: 'Trade expectancy', v: formatCompactVal(expectancy), c: expectancy >= 0 ? 'an-profit' : 'an-loss' },
+              { l: 'Max drawdown', v: maxDD > 0 ? `-${formatCompactVal(Math.abs(maxDD))}` : '$0.00', c: 'an-loss' },
+              { l: 'Max drawdown %', v: peak > 0 ? `-${(maxDD / peak * 100).toFixed(2)}%` : '0%', c: 'an-loss' },
+            ]];
+  const setupMetrics = (row: BreakdownItem) => <>
+    <span className="an-setup-count"><span className="an-mobile-label">Trades </span>{row.trades}</span>
+    <span className="an-setup-rate"><span className="an-mobile-label">Win </span>{(row.winRate * 100).toFixed(0)}%<i><b style={{ width: `${row.winRate * 100}%` }} /></i></span>
+    <strong className={tone(row.netValue)}>{money(row.netValue)}</strong>
+  </>;
+
+  if (isLoading) return <div className="analysis-page an-loading" role="status"><Activity className="animate-pulse" />Loading analysis...</div>;
+
+  return (
+    <div className="analysis-page">
+      <header className="an-toolbar">
+        <h1><Activity />Performance Analytics</h1>
+        <div className="an-filter"><span>Time Period</span><div className="an-segments" role="group" aria-label="Time period">
+          {periods.map(period => <button key={period} aria-pressed={timePeriod === period} onClick={() => { setTimePeriod(period); setSelectedCalendarDay(null); }}>{period}</button>)}
+        </div></div>
+        <div className="an-filter"><span>Filter By</span><div className="an-segments" role="group" aria-label="Trade outcome">
+          {outcomes.map(outcome => <button key={outcome} aria-pressed={filterBy === outcome} onClick={() => { setFilterBy(outcome); setSelectedCalendarDay(null); }}>{outcome === "Winners" && <CheckCircle2 />}{outcome === "Losers" && <X />}{outcome}</button>)}
+        </div></div>
+      </header>
+
+      <section className="an-surface an-kpis" aria-label="Performance summary">
+        <div className="an-kpi an-kpi-total">
+          <span className="an-label">Total P&amp;L</span><strong className={tone(totalPnl)}>{formatCompactVal(totalPnl)}</strong>
+          <p>From {filteredTrades.length} closed trades</p>
+          <div className="an-sparkline" aria-hidden="true"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><Area type="linear" dataKey="cumulative" stroke="var(--an-blue)" fill="var(--an-blue)" fillOpacity={0.06} strokeOpacity={0.4} dot={false} isAnimationActive={false} /></AreaChart></ResponsiveContainer></div>
         </div>
-      </div>
+        <div className="an-kpi"><span className="an-label">Win Rate</span><strong className="an-profit">{winRate.toFixed(1)}%</strong><div className="an-ratio" aria-hidden="true"><i style={{ width: `${winRate}%` }} /><i style={{ width: `${filteredTrades.length ? losers.length / filteredTrades.length * 100 : 0}%` }} /></div><p>{winCount} wins · {lossCount} losses</p></div>
+        <div className="an-kpi"><span className="an-label">Profit Factor</span><strong className="an-profit">{Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : "∞"}</strong><p><Flame size={13} />{!filteredTrades.length ? "No trades" : profitFactor >= 2 ? "Excellent" : profitFactor >= 1 ? "Profitable" : "Below breakeven"}</p></div>
+        <div className="an-kpi"><span className="an-label">Expectancy</span><strong className={tone(expectancy)}>{money(expectancy)}</strong><p>Expected profit per trade</p></div>
+      </section>
+
+      <section className="an-surface" aria-label="Equity and drawdown">
+        <div className="an-section-heading"><div><h2><Activity />{chartMode === "Equity" ? "Equity Curve" : "Drawdown"}</h2><p>{chartMode === "Equity" ? "Cumulative P&L progression" : "Decline from the cumulative P&L peak"}</p></div><div className="an-segments" role="group" aria-label="Chart mode">{(["Equity", "Drawdown"] as const).map(mode => <button key={mode} aria-pressed={chartMode === mode} onClick={() => setChartMode(mode)}>{mode}</button>)}</div></div>
+        <div className="an-equity-chart" role="img" aria-label={`${chartMode} chart, ${filteredTrades.length} trades`}>
+          {chartData.length ? <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 8, right: 0, bottom: 8, left: 0 }}>
+              <defs><linearGradient id="analysisEquityFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={chartMode === "Equity" ? "var(--an-blue)" : "var(--an-red)"} stopOpacity={0.22} /><stop offset="100%" stopColor={chartMode === "Equity" ? "var(--an-blue)" : "var(--an-red)"} stopOpacity={0.015} /></linearGradient></defs>
+              <CartesianGrid vertical={false} stroke="var(--an-line)" />
+              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "var(--an-muted)", fontSize: 10 }} minTickGap={40} tickMargin={12} interval="preserveStartEnd" />
+              <YAxis orientation="right" axisLine={false} tickLine={false} tick={{ fill: "var(--an-muted)", fontSize: 10 }} width={65} tickFormatter={formatCompactVal} />
+              <ReferenceLine y={0} stroke="var(--an-muted)" strokeOpacity={0.4} strokeDasharray="4 4" />
+              <Tooltip contentStyle={{ background: "var(--an-surface)", border: "1px solid var(--an-line)", borderRadius: 8, color: "var(--an-text)", fontSize: 12 }} formatter={(value: number) => [money(value), chartMode]} />
+              <Area type="linear" dataKey={chartMode === "Equity" ? "cumulative" : "drawdown"} stroke={chartMode === "Equity" ? "var(--an-blue)" : "var(--an-red)"} fill="url(#analysisEquityFill)" strokeWidth={2} dot={false} isAnimationActive={false} />
+            </AreaChart>
+          </ResponsiveContainer> : <div className="an-empty"><Activity /><p>No trades in this period</p></div>}
+        </div>
+        <div className="an-quick-stats">{quickStats.map(stat => <div key={stat.label}><span className="an-label">{stat.label}</span><strong className={stat.color}>{stat.value}</strong></div>)}</div>
+      </section>
+
+      <section className="an-surface an-distribution" aria-label="Win / Loss Distribution">
+        <div className="an-section-heading"><h2><CheckCircle2 />Win / Loss Distribution</h2><p>{winCount} winners · {lossCount} losers</p></div>
+        <div className="an-distribution-bar" aria-label={`${winCount} winners, ${lossCount} losers`}>
+          {winCount > 0 && <span style={{ flex: winCount }}>{winCount}W</span>}
+          {lossCount > 0 && <span className="an-loss-fill" style={{ flex: lossCount }}>{lossCount}L</span>}
+          {totalCount === 0 && <span className="an-no-results">No wins or losses</span>}
+        </div>
+        <div className="an-distribution-totals">{[{ label: "Gross Profit", value: grossProfit }, { label: "Gross Loss", value: grossLoss }, { label: "Net Result", value: totalPnl }].map(item => <div key={item.label}><span className="an-label">{item.label}</span><strong className={tone(item.value)}>{formatCompactVal(item.value)}</strong></div>)}</div>
+      </section>
+
+      <section className="an-surface an-comparisons" aria-label="Trade breakdowns">
+        <div><div className="an-section-heading"><div><h2><ArrowLeftRight />Long vs Short</h2><p>Performance by trade direction</p></div></div>
+          <div className="an-direction-bar" aria-hidden="true"><i style={{ flex: longTrades.length }} /><i style={{ flex: shortTrades.length }} /></div>
+          <div className="an-direction-list">{[{ name: "Long", count: longTrades.length, pnl: longPnl, rate: longWinRate, Icon: TrendingUp }, { name: "Short", count: shortTrades.length, pnl: shortPnl, rate: shortWinRate, Icon: TrendingDown }].map(item => <div key={item.name}><span><i className={item.name === "Short" ? "an-red-dot" : ""} /><item.Icon size={14} /><b>{item.name}</b></span><small>{item.count} trades · {item.rate.toFixed(1)}%</small><strong className={tone(item.pnl)}>{money(item.pnl)}</strong></div>)}</div>
+        </div>
+        <div><div className="an-section-heading"><div><h2><Calendar />Day Performance</h2><p>Results by weekday</p></div></div>
+          <div className="an-weekdays">{dayPerf.map(day => <div key={day.day}><span>{day.day}</span><div className="an-diverging"><i className={day.pnl < 0 ? "an-negative-bar" : ""} style={{ width: `${Math.abs(day.pnl) / maxDayPnl * 50}%` }} /></div><strong className={tone(day.pnl)}>{day.count ? money(day.pnl) : "—"}</strong></div>)}</div>
+        </div>
+        <div><div className="an-section-heading"><div><h2><Trophy />Top Symbols</h2><p>Best performing assets</p></div></div>
+          <div className="an-symbols">{symbols.length ? symbols.map(([symbol, data], index) => <div key={symbol}><span>{index + 1}</span><div><b>{symbol}</b><small><i><b style={{ width: `${data.wins / data.count * 100}%` }} /></i>{data.count} trades · {(data.wins / data.count * 100).toFixed(0)}% win</small></div><strong className={tone(data.pnl)}>{formatCompactVal(data.pnl)}</strong></div>) : <p className="an-inline-empty">No symbol data</p>}</div>
+        </div>
+      </section>
+
+      <section className="an-surface" aria-label="Session Performance">
+        <div className="an-section-heading"><div><h2><Globe />Session Performance</h2><p>Asian, London &amp; New York · UTC</p></div></div>
+        <div className="an-session-timeline">
+          <div className="an-session-track"><span>Asian</span><span>London</span><span>New York</span><span aria-label="Asian session continues" /></div>
+          <div className="an-now" style={{ left: `${utcProgress}%` }} title={`${clock.toLocaleTimeString("en-GB", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" })} UTC`}><span style={{ transform: utcProgress < 5 ? "none" : utcProgress > 95 ? "translateX(-100%)" : "translateX(-50%)" }}>NOW</span></div>
+          <div className="an-session-times"><span>00:00</span><span>08:00</span><span>13:00</span><span>22:00</span><span>24:00</span></div>
+        </div>
+        <div className="an-session-grid">{sessionPerf.map((session, index) => {
+          const Icon = [Sunrise, Landmark, Building2][index];
+          const sessionRate = session.count ? session.wins / session.count * 100 : 0;
+          return <div key={session.name}><div className={`an-session-name an-session-${index}`}><span><Icon /></span><div><h3>{session.name}</h3><p>{["22:00 – 08:00", "08:00 – 13:00", "13:00 – 22:00"][index]} UTC</p></div></div>
+            <strong className={cn("an-session-pnl", tone(session.pnl))}>{money(session.pnl)}</strong>
+            <div className="an-session-meter" aria-hidden="true"><i className={session.pnl < 0 ? "an-loss-fill" : ""} style={{ width: `${Math.abs(session.pnl) / Math.max(...sessionPerf.map(s => Math.abs(s.pnl)), 1) * 100}%` }} /></div>
+            <dl>{[{ label: "Trades", value: session.count }, { label: "Win Rate", value: `${sessionRate.toFixed(1)}%`, color: sessionRate ? "an-profit" : "" }, { label: "Avg Trade", value: money(session.count ? session.pnl / session.count : 0), color: tone(session.pnl) }, { label: "Volume", value: `${filteredTrades.length ? Math.round(session.count / filteredTrades.length * 100) : 0}%` }].map(stat => <div key={stat.label}><dt className="an-label">{stat.label}</dt><dd className={stat.color}>{stat.value}</dd></div>)}</dl>
+          </div>;
+        })}</div>
+      </section>
+
+      <section className="an-surface an-setups" aria-label="Performance by Setup">
+        <div className="an-section-heading"><div><h2><Layers />Performance by Setup</h2><p>Strategy setups from journal entries</p></div><span className="an-period-badge">{setupRows.length} setups</span></div>
+        <div className="an-setup-columns" aria-hidden="true"><span>Strategy setup</span><span>Trades</span><span>Win rate</span><span>Net P&amp;L</span></div>
+        {setupRows.length ? setupRows.map(row => row.children?.length ? <details className="an-setup-group" key={row.key}>
+          <summary className="an-setup-row"><span className="an-setup-name"><ChevronRight size={15} /><b>{row.key}</b></span>{setupMetrics(row)}</summary>
+          <div className="an-setup-children">{row.children.map(child => <div className="an-setup-row" key={child.key}><span className="an-setup-name">{child.key}</span>{setupMetrics(child)}</div>)}</div>
+        </details> : <div className="an-setup-row" key={row.key}><span className="an-setup-name"><Layers size={15} /><b>{row.key}</b></span>{setupMetrics(row)}</div>) : <div className="an-empty"><Layers /><p>No journal setups in this period</p></div>}
+      </section>
+
+      <section className="an-surface an-calendar-section" aria-label="Trading Calendar">
+        <div className="an-section-heading"><div><h2><Calendar />Trading Calendar</h2><p>Daily P&amp;L</p></div><div className="an-month-nav"><button aria-label="Previous month" onClick={() => { setCurrentDate(new Date(year, month - 1, 1)); setSelectedCalendarDay(null); }}><ChevronLeft /></button><span aria-live="polite">{currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span><button aria-label="Next month" onClick={() => { setCurrentDate(new Date(year, month + 1, 1)); setSelectedCalendarDay(null); }}><ChevronRight /></button></div></div>
+        <div className="an-calendar-body"><div className="an-calendar-main">
+          <div className="an-calendar-scroll"><div className="an-calendar-grid">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Weekly"].map(day => <span className={cn("an-calendar-dow", day === "Weekly" && "an-profit")} key={day}>{day}</span>)}
+            {Array.from({ length: weeks }, (_, week) => <div className="an-calendar-week" key={week}>
+              {Array.from({ length: 7 }, (_, column) => {
+                const day = week * 7 + column - startDow + 1;
+                if (day < 1 || day > daysInMonth) return <div key={column} />;
+                const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const data = calendarData[key];
+                return <button key={column} className={cn("an-calendar-day", data && (data.pnl > 0 ? "an-day-profit" : data.pnl < 0 ? "an-day-loss" : "an-day-flat"), selectedCalendarDay === key && "is-selected")} aria-label={`${currentDate.toLocaleDateString("en-US", { month: "long" })} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}`} aria-pressed={selectedCalendarDay === key} aria-current={day === now.getDate() && month === now.getMonth() && year === now.getFullYear() ? "date" : undefined} onClick={() => setSelectedCalendarDay(key)}><span>{day}</span>{data && <><strong className={tone(data.pnl)} title={money(data.pnl)}>{formatCompactVal(data.pnl)}</strong><small>{data.count} trade{data.count !== 1 ? "s" : ""}</small></>}</button>;
+              })}
+              <div className={cn("an-calendar-week-total", tone(weeklyTotals[week].pnl))}><span>Weekly</span><strong title={money(weeklyTotals[week].pnl)}>{formatCompactVal(weeklyTotals[week].pnl)}</strong><small>{weeklyTotals[week].trades} trades</small></div>
+            </div>)}
+          </div></div>
+          <div className="an-calendar-legend"><span><i />Profitable Day</span><span><i />Losing Day</span><span><i />No Trades</span></div>
+        </div><aside className="an-day-details" aria-label="Day Trades"><h2><ClipboardList />Day Trades</h2>
+          {selectedCalendarDay && <p className="an-selected-date">{new Date(selectedCalendarDay + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
+          <div aria-live="polite">{selectedDayTrades.length ? selectedDayTrades.map(trade => <div className="an-day-trade" key={trade.id}><div><b>{trade.symbol}</b><small>{trade.direction} · {trade.lot_size} lots</small></div><strong className={tone(Number(trade.pnl))}>{money(Number(trade.pnl))}</strong></div>) : <div className="an-empty"><Calendar /><p>{selectedCalendarDay ? "No trades on this day" : "No day selected"}</p></div>}</div>
+        </aside></div>
+      </section>
+
+      <section className="an-surface" aria-label="Your Stats">
+        <div className="an-section-heading"><h2><ClipboardList />Your Stats</h2><span className="an-period-badge">{timePeriod}</span></div>
+        <div className="an-month-stats">{[{ label: "Best Month", value: bestMonthStr.value, detail: bestMonthStr.label }, { label: "Worst Month", value: worstMonthStr.value, detail: worstMonthStr.label }, { label: "Average", value: avgMonthPnl, detail: "per Month" }].map(stat => <div key={stat.label}><span className="an-label">{stat.label}</span><strong className={tone(stat.value)}>{money(stat.value)}</strong><p>{stat.detail}</p></div>)}</div>
+        <div className="an-detailed-stats">{statsColumns.map((column, index) => <dl key={index}>{column.map(stat => <div key={stat.l}><dt>{stat.l}</dt><dd className={stat.c}>{stat.v}</dd></div>)}</dl>)}</div>
+      </section>
     </div>
   );
 }

@@ -21,6 +21,7 @@ const BacktestSession = lazy(() => import("./pages/BacktestSession"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ShareTrade = lazy(() => import("./pages/ShareTrade"));
 const Preview = import.meta.env.DEV ? lazy(() => import("./pages/Preview")) : null;
+const AnalysisPreview = import.meta.env.DEV ? lazy(() => import("./pages/AnalysisPreview")) : null;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,6 +78,11 @@ const App = () => (
                 {import.meta.env.DEV && Preview && (
                   <Route path="/preview" element={<AppLayout />}>
                     <Route index element={<Preview />} />
+                  </Route>
+                )}
+                {import.meta.env.DEV && AnalysisPreview && (
+                  <Route path="/preview/analysis" element={<AppLayout />}>
+                    <Route index element={<AnalysisPreview />} />
                   </Route>
                 )}
                 <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

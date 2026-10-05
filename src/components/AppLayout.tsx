@@ -7,6 +7,7 @@ import "@/styles/app-shell.css";
 const titleMap: Record<string, { title: string; subtitle?: string }> = {
   "/": { title: "Dashboard" },
   "/preview": { title: "Dashboard" },
+  "/preview/analysis": { title: "Analysis" },
   "/trades": { title: "Trades" },
   "/journal": { title: "Journal" },
   "/rules": { title: "Rules" },
