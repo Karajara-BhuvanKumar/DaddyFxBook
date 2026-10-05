@@ -121,13 +121,15 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
   const weeklyTotals = Array.from({ length: weeks }, (_, week) => {
     let pnl = 0;
     let count = 0;
-    for (let column = 0; column < 7; column++) {
+    const days = Array.from({ length: 7 }, (_, column) => {
       const day = week * 7 + column - startDow + 1;
-      if (day < 1 || day > daysInMonth) continue;
-      const data = calendarData[`${monthPrefix}-${String(day).padStart(2, "0")}`];
+      if (day < 1 || day > daysInMonth) return null;
+      const key = `${monthPrefix}-${String(day).padStart(2, "0")}`;
+      const data = calendarData[key];
       if (data) { pnl += data.pnl; count += data.count; }
-    }
-    return { pnl, count };
+      return { day, key, data, weekday: new Date(year, month, day).toLocaleDateString("en-US", { weekday: "short" }) };
+    });
+    return { pnl, count, days, firstDay: Math.max(1, week * 7 - startDow + 1), lastDay: Math.min(daysInMonth, (week + 1) * 7 - startDow) };
   });
   const now = new Date();
   const dataMax = Math.max(...chartData.map((point) => point.cumulative), 0);
@@ -222,11 +224,9 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
             <div className="calendar-weekdays" aria-hidden="true">{["M", "T", "W", "T", "F", "S", "S"].map((day, index) => <span key={index}>{day}</span>)}{showWeekly && <span className="weekly-heading">Weekly</span>}</div>
             <div className="calendar-weeks">
               {weeklyTotals.map((week, weekIndex) => <div className="calendar-week" key={weekIndex}>
-                {Array.from({ length: 7 }, (_, column) => {
-                  const day = weekIndex * 7 + column - startDow + 1;
-                  if (day < 1 || day > daysInMonth) return <div key={column} className="calendar-blank" aria-hidden="true" />;
-                  const key = `${monthPrefix}-${String(day).padStart(2, "0")}`;
-                  const data = calendarData[key];
+                {week.days.map((entry, column) => {
+                  if (!entry) return <div key={column} className="calendar-blank" aria-hidden="true" />;
+                  const { day, key, data } = entry;
                   const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                   return <button key={column} className={cn("pnl-day", data && (data.pnl < 0 ? "loss-day" : data.pnl > 0 ? "profit-day" : "flat-day"), today && "today")} aria-label={`${monthLabel} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}`} aria-current={today ? "date" : undefined} onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
                     <span className="pnl-day-number">{day}</span>{data && <strong title={money(data.pnl)}>{compactMoney(data.pnl)}</strong>}
@@ -235,6 +235,27 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
                 {showWeekly && <div className={cn("pnl-week-total", week.count > 0 && (week.pnl < 0 ? "loss-day" : week.pnl > 0 ? "profit-day" : "flat-day"))} title={`Week ${weekIndex + 1}: ${money(week.pnl)}, ${week.count} trades`}><span>Weekly</span><strong>{compactMoney(week.pnl)}</strong><small>{week.count} trade{week.count !== 1 ? "s" : ""}</small></div>}
               </div>)}
             </div>
+          </div>
+          <div className="mobile-pnl-list">
+            {weeklyTotals.some((week) => week.count > 0) ? weeklyTotals.map((week, weekIndex) => (
+              <section className="mobile-pnl-week" key={weekIndex} aria-label={`Week ${weekIndex + 1}, days ${week.firstDay} to ${week.lastDay}`}>
+                <div className={cn("mobile-pnl-week-band", showWeekly && pnlTone(week.pnl))}>
+                  <div className="mobile-pnl-week-label"><h3>Week {weekIndex + 1}</h3><span>{week.firstDay}–{week.lastDay} {currentDate.toLocaleDateString("en-US", { month: "short" })}</span></div>
+                  {showWeekly && <div className="mobile-pnl-week-summary"><strong>{week.pnl === 0 ? "$0.00" : money(week.pnl)}</strong><span>{week.count} trade{week.count !== 1 ? "s" : ""}</span></div>}
+                </div>
+                {week.days.map((entry) => {
+                  if (!entry?.data) return null;
+                  const { day, key, data, weekday } = entry;
+                  const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+                  return <button key={key} type="button" className="mobile-pnl-day" aria-label={`${monthLabel} ${day}, ${data.count} ${data.count === 1 ? "trade" : "trades"}, ${money(data.pnl)}`} aria-current={today ? "date" : undefined} aria-haspopup="dialog" onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
+                    <span className="mobile-pnl-date" aria-hidden="true">{day}</span>
+                    <span className="mobile-pnl-day-label"><span>{weekday}{today && <span className="mobile-pnl-today">Today</span>}</span><small>{data.count} trade{data.count !== 1 ? "s" : ""}</small></span>
+                    <strong className={pnlTone(data.pnl)}>{data.pnl === 0 ? "$0.00" : money(data.pnl)}</strong>
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </button>;
+                })}
+              </section>
+            )) : <p className="mobile-pnl-empty">No trades this month.</p>}
           </div>
           <div className="calendar-legend"><span><i />Profit</span><span><i />Loss</span></div>
         </section>}

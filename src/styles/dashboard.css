@@ -229,6 +229,42 @@
   .calendar-legend { font-size: 10px; margin-top: 14px; gap: 17px; }
   .calendar-legend i { width: 7px; height: 7px; }
 }
+.mobile-pnl-list { display: none; }
+@media (max-width: 599px) {
+  .trading-dashboard .calendar-panel { min-height: 0; padding: 20px 16px 16px; }
+  .trading-dashboard .calendar-panel .pnl-calendar { display: none; }
+  .trading-dashboard .calendar-panel .calendar-heading { padding: 0; }
+  .trading-dashboard .calendar-panel .calendar-total { font-size: 12px; overflow-wrap: anywhere; white-space: normal; }
+  .trading-dashboard .calendar-panel .calendar-navigation { margin-top: 8px; }
+  .trading-dashboard .calendar-panel .calendar-navigation button { width: 44px; height: 44px; }
+  .trading-dashboard .calendar-panel .calendar-navigation span { font-size: 14px; color: hsl(var(--foreground)); }
+  .trading-dashboard .calendar-panel .calendar-legend { font-size: 11px; margin-top: 20px; }
+  .mobile-pnl-list { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+  .mobile-pnl-week { min-width: 0; }
+  .mobile-pnl-week-band { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: center; gap: 8px; padding: 10px 12px; background: hsl(var(--muted)); border-left: 2px solid hsl(var(--border)); }
+  .mobile-pnl-week-band.is-profit { background: color-mix(in srgb, var(--dashboard-blue) 9%, transparent); border-left-color: var(--dashboard-blue); }
+  .mobile-pnl-week-band.is-loss { background: hsl(var(--loss) / .08); border-left-color: hsl(var(--loss)); }
+  .mobile-pnl-week-label h3 { font-size: 13px; line-height: 20px; font-weight: 600; color: hsl(var(--foreground)); letter-spacing: 0; }
+  .mobile-pnl-week-label > span,
+  .mobile-pnl-week-summary > span { display: block; font-size: 11px; line-height: 18px; color: hsl(var(--muted-foreground)); }
+  .mobile-pnl-week-summary { min-width: 0; text-align: right; }
+  .mobile-pnl-week-summary strong { font-size: 14px; line-height: 20px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .mobile-pnl-day { display: grid; grid-template-columns: 32px minmax(52px, 1fr) minmax(0, 1.7fr) 16px; width: 100%; min-height: 60px; align-items: center; gap: 8px; padding: 10px 4px; border-bottom: 1px solid hsl(var(--border)); text-align: left; border-radius: 0; transition: background-color .15s ease, transform .15s ease; touch-action: manipulation; }
+  .mobile-pnl-day:last-child { border-bottom: 0; }
+  .mobile-pnl-day:hover { background: hsl(var(--muted)); }
+  .mobile-pnl-day:active { background: hsl(var(--accent)); transform: translateY(1px); }
+  .mobile-pnl-date { display: grid; place-items: center; width: 32px; height: 36px; border-radius: 6px; background: hsl(var(--muted)); color: hsl(var(--foreground)); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mobile-pnl-day[aria-current="date"] .mobile-pnl-date { box-shadow: inset 0 0 0 1px var(--dashboard-blue); color: var(--dashboard-blue); }
+  .mobile-pnl-day-label { min-width: 0; }
+  .mobile-pnl-day-label > span { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 5px; font-size: 13px; line-height: 19px; color: hsl(var(--foreground)); }
+  .mobile-pnl-day-label small { display: block; font-size: 11px; line-height: 18px; color: hsl(var(--muted-foreground)); }
+  .mobile-pnl-day-label .mobile-pnl-today { font-size: 10px; color: var(--dashboard-blue); }
+  .mobile-pnl-day > strong { min-width: 0; text-align: right; font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .mobile-pnl-day > svg { color: hsl(var(--muted-foreground)); }
+  .mobile-pnl-empty { padding: 28px 12px; text-align: center; color: hsl(var(--muted-foreground)); font-size: 13px; }
+  .light .mobile-pnl-list .is-profit { color: hsl(var(--primary)); }
+  .light .mobile-pnl-list .is-loss { color: #c92e36; }
+}
 /* Desktop density is sized directly so the shared app shell keeps its normal scale. */
 @media (min-width: 1024px) {
   .trading-dashboard .dashboard-toolbar { min-height: 35.15px; margin-bottom: 9.5px; }
