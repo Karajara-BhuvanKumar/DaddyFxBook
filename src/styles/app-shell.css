@@ -167,6 +167,59 @@
   .app-header-profile { height: 44px; min-height: 44px; }
   .app-content { padding: 20px 16px 32px; }
 }
+/* Match the compact desktop Dashboard without scaling page contents. */
+@media (min-width: 1024px) {
+  .app-sidebar { width: clamp(208px, 13.333vw, 256px); }
+  .app-brand { height: 76px; min-height: 76px; gap: 6px; padding: 0 12px; }
+  .app-brand img { width: 30px; height: 30px; }
+  .app-brand-name { font-size: 16px; letter-spacing: 0; }
+  .app-beta { margin-top: -16px; padding: 3px 4px; font-size: 7px; letter-spacing: 0; }
+  .app-account { gap: 10px; min-height: 55px; margin: 22px 12px 16px; padding: 7px 9px; border-radius: 15px; }
+  .app-account-avatar { width: 37px; height: 37px; border-radius: 12px; }
+  .app-account-avatar > span { font-size: 20px; border-radius: 11px; }
+  .app-account-status { width: 10px; height: 10px; border-width: 2px; }
+  .app-account-copy strong { font-size: 14px; }
+  .app-account-copy > span { font-size: 10px; }
+  .app-account-chevron { width: 14px; height: 14px; }
+  .app-navigation { padding: 0 12px 13px; }
+  .app-menu-label { gap: 10px; padding: 2px 8px 12px; font-size: 9px; letter-spacing: 0; }
+  .app-nav-items { gap: 4px; }
+  .app-nav-item { min-height: 42px; gap: 10px; padding: 9px 10px; border-radius: 10px; font-size: 13px; }
+  .app-nav-item > svg { width: 18px; height: 18px; }
+  .app-nav-badge { padding: 2px 3px; font-size: 7px; letter-spacing: 0; }
+  .app-sidebar-footer { padding: 8px 12px 13px; }
+  .app-signout { font-size: 12px; }
+  .app-sidebar-collapse { right: -12px; top: 75px; width: 24px; height: 40px; border-radius: 0 9px 9px 0; }
+  .app-sidebar-collapse svg { width: 13px; height: 13px; }
+  .app-sidebar.is-collapsed { width: 66px; }
+  .is-collapsed .app-brand { padding: 0; }
+  .is-collapsed .app-account { margin: 22px 8px 18px; padding: 6px 0; }
+  .is-collapsed .app-navigation { padding: 0 8px; }
+  .is-collapsed .app-nav-item { padding: 10px; }
+  .is-collapsed .app-sidebar-footer { padding: 8px; }
+  .app-header { min-height: 73px; gap: 19px; padding: 10px 24px; }
+  .app-header-title { flex-basis: 240px; min-width: 116px; }
+  .app-header-title h1 { font-size: 21px; letter-spacing: 0; }
+  .app-header-title p { font-size: 11px; }
+  .app-header-search { flex-basis: 400px; max-width: 480px; min-width: 136px; height: 43px; gap: 12px; padding: 0 16px; border-radius: 13px; }
+  .app-header-search > svg { width: 18px; height: 18px; }
+  .app-header-search > span { font-size: 13px; }
+  .app-header-search kbd { padding: 2px 7px; border-radius: 6px; font-size: 9px; }
+  .app-header-actions { gap: 8px; }
+  .app-icon-button { width: 40px; height: 40px; border-radius: 12px; }
+  .app-icon-button > svg { width: 18px; height: 18px; }
+  .app-add-trade > svg { width: 22px; height: 22px; }
+  .app-header-clock { gap: 7px; height: 38px; min-width: 120px; padding: 0 10px; border-radius: 12px; font-size: 11px; }
+  .app-header-clock svg { width: 16px; height: 16px; }
+  .app-header-profile { gap: 11px; padding: 5px 9px 5px 6px; min-height: 45px; border-radius: 14px; }
+  .app-header-profile > svg { width: 13px; height: 13px; }
+  .app-header-avatar { width: 32px; height: 32px; border-radius: 9px; }
+  .app-header-avatar > span { font-size: 19px; border-radius: 8px; }
+}
+@media (min-width: 1024px) and (max-width: 1359px) {
+  .app-header { gap: 14px; padding: 10px 19px; }
+  .app-header-title { flex-basis: 148px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .app-shell *, .app-sidebar-drawer * { transition-duration: 0s !important; }
 }

@@ -229,4 +229,80 @@
   .calendar-legend { font-size: 10px; margin-top: 14px; gap: 17px; }
   .calendar-legend i { width: 7px; height: 7px; }
 }
+/* Desktop density is sized directly so the shared app shell keeps its normal scale. */
+@media (min-width: 1024px) {
+  .trading-dashboard .dashboard-toolbar { min-height: 37px; margin-bottom: 10px; }
+  .trading-dashboard .customize-button { gap: 7px; min-height: 32px; padding: 6px 12px; border-radius: 11px; font-size: 11px; }
+  .trading-dashboard .customize-button svg { width: 14px; height: 14px; }
+  .trading-dashboard .dashboard-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px; margin-bottom: 24px; }
+  .trading-dashboard .dashboard-stat { min-height: 115px; padding: 22px; gap: 14px; border-radius: 18px; }
+  .trading-dashboard .dashboard-stat-icon { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }
+  .trading-dashboard .dashboard-stat-icon svg { width: 20px; height: 20px; }
+  .trading-dashboard .dashboard-stat h2 { font-size: 10px; line-height: 16px; margin-bottom: 2px; letter-spacing: 0; }
+  .trading-dashboard .dashboard-stat-value { font-size: 27px; letter-spacing: 0; }
+  .trading-dashboard .dashboard-stat-note,
+  .trading-dashboard .dashboard-stat-link { margin-top: 3px; font-size: 10.5px; line-height: 18px; }
+  .trading-dashboard .dashboard-stat-link { gap: 4px; }
+  .trading-dashboard .dashboard-stat-link svg { width: 12px; height: 12px; }
+  .trading-dashboard .win-rate-track { height: 6px; margin-top: 10px; max-width: 152px; }
+  .trading-dashboard .dashboard-panels { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; }
+  .trading-dashboard .dashboard-panels.single-panel { grid-template-columns: minmax(0, 1fr); }
+  .trading-dashboard .dashboard-panel { min-height: 440px; border-radius: 24px; }
+  .trading-dashboard .performance-panel { padding: 28px 28px 22px; }
+  .trading-dashboard .performance-heading { flex-wrap: wrap; gap: 14px; margin-bottom: 37px; }
+  .trading-dashboard .performance-summary h2 { gap: 8px; font-size: 11px; line-height: 19px; letter-spacing: 0; }
+  .trading-dashboard .performance-summary h2 svg { width: 17px; height: 17px; }
+  .trading-dashboard .performance-value-row { gap: 14px; margin-top: 6px; }
+  .trading-dashboard .performance-value { font-size: 39px; letter-spacing: 0; }
+  .trading-dashboard .performance-change { gap: 4px; padding: 7px 12px; border-radius: 19px; font-size: 11px; }
+  .trading-dashboard .performance-change svg { width: 13px; height: 13px; }
+  .trading-dashboard .performance-timeframes { gap: 3px; padding: 4px; border-radius: 10px; }
+  .trading-dashboard .performance-timeframes button { min-width: 38px; min-height: 26px; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; }
+  .trading-dashboard .performance-chart { height: 277px; min-height: 184px; }
+  .trading-dashboard .performance-chart .recharts-cartesian-axis-tick text { font-size: 10px; }
+  .trading-dashboard .calendar-panel { padding: 17px 16px 16px; }
+  .trading-dashboard .calendar-heading { align-items: center; gap: 10px; min-height: 26px; flex-wrap: wrap; }
+  .trading-dashboard .calendar-heading h2 { font-size: 16px; letter-spacing: 0; }
+  .trading-dashboard .calendar-controls { gap: 10px; flex-wrap: wrap; }
+  .trading-dashboard .calendar-total { font-size: 10px; }
+  .trading-dashboard .calendar-navigation { gap: 6px; }
+  .trading-dashboard .calendar-navigation button { width: 24px; height: 24px; border-radius: 8px; }
+  .trading-dashboard .calendar-navigation button svg { width: 14px; height: 14px; }
+  .trading-dashboard .calendar-navigation span { min-width: 91px; font-size: 10.5px; }
+  .trading-dashboard .pnl-calendar { margin-top: 25px; }
+  .trading-dashboard .calendar-weekdays,
+  .trading-dashboard .calendar-week { gap: 4px; }
+  .trading-dashboard .calendar-weekdays { font-size: 10px; margin-bottom: 10px; line-height: 16px; }
+  .trading-dashboard .calendar-weekdays .weekly-heading { font-size: 8px; letter-spacing: 0; }
+  .trading-dashboard .calendar-weeks { gap: 4px; }
+  .trading-dashboard .calendar-week { min-height: 46px; }
+  .trading-dashboard .pnl-day,
+  .trading-dashboard .pnl-week-total { min-height: 46px; border-radius: 10px; }
+  .trading-dashboard .pnl-day { padding: 5px 6px 6px; }
+  .trading-dashboard .pnl-day-number { font-size: 10px; line-height: 13px; }
+  .trading-dashboard .pnl-day strong { font-size: 11px; }
+  .trading-dashboard .pnl-day.today::after { width: 3px; height: 3px; top: 8px; right: 6px; }
+  .trading-dashboard .pnl-week-total { padding: 2px; }
+  .trading-dashboard .pnl-week-total > span { font-size: 7px; line-height: 10px; letter-spacing: 0; }
+  .trading-dashboard .pnl-week-total > strong { font-size: 10px; line-height: 13px; }
+  .trading-dashboard .pnl-week-total > small { font-size: 7px; line-height: 10px; }
+  .trading-dashboard .calendar-legend { gap: 16px; font-size: 10px; margin-top: 10px; }
+  .trading-dashboard .calendar-legend span { gap: 6px; }
+  .trading-dashboard .calendar-legend i { width: 7px; height: 7px; }
+}
+@media (min-width: 1024px) and (max-width: 1359px) {
+  .trading-dashboard .dashboard-stat { padding: 18px 16px; gap: 11px; }
+  .trading-dashboard .dashboard-stat-icon { width: 37px; height: 37px; flex-basis: 37px; }
+  .trading-dashboard .dashboard-stat-value { font-size: 24px; }
+  .trading-dashboard .dashboard-stats { gap: 14px; }
+  .trading-dashboard .dashboard-panels { gap: 18px; }
+  .trading-dashboard .performance-panel { padding: 22px 21px 18px; }
+  .trading-dashboard .performance-heading { margin-bottom: 19px; }
+  .trading-dashboard .performance-chart { height: 272px; }
+  .trading-dashboard .pnl-calendar { margin-top: 19px; }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .trading-dashboard .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trading-dashboard .dashboard-panels { grid-template-columns: minmax(0, 1fr); }
+}
 @media (prefers-reduced-motion: reduce) { .trading-dashboard * { transition: none !important; } }
