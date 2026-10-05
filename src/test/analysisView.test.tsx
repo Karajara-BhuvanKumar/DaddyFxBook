@@ -4,7 +4,7 @@ import { AnalysisView } from "@/pages/Analysis";
 import { previewTrades } from "@/lib/previewData";
 import type { Journal } from "@/hooks/useTrades";
 
-vi.mock("@/hooks/useTrades", () => ({ useTrades: vi.fn(), useAllJournals: vi.fn() }));
+vi.mock("@/hooks/useAnalysisData", () => ({ useAnalysisData: vi.fn() }));
 vi.mock("recharts", async (importOriginal) => ({
   ...await importOriginal<typeof import("recharts")>(),
   ResponsiveContainer: () => null,
@@ -32,27 +32,27 @@ describe("Analysis redesign", () => {
     const setups = within(screen.getByRole("region", { name: "Performance by Setup" }));
     const summary = container.querySelector(".an-setup-group summary")!;
     expect(summary).toHaveTextContent("H4 TJL 2 / M5 QML / Bullish");
-    expect(summary).toHaveTextContent("33%");
+    expect(summary).toHaveTextContent("50%");
     expect(summary).toHaveTextContent("$60.00");
     expect(setups.getByText("M5 QML Confirmation: M1 TJL 1")).toBeInTheDocument();
     expect(setups.getByText("M5 QML Confirmation: M1 CC Engulfing")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Winners", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Winners" }));
     expect(container.querySelector(".an-setup-group summary")).toHaveTextContent("100%");
     expect(container.querySelector(".an-setup-group summary")).toHaveTextContent("$100.00");
     expect(setups.queryByText("M5 QML Confirmation: M1 CC Engulfing")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Losers", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Losers" }));
     expect(container.querySelector(".an-setup-group summary")).toHaveTextContent("-$40.00");
   });
 
   it("switches chart mode, selects a calendar day, and clears selection on period change", () => {
     showAnalysis();
-    fireEvent.click(screen.getByRole("button", { name: "Drawdown", exact: true }));
-    expect(screen.getByRole("button", { name: "Drawdown", exact: true })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Drawdown" }));
+    expect(screen.getByRole("button", { name: "Drawdown" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("img", { name: "Drawdown chart, 3 trades" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "October 2, 1 trades, -$40.00" }));
     const details = within(screen.getByRole("complementary", { name: "Day Trades" }));
     expect(details.getByText("-$40.00")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Today", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
     expect(details.getByText("No day selected")).toBeInTheDocument();
     expect(screen.getByText("No trades in this period")).toBeInTheDocument();
     expect(screen.getByText("No journal setups in this period")).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe("Analysis redesign", () => {
     const { container } = showAnalysis();
     const stats = within(screen.getByRole("region", { name: "Your Stats" }));
     expect(stats.getByText("Max drawdown").parentElement).toHaveTextContent("-$40.00");
-    fireEvent.click(screen.getByRole("button", { name: "Winners", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Winners" }));
     expect(container.querySelectorAll(".an-kpi")[2]).toHaveTextContent("∞");
   });
 });

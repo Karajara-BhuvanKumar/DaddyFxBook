@@ -9,6 +9,7 @@ import { Trade, useJournal, useChecklist, useUpdateTrade } from "@/hooks/useTrad
 import { ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toLocalDateTime, toUtcTimestamp } from "@/lib/tradeTimestamps";
 
 interface EditTradeModalProps {
   trade: Trade | null;
@@ -66,8 +67,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         lotSize: trade.lot_size.toString(),
         stopLoss: trade.stop_loss?.toString() || '',
         takeProfit: trade.take_profit?.toString() || '',
-        openDate: trade.open_time.slice(0, 16),
-        closeDate: trade.close_time.slice(0, 16),
+        openDate: toLocalDateTime(trade.open_time),
+        closeDate: toLocalDateTime(trade.close_time),
         commission: '', // No direct field in Trade schema yet
         swap: '',       // No direct field in Trade schema yet
         tags: journal?.tags || '',
@@ -98,8 +99,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         lot_size: parseFloat(form.lotSize) || 0,
         stop_loss: form.stopLoss ? parseFloat(form.stopLoss) : null,
         take_profit: form.takeProfit ? parseFloat(form.takeProfit) : null,
-        open_time: form.openDate,
-        close_time: form.closeDate,
+        open_time: toUtcTimestamp(form.openDate, trade.open_time),
+        close_time: toUtcTimestamp(form.closeDate, trade.close_time),
       };
 
       const combinedLessons = form.mistakes 

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { toUtcTimestamp } from "@/lib/tradeTimestamps";
 import { useTrades, useAddTrade, useDeleteTrade, calculatePnl, Trade } from "@/hooks/useTrades";
 import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X, DollarSign, Share2, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -162,7 +163,7 @@ export default function Trades() {
     const lot = parseFloat(form.lotSize);
     if (isNaN(entry) || isNaN(exit) || isNaN(lot)) return;
     try {
-      await addTrade.mutateAsync({ symbol: 'XAUUSD', direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: form.openDate, close_time: form.closeDate });
+      await addTrade.mutateAsync({ symbol: 'XAUUSD', direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: toUtcTimestamp(form.openDate), close_time: toUtcTimestamp(form.closeDate) });
       toast.success("Trade added!");
       setShowForm(false);
       setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', openDate: localNow(), closeDate: localNow() });
