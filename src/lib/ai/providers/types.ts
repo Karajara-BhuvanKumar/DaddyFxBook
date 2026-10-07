@@ -31,6 +31,7 @@ export interface ModelDefinition {
 }
 
 export interface AIRequest {
+  signal?: AbortSignal;
   apiKey: string;
   model: OpenRouterModelId | string;
   prompt: string;

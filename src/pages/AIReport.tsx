@@ -1,819 +1,168 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Sparkles, Key, Eye, EyeOff, Save, CheckCircle2,
-  Download, Copy, RefreshCw, Target, BrainCircuit,
-  TrendingUp, TrendingDown, Clock, ChevronDown, Check,
-  Zap, Shield, Brain, BarChart2, Activity, FileText,
-  ServerCrash, AlertCircle, Info,
-} from "lucide-react";
-import { subDays, format } from "date-fns";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, BarChart3, BookOpen, Check, ChevronDown, Copy, Download, Eye, EyeOff, FileSearch, History, Loader2, Plug, RefreshCw, Settings2, ShieldCheck, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchExportData } from "@/hooks/useTrades";
-import { buildScorecard } from "@/lib/scoring";
-import {
-  OPENROUTER_MODELS,
-  DEFAULT_MODEL,
-  DEFAULT_TEMPERATURE,
-  DEFAULT_MAX_TOKENS,
-  validateOpenRouterKey,
-  generateWithFallback,
-  buildPrompt,
-  AI_SYSTEM_INSTRUCTION,
-  formatAIReport,
-  reportToPlainText,
-} from "@/lib/ai";
-import type { OpenRouterModelId, FormattedReport, ReportSection } from "@/lib/ai";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { ScorecardTab } from "@/components/ai-report/ScorecardTab";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { generateWithFallback, validateOpenRouterKey, type IncludeFlags } from "@/lib/ai";
+import { fetchCoachData } from "@/lib/coach/data";
+import { analyzeCoachData } from "@/lib/coach/analysis";
+import { resolveCoachWindow } from "@/lib/coach/period";
+import { DEFAULT_SOURCES, SOURCE_LABELS, type Period } from "@/lib/coach/types";
+import { buildCoachPrompt, COACH_SYSTEM, coachReportToText, parseCoachReport, readSavedReviews, saveReview, type SavedCoachReport } from "@/lib/coach/report";
+import { CoachReview, ProcessMeasures } from "@/components/coach/CoachReview";
+import "@/styles/performance-coach.css";
 
-// ─────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────
-
-type ReportPeriod = "Daily" | "Weekly" | "Monthly" | "Custom" | "Full (All Time)";
-type KeyStatus = "idle" | "checking" | "valid" | "invalid";
-
-interface DataToggles {
-  trades: boolean;
-  journalEntries: boolean;
-  strategySetup: boolean;
-  emotions: boolean;
-  tags: boolean;
-  lessonsLearned: boolean;
-  screenshots: boolean;
-  executionChecklist: boolean;
-}
-
-// ─────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────
-
-const LOADING_STEPS = [
-  "Connecting to OpenRouter...",
-  "Verifying API key...",
-  "Fetching your trades...",
-  "Fetching journal entries...",
-  "Fetching checklists & screenshots...",
-  "Computing performance metrics...",
-  "Analysing session performance...",
-  "Detecting behavioural patterns...",
-  "Building coaching prompt...",
-  "Sending to AI model...",
-  "AI is analysing your trading psychology...",
-  "AI is identifying hidden patterns...",
-  "AI is writing your action plan...",
-  "Finalising report...",
-];
-
-const TOGGLE_LABELS: Record<keyof DataToggles, string> = {
-  trades: "Trades",
-  journalEntries: "Journal Entries",
-  strategySetup: "Strategy Setup",
-  emotions: "Emotions",
-  tags: "Tags",
-  lessonsLearned: "Lessons Learned",
-  screenshots: "Screenshots",
-  executionChecklist: "Checklist",
-};
-
-// ─────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────
-
-function ScoreBar({ label, score, icon }: { label: string; score: number; icon: React.ReactNode }) {
-  const colour = score >= 70 ? "bg-blue-500" : score >= 50 ? "bg-amber-500" : "bg-red-500";
-  const text = score >= 70 ? "text-blue-400" : score >= 50 ? "text-amber-400" : "text-red-400";
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-          {icon} {label}
-        </span>
-        <span className={`text-sm font-black ${text}`}>{score}</span>
-      </div>
-      <div className="h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-1000 ease-out ${colour}`} style={{ width: `${score}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function SectionCard({ section }: { section: ReportSection }) {
-  const [open, setOpen] = useState(false);
-  const border = { default: "border-white/[0.05]", success: "border-emerald-500/20", warning: "border-amber-500/20", danger: "border-red-500/20" }[section.tone];
-  const dot = { default: "bg-blue-500", success: "bg-emerald-500", warning: "bg-amber-500", danger: "bg-red-500" }[section.tone];
-  return (
-    <div className={`bg-[#121212] border ${border} rounded-2xl overflow-hidden`}>
-      <button onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors">
-        <span className="text-sm font-bold text-white flex items-center gap-2.5">
-          <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-          <span className="text-zinc-600 text-[11px] font-black tabular-nums">{section.number}.</span>
-          {section.title}
-        </span>
-        <ChevronDown className={cn("w-4 h-4 text-zinc-600 transition-transform duration-200 shrink-0", open && "rotate-180")} />
-      </button>
-      {open && (
-        <div className="px-4 pb-5 border-t border-white/[0.04]">
-          <div className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap font-medium pt-4">{section.body}</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Main Page
-// ─────────────────────────────────────────────────────────────
+const LegacyScorecards = lazy(() => import("@/components/ai-report/ScorecardTab").then(module => ({ default: module.ScorecardTab })));
+const PERIODS: Period[] = ["Daily", "Weekly", "Monthly", "Custom", "All Time"];
+const readStorage = (key: string) => { try { return localStorage.getItem(key) || ""; } catch { return ""; } };
 
 export default function AIReportPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"coach" | "scorecard">("coach");
-
-  // Config
+  const queryClient = useQueryClient();
+  const uid = user?.id || "";
+  const [period, setPeriod] = useState<Period>("Weekly");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [asOf, setAsOf] = useState(() => new Date());
+  const [include, setInclude] = useState<IncludeFlags>({ ...DEFAULT_SOURCES });
+  const [instructions, setInstructions] = useState("");
+  const [connectionOpen, setConnectionOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [legacyOpen, setLegacyOpen] = useState(false);
+  const [keyDraft, setKeyDraft] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
-  const [keyStatus, setKeyStatus] = useState<KeyStatus>("idle");
-  const [selectedModel, setSelectedModel] = useState<OpenRouterModelId>(DEFAULT_MODEL);
-  const [period, setPeriod] = useState<ReportPeriod>("Weekly");
-  const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
-  const [instructions, setInstructions] = useState("");
-  const [toggles, setToggles] = useState<DataToggles>({
-    trades: true,
-    journalEntries: true,
-    strategySetup: true,
-    emotions: true,
-    tags: true,
-    lessonsLearned: true,
-    screenshots: false,
-    executionChecklist: true,
-  });
-
-  // Report
+  const [checking, setChecking] = useState(false);
+  const [keyError, setKeyError] = useState("");
+  const [report, setReport] = useState<SavedCoachReport | null>(null);
+  const [savedReviews, setSavedReviews] = useState<SavedCoachReport[]>([]);
   const [generating, setGenerating] = useState(false);
-  const [loadingStep, setLoadingStep] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [report, setReport] = useState<FormattedReport | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [attemptedModels, setAttemptedModels] = useState<string[]>([]);
-  const stepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [stage, setStage] = useState("");
+  const [error, setError] = useState("");
+  const [storageWarning, setStorageWarning] = useState("");
+  const controller = useRef<AbortController | null>(null);
+  const reportTop = useRef<HTMLDivElement>(null);
+  const activeUser = useRef(uid);
+  activeUser.current = uid;
+  const keyName = `dfb-coach-key:${uid}`;
+  const dataQuery = useQuery({ queryKey: ["performance-coach-data", uid], enabled: !!uid, queryFn: ({ signal }) => fetchCoachData(uid, signal), staleTime: 60_000, retry: false });
 
-  // Restore persisted settings
   useEffect(() => {
-    const k = localStorage.getItem("openrouter_api_key");
-    if (k) { setApiKey(k); setKeyStatus("valid"); }
-    const m = localStorage.getItem("openrouter_model") as OpenRouterModelId;
-    if (m && OPENROUTER_MODELS[m]) setSelectedModel(m);
-    const ins = localStorage.getItem("ai_report_instructions");
-    if (ins) setInstructions(ins);
-  }, []);
+    const key = readStorage(`dfb-coach-key:${uid}`) || readStorage("openrouter_api_key");
+    setApiKey(key); setKeyDraft(key);
+    setInstructions(readStorage(`dfb-coach-focus:${uid}`) || readStorage("ai_report_instructions"));
+    const reviews = uid ? readSavedReviews(uid) : [];
+    setSavedReviews(reviews); setReport(reviews[0] || null);
+    setError(""); setStorageWarning(""); setGenerating(false);
+    return () => { controller.current?.abort(); };
+  }, [uid]);
 
-  // Loading animation helpers
-  const startLoading = useCallback(() => {
-    let step = 0;
-    setLoadingStep(LOADING_STEPS[0]);
-    setProgress(2);
-    stepTimer.current = setInterval(() => {
-      step = Math.min(step + 1, LOADING_STEPS.length - 1);
-      setLoadingStep(LOADING_STEPS[step]);
-      setProgress(2 + (step / (LOADING_STEPS.length - 1)) * 88);
-    }, 2000);
-  }, []);
+  const range = useMemo(() => {
+    try { return { value: resolveCoachWindow(period, from, to, asOf), error: "" }; }
+    catch (error) { return { value: null, error: error instanceof Error ? error.message : "Check your dates." }; }
+  }, [period, from, to, asOf]);
+  const analysis = useMemo(() => dataQuery.data && range.value ? analyzeCoachData(dataQuery.data, range.value, include) : null, [dataQuery.data, range.value, include]);
+  const sourceCount = Object.values(include).filter(Boolean).length;
 
-  const stopLoading = useCallback(() => {
-    if (stepTimer.current) clearInterval(stepTimer.current);
-    setProgress(100);
-  }, []);
-
-  // Key verification
-  const handleSaveKey = async () => {
-    if (!apiKey.trim()) { toast.error("Please enter your OpenRouter API key."); return; }
-    setKeyStatus("checking");
-    const { valid, error: keyErr } = await validateOpenRouterKey(apiKey.trim());
-    if (valid) {
-      localStorage.setItem("openrouter_api_key", apiKey.trim());
-      setKeyStatus("valid");
-      toast.success("API key verified and saved.");
-    } else {
-      setKeyStatus("invalid");
-      toast.error(keyErr ?? "Invalid API key.");
-    }
-  };
-
-  // Model change
-  const handleModelChange = (model: OpenRouterModelId) => {
-    setSelectedModel(model);
-    localStorage.setItem("openrouter_model", model);
-  };
-
-  // Copy & download
-  const handleCopy = useCallback(() => {
-    if (!report) return;
-    navigator.clipboard.writeText(report.rawMarkdown);
-    toast.success("Report copied to clipboard.");
-  }, [report]);
-
-  const handleDownload = useCallback(() => {
-    if (!report) return;
-    const blob = new Blob([reportToPlainText(report)], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `DaddyFxBook_AI_Report_${format(new Date(), "yyyy-MM-dd")}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Report downloaded as TXT.");
-  }, [report]);
-
-  // Main generation
-  const generateReport = useCallback(async () => {
-    if (keyStatus !== "valid") { toast.error("Please save and verify your OpenRouter API key first."); return; }
-    if (!user) { toast.error("You must be logged in to generate a report."); return; }
-    if (period === "Custom" && (!customRange.from || !customRange.to)) {
-      toast.error("Select both start and end dates for a custom report.");
-      return;
-    }
-
-    setGenerating(true);
-    setReport(null);
-    setError(null);
-    setAttemptedModels([]);
-    startLoading();
-
+  async function saveConnection(event: React.FormEvent) {
+    event.preventDefault();
+    if (!keyDraft.trim()) { setKeyError("Enter your connection key."); return; }
+    setChecking(true); setKeyError("");
+    const forUser = uid;
     try {
-      // 1 — Resolve date window
-      const now = new Date();
-      let startDate: string | undefined;
-      let endDate: string | undefined;
-
-      if (period === "Daily") {
-        const s = new Date(now); s.setHours(0, 0, 0, 0); startDate = s.toISOString();
-      } else if (period === "Weekly") {
-        startDate = subDays(now, 7).toISOString();
-      } else if (period === "Monthly") {
-        startDate = subDays(now, 30).toISOString();
-      } else if (period === "Custom") {
-        startDate = customRange.from!.toISOString();
-        endDate = customRange.to!.toISOString();
-      }
-      // "Full (All Time)" → undefined → no filter
-
-      // 2 — Fetch data
-      const data = await fetchExportData(user.id, startDate, endDate);
-      if (data.trades.length === 0) {
-        throw new Error("No trades found in the selected period. Try a wider date range.");
-      }
-
-      // 3 — Scorecard (deterministic, client-side)
-      const scorecard = buildScorecard(data.trades, data.journals, data.checklists, []);
-
-      // 4 — Prompt
-      if (instructions) localStorage.setItem("ai_report_instructions", instructions);
-
-      const prompt = buildPrompt({
-        trades: data.trades,
-        journals: data.journals,
-        checklists: data.checklists,
-        screenshots: data.screenshots,
-        scorecard,
-        reportType: period === "Full (All Time)" ? "Full" : period,
-        include: toggles,
-        customInstructions: instructions || undefined,
+      const key = keyDraft.trim();
+      const result = await validateOpenRouterKey(key);
+      if (activeUser.current !== forUser) return;
+      if (!result.valid) throw new Error("Couldn't verify this key. Check the key, available credits, and your connection.");
+      localStorage.setItem(keyName, key);
+      localStorage.removeItem("openrouter_api_key");
+      setApiKey(key); setKeyDraft(key); setConnectionOpen(false); toast.success("Coach connection saved.");
+    } catch (error) { setKeyError(error instanceof Error ? error.message : "Couldn't save your connection."); }
+    finally { setChecking(false); }
+  }
+  function forgetConnection() {
+    try { localStorage.removeItem(keyName); localStorage.removeItem("openrouter_api_key"); setApiKey(""); setKeyDraft(""); setKeyError(""); toast.success("Connection removed from this browser."); }
+    catch { setKeyError("Couldn't remove this connection. Check browser storage permissions."); }
+  }
+  async function generate() {
+    if (generating || !uid) return;
+    if (!apiKey) { setConnectionOpen(true); return; }
+    if (!range.value || !sourceCount) return;
+    const abort = new AbortController(); controller.current = abort;
+    setGenerating(true); setError(""); setStorageWarning(""); setStage("Reading your selected trading records…");
+    try {
+      const window = resolveCoachWindow(period, from, to, new Date());
+      const fresh = await fetchCoachData(uid, abort.signal);
+      if (abort.signal.aborted || activeUser.current !== uid) return;
+      queryClient.setQueryData(["performance-coach-data", uid], fresh);
+      const context = analyzeCoachData(fresh, window, include);
+      if (!context.tradeCount) throw new Error("There are no trades in this period. Choose a wider range or add your first trade.");
+      setStage("Reviewing performance, journal context, and recurring patterns…");
+      const result = await generateWithFallback({ apiKey, prompt: buildCoachPrompt(context, instructions), systemInstruction: COACH_SYSTEM, temperature: 0.3, maxTokens: 6500, signal: abort.signal,
+        onModelAttempt: (_model, attempt) => { if (attempt > 1) setStage("The coach is reconnecting. Your review is still in progress…"); },
       });
+      if (abort.signal.aborted) return;
+      if (!result.success || !result.report) throw new Error("The coach couldn't complete your review. Check your connection and credits, then try again.");
+      setStage("Checking report structure and evidence references…");
+      const structured = parseCoachReport(result.report, context);
+      const saved: SavedCoachReport = { version: 1, id: crypto.randomUUID(), generatedAt: result.timestamp, report: structured, analysis: context, instructions: instructions.trim() };
+      if (activeUser.current !== uid) return;
+      setReport(saved); setAsOf(new Date(window.end));
+      try { setSavedReviews(saveReview(uid, saved)); localStorage.setItem(`dfb-coach-focus:${uid}`, instructions.trim()); }
+      catch { setStorageWarning("Your review is ready, but this browser couldn't save it. Download a copy to keep it."); }
+      toast.success("Your performance review is ready.");
+      requestAnimationFrame(() => { reportTop.current?.scrollIntoView({ behavior: "smooth", block: "start" }); reportTop.current?.focus({ preventScroll: true }); });
+    } catch (error) {
+      if (!abort.signal.aborted) setError(error instanceof Error ? error.message : "Couldn't complete the review. Please try again.");
+    } finally { if (controller.current === abort) { controller.current = null; setGenerating(false); setStage(""); } }
+  }
+  function cancel() { controller.current?.abort(); setGenerating(false); setStage(""); }
+  async function copyReport() {
+    if (!report) return;
+    try { await navigator.clipboard.writeText(coachReportToText(report)); toast.success("Review copied with supporting evidence."); }
+    catch { toast.error("Couldn't access the clipboard. Download the review instead."); }
+  }
+  function downloadReport() {
+    if (!report) return;
+    const url = URL.createObjectURL(new Blob([coachReportToText(report)], { type: "text/plain;charset=utf-8" }));
+    const anchor = document.createElement("a"); anchor.href = url; anchor.download = `DaddyFXBook-Performance-Review-${report.generatedAt.slice(0, 10)}.txt`; anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
-      // 5 — Generate with automatic model fallback
-      const result = await generateWithFallback({
-        apiKey,
-        preferredModel: selectedModel,
-        prompt,
-        systemInstruction: AI_SYSTEM_INSTRUCTION,
-        temperature: DEFAULT_TEMPERATURE,
-        maxTokens: DEFAULT_MAX_TOKENS,
-        onModelAttempt: (model, n) => {
-          setLoadingStep(`Sending to ${OPENROUTER_MODELS[model as OpenRouterModelId]?.label ?? model}...`);
-          setAttemptedModels((prev) => [...new Set([...prev, model])]);
-          if (n > 1) toast.info(`Trying ${OPENROUTER_MODELS[model as OpenRouterModelId]?.label ?? model}...`);
-        },
-        onModelFailed: (model, err, willRetry) => {
-          const label = OPENROUTER_MODELS[model as OpenRouterModelId]?.label ?? model;
-          if (willRetry) toast.error(`${label}: ${err} — trying next model...`);
-        },
-      });
+  return <div className="pc-page">
+    <header className="pc-header"><div><div className="pc-eyebrow"><span />YOUR EDGE STARTS WITH UNDERSTANDING</div><h1>Performance Coach</h1><p>Understand the pattern. Improve the process.</p></div><div className="pc-header-actions"><Button variant="outline" onClick={() => setHistoryOpen(true)}><History size={15} />Past reviews{savedReviews.length > 0 && <span className="pc-count">{savedReviews.length}</span>}</Button><Button variant="ghost" disabled={generating} onClick={() => setConnectionOpen(true)}><span className={`pc-connection-dot ${apiKey ? "is-connected" : ""}`} />{apiKey ? "Connection saved" : "Connect coach"}<Settings2 size={14} /></Button></div></header>
 
-      stopLoading();
+    <section className="pc-builder" aria-label="Review setup"><fieldset disabled={generating}>
+      <div className="pc-builder-top"><div><span className="pc-kicker">YOUR REVIEW WINDOW</span><div className="pc-periods" role="group" aria-label="Report period">{PERIODS.map(p => <button key={p} type="button" aria-pressed={period === p} onClick={() => { setPeriod(p); setAsOf(new Date()); }}>{p}</button>)}</div></div><Button className="pc-generate" onClick={generate} disabled={generating || dataQuery.isPending || !range.value || !sourceCount || !uid || !analysis?.tradeCount}>{generating ? <Loader2 size={17} className="animate-spin" /> : <FileSearch size={17} />}{generating ? "Preparing your review…" : "Generate Performance Report"}{!generating && <ArrowRight size={16} />}</Button></div>
+      {period === "Custom" && <div className="pc-custom-dates"><div><Label htmlFor="coach-from">From</Label><Input id="coach-from" type="date" value={from} onChange={e => setFrom(e.target.value)} /></div><div><Label htmlFor="coach-to">Through</Label><Input id="coach-to" type="date" value={to} min={from} onChange={e => setTo(e.target.value)} /></div><span>Includes the end date through now.</span></div>}
+      <div className="pc-window-caption">{range.value ? <><span>{period === "Daily" ? "Last 24 hours" : period === "Weekly" ? "Last 7 days" : period === "Monthly" ? "Last 30 days" : period === "All Time" ? "Complete available history" : "Custom date range"}</span><span>{range.value.label} · {range.value.timezone}</span></> : <span role="alert">{range.error}</span>}</div>
+      <details className="pc-options"><summary><span><Settings2 size={14} />Customize analysis <small>{sourceCount} sources · optional focus</small></span><ChevronDown size={15} /></summary><div className="pc-options-body"><div><h3>Give your coach the right context</h3><p className="pc-muted pc-small">Only checked sources and their derived metrics are included. Trades still define the date window when performance data is unchecked.</p><div className="pc-source-options">{Object.entries(SOURCE_LABELS).map(([name, label]) => <label key={name}><input type="checkbox" checked={include[name as keyof IncludeFlags]} onChange={e => setInclude(prev => ({ ...prev, [name]: e.target.checked }))} /><span>{label}</span></label>)}</div><p className="pc-muted pc-small">Screenshot coverage counts attachments. Chart images are not visually analyzed.</p>{!sourceCount && <p className="pc-error-text">Choose at least one source.</p>}</div><div><Label htmlFor="coach-focus">Anything to focus on? <span className="pc-muted">Optional</span></Label><Textarea id="coach-focus" value={instructions} maxLength={1500} onChange={e => setInstructions(e.target.value)} placeholder="Focus on FOMO, off-session entries, and whether I'm forcing trades around H1 levels." /><p className="pc-muted pc-small">The coach will investigate this against your records. {instructions.length}/1,500</p></div></div></details>
+      <div className="pc-builder-footer"><span><ShieldCheck size={13} />Evidence first. Clear next steps.</span><span>{dataQuery.isPending ? "Loading your journal…" : analysis ? `${analysis.tradeCount} trades · ${analysis.journalCount} journal notes · ${analysis.checklistCount} checklists` : "Select a valid review window"}</span></div>
+    </fieldset></section>
 
-      if (!result.success || !result.report) {
-        throw new Error(result.error ?? "AI returned no content. Please try again.");
-      }
+    {dataQuery.isError && <div className="pc-notice pc-error" role="alert"><p>Couldn't load your trading records. Your past reviews are still available.</p><Button variant="outline" onClick={() => dataQuery.refetch()}>Retry loading data</Button></div>}
+    {analysis?.limitations.some(l => l.includes("could not be loaded")) && <div className="pc-notice"><p>Some sources are unavailable: {analysis.limitations.filter(l => l.includes("could not be loaded")).join(" ")}</p><Button variant="ghost" onClick={() => dataQuery.refetch()}>Retry sources</Button></div>}
+    {!apiKey && !report && !dataQuery.isPending && <div className="pc-connect-notice"><Plug size={17} /><p>Connect your coach once to start generating reviews.</p><Button variant="ghost" onClick={() => setConnectionOpen(true)}>Set up connection <ArrowRight size={14} /></Button></div>}
+    {generating && <div className="pc-generating" role="status"><div className="pc-loading-icon"><Loader2 size={24} className="animate-spin" /></div><div><h2>Your performance review is taking shape</h2><p>{stage}</p><span>Large journals may take a couple of minutes. Your previous review stays available.</span></div><Button variant="ghost" onClick={cancel}><X size={15} />Cancel</Button></div>}
+    {error && <div className="pc-notice pc-error" role="alert"><div><strong>Review couldn't be completed</strong><p>{error}</p></div><Button variant="outline" onClick={generate} disabled={generating}>Try again <RefreshCw size={14} /></Button></div>}
+    {storageWarning && <p className="pc-notice" role="status">{storageWarning}</p>}
 
-      // 6 — Format
-      const formatted = formatAIReport(result.report, scorecard, {
-        provider: result.provider,
-        model: result.model,
-        generatedAt: result.timestamp,
-        latencyMs: result.latencyMs,
-        tradeCount: data.trades.length,
-        wasCapped: data.trades.length > 200,
-      });
-
-      setReport(formatted);
-      const secs = ((result.latencyMs ?? 0) / 1000).toFixed(1);
-      const label = OPENROUTER_MODELS[result.model as OpenRouterModelId]?.label ?? result.model;
-      toast.success(`Report generated in ${secs}s using ${label}.`);
-    } catch (err: unknown) {
-      stopLoading();
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setGenerating(false);
-      setLoadingStep("");
-    }
-  }, [apiKey, keyStatus, user, period, customRange, toggles, instructions, selectedModel, startLoading, stopLoading]);
-
-  // ── Derived ───────────────────────────────────────────────────
-  const canGenerate = keyStatus === "valid" && !generating;
-
-  const keyBadge = {
-    idle: null,
-    checking: <span className="flex items-center gap-1 text-[10px] text-amber-400 font-bold"><RefreshCw className="w-3 h-3 animate-spin" />Checking...</span>,
-    valid: <span className="flex items-center gap-1 text-[10px] text-emerald-500 font-bold"><CheckCircle2 className="w-3 h-3" />Connected</span>,
-    invalid: <span className="flex items-center gap-1 text-[10px] text-red-500 font-bold"><AlertCircle className="w-3 h-3" />Invalid</span>,
-  }[keyStatus];
-
-  // ─────────────────────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────────────────────
-  return (
-    <div className="overflow-guard space-y-4 md:space-y-6">
-
-      {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-            </div>
-            <span className="truncate">AI Report</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium sm:ml-[52px]">
-            Elite coaching powered by OpenRouter — Claude, GPT-4o, Gemini, and more.
-          </p>
-        </div>
-
-        {report && (
-          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 flex-wrap w-full sm:w-auto">
-            <button onClick={generateReport} disabled={generating}
-              className="px-3 py-1.5 rounded-lg bg-[#121212] hover:bg-white/5 border border-white/[0.08] text-xs font-bold text-zinc-300 transition-colors flex items-center gap-1.5 disabled:opacity-40">
-              <RefreshCw className="w-3.5 h-3.5" /> Regenerate
-            </button>
-            <button onClick={handleCopy}
-              className="px-3 py-1.5 rounded-lg bg-[#121212] hover:bg-white/5 border border-white/[0.08] text-xs font-bold text-zinc-300 transition-colors flex items-center gap-1.5">
-              <Copy className="w-3.5 h-3.5" /> Copy
-            </button>
-            <button onClick={handleDownload}
-              className="px-3 py-1.5 rounded-lg bg-[#121212] hover:bg-white/5 border border-white/[0.08] text-xs font-bold text-zinc-300 transition-colors flex items-center gap-1.5">
-              <Download className="w-3.5 h-3.5" /> Download TXT
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex bg-[#0B0B0B] border border-white/[0.06] rounded-[20px] p-1.5 mb-6 w-fit">
-        <button
-          onClick={() => setActiveTab("coach")}
-          className={cn(
-            "px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
-            activeTab === "coach" ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-white hover:bg-white/5"
-          )}
-        >
-          <BrainCircuit className="w-4 h-4" /> Performance Coach
-        </button>
-        <button
-          onClick={() => setActiveTab("scorecard")}
-          className={cn(
-            "px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
-            activeTab === "scorecard" ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-white hover:bg-white/5"
-          )}
-        >
-          <Target className="w-4 h-4" /> Trader Scorecard
-        </button>
-      </div>
-
-      {activeTab === "scorecard" && (
-        <div className="-mx-6 -mt-5">
-          <ScorecardTab />
-        </div>
-      )}
-
-      {activeTab === "coach" && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-
-        {/* ════ LEFT — Configuration ════ */}
-        <div className="xl:col-span-4">
-          <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] p-6 space-y-5">
-
-            {/* Title */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                <BrainCircuit className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-white">AI Configuration</h2>
-                <p className="text-[11px] text-zinc-500 font-medium">Keys are stored locally. Never sent to our servers.</p>
-              </div>
-            </div>
-
-            {/* OpenRouter info pill */}
-            <div className="flex items-start gap-2.5 bg-blue-500/5 border border-blue-500/10 rounded-xl p-3">
-              <Info className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">
-                Get a free API key at{" "}
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer"
-                  className="text-blue-400 underline underline-offset-2 hover:text-blue-300">
-                  openrouter.ai/keys
-                </a>. Access Claude, GPT-4o, Gemini and more through one key.
-              </p>
-            </div>
-
-            {/* API Key */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex justify-between items-center">
-                OpenRouter API Key {keyBadge}
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Key className="h-4 w-4 text-zinc-500" />
-                </div>
-                <input
-                  type={showKey ? "text" : "password"}
-                  value={apiKey}
-                  onChange={(e) => { setApiKey(e.target.value); setKeyStatus("idle"); }}
-                  placeholder="sk-or-..."
-                  className="w-full bg-[#121212] border border-white/[0.08] rounded-xl py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 transition-all font-mono"
-                />
-                <button type="button" onClick={() => setShowKey((s) => !s)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-white transition-colors">
-                  {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <button onClick={handleSaveKey} disabled={keyStatus === "checking" || !apiKey.trim()}
-                className="w-full py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/[0.08] flex items-center justify-center gap-2 transition-colors disabled:opacity-40">
-                {keyStatus === "checking"
-                  ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" />Verifying...</>
-                  : <><Save className="w-3.5 h-3.5" />Save & Verify</>}
-              </button>
-            </div>
-
-            <hr className="border-white/[0.05]" />
-
-            {/* Model Selector */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Model</label>
-              <div className="space-y-1.5">
-                {(Object.values(OPENROUTER_MODELS)).map((m) => (
-                  <button key={m.id} onClick={() => handleModelChange(m.id)}
-                    className={cn(
-                      "w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all",
-                      selectedModel === m.id
-                        ? "bg-blue-500/10 border-blue-500/40"
-                        : "bg-[#121212] border-white/[0.06] hover:bg-white/[0.02]"
-                    )}>
-                    <div>
-                      <p className="text-xs font-bold text-white">{m.label}</p>
-                      <p className="text-[10px] text-zinc-500">{m.description}</p>
-                    </div>
-                    {selectedModel === m.id && <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <hr className="border-white/[0.05]" />
-
-            {/* Report Period */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Report Period</label>
-              <div className="flex flex-wrap gap-2">
-                {(["Daily", "Weekly", "Monthly", "Custom", "Full (All Time)"] as ReportPeriod[]).map((p) => (
-                  <button key={p} onClick={() => setPeriod(p)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all",
-                      period === p
-                        ? "bg-blue-600 text-white border-blue-500"
-                        : "bg-[#121212] text-zinc-400 border-white/[0.08] hover:text-white"
-                    )}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-
-              {period === "Custom" && (
-                <div className="flex gap-3 pt-1 animate-in fade-in">
-                  {(["from", "to"] as const).map((key) => (
-                    <div key={key} className="flex-1">
-                      <p className="text-[10px] text-zinc-500 font-semibold mb-1">{key === "from" ? "Start" : "End"}</p>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="flex items-center gap-1.5 w-full px-2.5 py-2 rounded-lg bg-[#121212] border border-white/[0.06] text-xs text-white hover:bg-white/[0.02] transition-colors">
-                            <CalendarIcon className="w-3 h-3 text-zinc-500" />
-                            {customRange[key] ? format(customRange[key]!, "MMM d, yy") : <span className="text-zinc-600">Pick</span>}
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 border-white/[0.06] bg-[#0B0B0B]" align="start">
-                          <Calendar mode="single" selected={customRange[key]} initialFocus
-                            onSelect={(d) => setCustomRange((prev) => ({ ...prev, [key]: d }))}
-                            disabled={key === "to" && customRange.from ? (d) => d < customRange.from! : undefined} />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Include Data */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Include Data</label>
-              <div className="grid grid-cols-1 xs:grid-cols-2 gap-y-2.5 gap-x-4">
-                {(Object.keys(toggles) as (keyof DataToggles)[]).map((key) => (
-                  <label key={key} className="flex items-center gap-2 cursor-pointer group"
-                    onClick={() => setToggles((p) => ({ ...p, [key]: !p[key] }))}>
-                    <div className={cn(
-                      "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors shrink-0",
-                      toggles[key] ? "bg-blue-600 border-blue-500" : "bg-[#121212] border-white/[0.15]"
-                    )}>
-                      {toggles[key] && <Check className="w-2.5 h-2.5 text-white" />}
-                    </div>
-                    <span className={cn("text-[11px] font-semibold transition-colors",
-                      toggles[key] ? "text-white" : "text-zinc-500 group-hover:text-zinc-300")}>
-                      {TOGGLE_LABELS[key]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Instructions */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Custom Instructions</label>
-              <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)}
-                placeholder="e.g. Focus on FOMO during London open, revenge trades after losses..."
-                className="w-full h-20 bg-[#121212] border border-white/[0.08] rounded-xl p-3 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 transition-all resize-none" />
-            </div>
-
-            {/* Generate */}
-            <button onClick={generateReport} disabled={!canGenerate}
-              className={cn(
-                "w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300",
-                canGenerate
-                  ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]"
-                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-              )}>
-              {generating
-                ? <><RefreshCw className="w-5 h-5 animate-spin" /><span className="truncate max-w-[200px]">{loadingStep}</span></>
-                : <><Sparkles className="w-5 h-5" />Generate AI Report</>}
-            </button>
-
-            {generating && (
-              <div className="h-1 bg-[#1A1A1A] rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
-              </div>
-            )}
-
-          </div>
-        </div>
-
-        {/* ════ RIGHT — Report Output ════ */}
-        <div className="xl:col-span-8 space-y-4">
-
-          {/* Empty state */}
-          {!generating && !report && !error && (
-            <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] p-8 sm:p-16 flex flex-col items-center justify-center text-center min-h-[320px] sm:min-h-[480px]">
-              <div className="w-20 h-20 rounded-3xl bg-blue-500/5 flex items-center justify-center mb-6 relative">
-                <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />
-                <Sparkles className="w-10 h-10 text-blue-500 relative z-10" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">No report generated yet</h3>
-              <p className="text-sm text-zinc-500 max-w-md leading-relaxed">
-                Add your OpenRouter key, choose a model and period, then generate. Your AI trading coach will review 35 performance sections using all your data.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-6 justify-center">
-                {["35 Analysis Sections", "Psychology Review", "Behavioral Detection", "Risk Analysis", "Action Plan", "Coach Message"].map((tag) => (
-                  <span key={tag} className="text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-full">{tag}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Error state */}
-          {error && !generating && (
-            <div className="bg-[#0B0B0B] border border-red-500/20 rounded-[24px] p-8">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
-                  <ServerCrash className="w-5 h-5 text-red-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-white mb-1">Generation Failed</p>
-                  <p className="text-sm text-red-400">{error}</p>
-                  {attemptedModels.length > 0 && (
-                    <p className="text-[11px] text-zinc-600 mt-2">
-                      Tried: {attemptedModels.map((m) => OPENROUTER_MODELS[m as OpenRouterModelId]?.label ?? m).join(" → ")}
-                    </p>
-                  )}
-                  <button onClick={generateReport}
-                    className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg flex items-center gap-2 transition-colors">
-                    <RefreshCw className="w-3.5 h-3.5" /> Retry
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Loading state */}
-          {generating && (
-            <div className="space-y-3">
-              <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] p-8 text-center">
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
-                  <span className="text-sm font-bold text-blue-400 tracking-wide">{loadingStep}</span>
-                </div>
-                <p className="text-xs text-zinc-600">Analysing your complete trading history with AI...</p>
-              </div>
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className={`h-14 bg-[#0B0B0B] border border-white/[0.04] rounded-2xl animate-pulse`}
-                  style={{ animationDelay: `${i * 150}ms` }} />
-              ))}
-            </div>
-          )}
-
-          {/* ══ Report ══ */}
-          {report && !generating && (
-            <div className="space-y-4 animate-in fade-in duration-500 report-content">
-
-              {/* Meta banner */}
-              <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[20px] px-5 py-3 flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-bold text-zinc-400">
-                    {format(new Date(report.meta.generatedAt), "MMM d, yyyy 'at' HH:mm")}
-                    {" · "}{OPENROUTER_MODELS[report.meta.model as OpenRouterModelId]?.label ?? report.meta.model}
-                    {report.meta.latencyMs ? ` · ${(report.meta.latencyMs / 1000).toFixed(1)}s` : ""}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {report.meta.wasCapped && (
-                    <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">Capped 200</span>
-                  )}
-                  <span className="text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">{period}</span>
-                </div>
-              </div>
-
-              {/* Scorecard */}
-              <div className="bg-[#0B0B0B] border border-white/[0.06] rounded-[24px] p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <Target className="w-4 h-4 text-blue-500" /> Performance Scorecard
-                  </h2>
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)]">
-                      <span className="text-2xl font-black text-white">{report.scores.grade}</span>
-                    </div>
-                    <span className="text-[10px] text-zinc-500 font-bold mt-1.5 uppercase tracking-wider">{report.scores.classification}</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <ScoreBar label="Discipline" score={report.scores.discipline} icon={<Shield className="w-3.5 h-3.5" />} />
-                  <ScoreBar label="Risk Mgmt" score={report.scores.risk} icon={<BarChart2 className="w-3.5 h-3.5" />} />
-                  <ScoreBar label="Execution" score={report.scores.execution} icon={<Zap className="w-3.5 h-3.5" />} />
-                  <ScoreBar label="Psychology" score={report.scores.psychology} icon={<Brain className="w-3.5 h-3.5" />} />
-                  <ScoreBar label="Consistency" score={report.scores.consistency} icon={<Activity className="w-3.5 h-3.5" />} />
-                </div>
-              </div>
-
-              {/* Executive Summary */}
-              {report.executiveSummary && (
-                <div className="bg-gradient-to-br from-blue-600/10 to-[#0B0B0B] border border-blue-500/20 rounded-[24px] p-6">
-                  <h3 className="text-sm font-bold text-blue-400 mb-3 flex items-center gap-2">
-                    <FileText className="w-4 h-4" /> Executive Summary
-                  </h3>
-                  <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">{report.executiveSummary}</p>
-                </div>
-              )}
-
-              {/* Strengths / Weaknesses */}
-              {(report.strengths.length > 0 || report.weaknesses.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {report.strengths.length > 0 && (
-                    <div className="bg-[#121212] border border-emerald-500/20 rounded-2xl p-5">
-                      <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-emerald-500" /> Strengths
-                      </h3>
-                      <ul className="space-y-2">
-                        {report.strengths.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-300">
-                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />{s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {report.weaknesses.length > 0 && (
-                    <div className="bg-[#121212] border border-red-500/20 rounded-2xl p-5">
-                      <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                        <TrendingDown className="w-4 h-4 text-red-500" /> Weaknesses
-                      </h3>
-                      <ul className="space-y-2">
-                        {report.weaknesses.map((w, i) => (
-                          <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-300">
-                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />{w}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Action Plan */}
-              {report.actionPlan.length > 0 && (
-                <div className="bg-[#121212] border border-blue-500/20 rounded-2xl p-5">
-                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500" /> Action Plan
-                  </h3>
-                  <div className="space-y-3">
-                    {report.actionPlan.map((a, i) => (
-                      <div key={i} className="flex gap-3 text-sm">
-                        <span className="text-blue-500 font-black shrink-0">{i + 1}.</span>
-                        <span className="text-zinc-300">{a}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Weekly Goals + Daily Focus */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {report.weeklyGoals.length > 0 && (
-                  <div className="bg-[#121212] border border-amber-500/20 rounded-2xl p-5">
-                    <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                      <Target className="w-4 h-4 text-amber-500" /> Weekly Goals
-                    </h3>
-                    {report.weeklyGoals.map((g, i) => (
-                      <div key={i} className="flex gap-3 text-sm mb-2">
-                        <span className="text-amber-500 font-black shrink-0">→</span>
-                        <span className="text-zinc-300">{g}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {report.dailyFocus && (
-                  <div className="bg-[#121212] border border-purple-500/20 rounded-2xl p-5 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
-                      <Clock className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">Daily Focus</p>
-                      <p className="text-sm font-bold text-white leading-snug">{report.dailyFocus}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 35 Collapsible Sections */}
-              {report.sections.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider px-1">
-                    Full Analysis — {report.sections.length} Sections
-                  </p>
-                  {report.sections.map((s) => <SectionCard key={s.number} section={s} />)}
-                </div>
-              )}
-
-              {/* Coach Message */}
-              {report.coachMessage && (
-                <div className="bg-gradient-to-br from-blue-600/10 to-[#0B0B0B] border border-blue-500/30 rounded-[24px] p-6 relative overflow-hidden">
-                  <div className="absolute -right-8 -top-8 w-36 h-36 bg-blue-500/5 blur-3xl rounded-full" />
-                  <div className="flex gap-4 relative z-10">
-                    <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(37,99,235,0.5)]">
-                      <Sparkles className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-blue-400 mb-2">Final Coach Message</p>
-                      <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">{report.coachMessage}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-          )}
-        </div>
-      </div>
-      )}
+    <div ref={reportTop} tabIndex={-1} className="pc-report-anchor">
+      {report ? <><div className="pc-review-toolbar"><p>Viewing your {report.analysis.window.period.toLowerCase()} review. The controls above apply to your next report.</p><div><Button variant="ghost" onClick={copyReport}><Copy size={14} />Copy</Button><Button variant="outline" onClick={downloadReport}><Download size={14} />Download</Button></div></div><CoachReview saved={report} /></> : !generating && <>
+        <section className="pc-welcome"><div className="pc-welcome-main"><span className="pc-kicker">A CLEARER VIEW OF YOUR TRADING</span><h2>Your journal has a story.<br /><span>Find the part that matters.</span></h2><p>A focused review of what works, what repeats, and what to change next—grounded in the trades and reflections you've recorded.</p><div className="pc-welcome-points"><span><Check size={14} />Evidence behind each finding</span><span><Check size={14} />A practical plan for your next session</span></div></div><div className="pc-review-outline"><div><span>01</span><div><h3>See the real issue</h3><p>Separate strategy, execution, risk, and behavior.</p></div><FileSearch size={19} /></div><div><span>02</span><div><h3>Understand the pattern</h3><p>Connect outcomes to your notes and decisions.</p></div><BarChart3 size={19} /></div><div><span>03</span><div><h3>Know your next move</h3><p>Leave with a short, measurable coaching plan.</p></div><Target size={19} /></div></div></section>
+        {analysis && analysis.tradeCount > 0 ? <><div className="pc-readiness"><BookOpen size={18} /><div><h3>Your review starts with {analysis.tradeCount} trades</h3><p>{analysis.journalCount} journal notes and {analysis.checklistCount} checklists add context. Missing information will be called out explicitly.</p></div><span className="pc-badge">{analysis.tradeCount < 20 ? "Early evidence" : "Ready to review"}</span></div><ProcessMeasures analysis={analysis} /></> : !dataQuery.isPending && !dataQuery.isError && range.value && <div className="pc-empty-data"><BookOpen size={24} /><h3>No trades in this window</h3><p>Choose a wider period, or record a trade and add the decisions behind it.</p><div><Button variant="outline" onClick={() => setPeriod("All Time")}>Review all history</Button><Button asChild><Link to="/trades">Go to trades <ArrowRight size={14} /></Link></Button></div></div>}
+      </>}
     </div>
-  );
+    <footer className="pc-footer"><span>DaddyFXBook <i>·</i> Reflect. Adjust. Repeat.</span><button onClick={() => setLegacyOpen(true)}>Previous scorecards <ArrowRight size={12} /></button></footer>
+
+    <Dialog open={connectionOpen} onOpenChange={open => { if (!checking) { setConnectionOpen(open); setShowKey(false); } }}><DialogContent className="pc-dialog"><DialogHeader><DialogTitle>Connect your Performance Coach</DialogTitle><DialogDescription>Use your OpenRouter connection for report generation. Routing is handled automatically.</DialogDescription></DialogHeader><form onSubmit={saveConnection} className="pc-connection-form"><Label htmlFor="coach-key">OpenRouter API key</Label><div className="pc-key-input"><Input id="coach-key" type={showKey ? "text" : "password"} value={keyDraft} disabled={checking} autoComplete="off" spellCheck={false} onChange={e => { setKeyDraft(e.target.value); setKeyError(""); }} placeholder="sk-or-…" /><button type="button" onClick={() => setShowKey(!showKey)} aria-label={showKey ? "Hide key" : "Show key"}>{showKey ? <EyeOff size={16} /> : <Eye size={16} />}</button></div><p className="pc-muted pc-small">Saved for your account in this browser. Selected journal data is sent to OpenRouter when you generate a review. Verifying the key makes a small test request.</p>{keyError && <p role="alert" className="pc-error-text">{keyError}</p>}<div className="pc-dialog-actions">{apiKey && <Button type="button" variant="ghost" disabled={checking} onClick={forgetConnection}>Remove connection</Button>}<Button type="submit" disabled={checking || !keyDraft.trim()}>{checking && <Loader2 size={15} className="animate-spin" />}{checking ? "Verifying…" : "Verify & save"}</Button></div></form></DialogContent></Dialog>
+    <Dialog open={historyOpen} onOpenChange={setHistoryOpen}><DialogContent className="pc-dialog"><DialogHeader><DialogTitle>Past performance reviews</DialogTitle><DialogDescription>Your five most recent reviews, saved for this account on this browser. Download reviews to keep a separate copy.</DialogDescription></DialogHeader><div className="pc-history-list">{savedReviews.length ? savedReviews.map(saved => <button key={saved.id} onClick={() => { setReport(saved); setHistoryOpen(false); setStorageWarning(""); }}><div><span>{saved.analysis.window.period} · {new Date(saved.generatedAt).toLocaleDateString()}</span><strong>{saved.report.verdict.headline}</strong><small>{saved.analysis.tradeCount} trades · {saved.analysis.window.label}</small></div><ArrowRight size={16} /></button>) : <p className="pc-muted">Your first completed review will appear here.</p>}</div></DialogContent></Dialog>
+    <Dialog open={legacyOpen} onOpenChange={setLegacyOpen}><DialogContent className="pc-legacy-dialog"><DialogHeader><DialogTitle>Previous scorecards</DialogTitle><DialogDescription>Existing saved scores use the original scoring rules. They are kept separately from the new report's transparent process measures.</DialogDescription></DialogHeader>{legacyOpen && <Suspense fallback={<p>Loading saved scorecards…</p>}><LegacyScorecards /></Suspense>}</DialogContent></Dialog>
+  </div>;
 }

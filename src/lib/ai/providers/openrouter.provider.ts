@@ -96,6 +96,9 @@ export class OpenRouterProvider implements AIProvider {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://daddyfxbook.app";
 
     const controller = new AbortController();
+    const cancel = () => controller.abort();
+    request.signal?.addEventListener("abort", cancel, { once: true });
+    if (request.signal?.aborted) controller.abort();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
@@ -110,8 +113,6 @@ export class OpenRouterProvider implements AIProvider {
         body: JSON.stringify(buildRequestBody(request)),
         signal: controller.signal,
       });
-
-      clearTimeout(timer);
 
       const body: unknown = await response.json().catch(() => ({}));
 
@@ -131,7 +132,7 @@ export class OpenRouterProvider implements AIProvider {
       const text: string | undefined = (body as any)?.choices?.[0]?.message?.content;
       const tokensUsed: number | undefined = (body as any)?.usage?.total_tokens;
 
-      if (!text || text.trim() === "") {
+      if (!text || text.trim() === "" || (body as any)?.choices?.[0]?.finish_reason === "length") {
         const finishReason = (body as any)?.choices?.[0]?.finish_reason;
         const errorMsg =
           finishReason === "length"
@@ -171,6 +172,9 @@ export class OpenRouterProvider implements AIProvider {
         latencyMs: Date.now() - startTime,
         error: parsed.message,
       };
+    } finally {
+      clearTimeout(timer);
+      request.signal?.removeEventListener("abort", cancel);
     }
   }
 }

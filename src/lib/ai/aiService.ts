@@ -29,9 +29,10 @@ export async function callModel(
   apiKey: string,
   model: string,
   prompt: string,
-  options?: { temperature?: number; maxTokens?: number; systemInstruction?: string },
+  options?: { temperature?: number; maxTokens?: number; systemInstruction?: string; signal?: AbortSignal },
 ): Promise<AIResponse> {
   const request: AIRequest = {
+    signal: options?.signal,
     apiKey,
     model,
     prompt,
@@ -45,6 +46,7 @@ export async function callModel(
 // ── Fallback config ───────────────────────────────────────────
 
 export interface GenerateWithFallbackOptions {
+  signal?: AbortSignal;
   apiKey: string;
   /** Primary model to attempt first. Defaults to fallback order position 0. */
   preferredModel?: OpenRouterModelId | string;
@@ -77,11 +79,13 @@ export async function generateWithFallback(
   const attempted: string[] = [];
 
   for (let i = 0; i < order.length; i++) {
+    if (opts.signal?.aborted) throw new DOMException("Cancelled", "AbortError");
     const model = order[i];
     attempted.push(model);
     opts.onModelAttempt?.(model, i + 1);
 
     const response = await callModel(apiKey, model, prompt, {
+      signal: opts.signal,
       systemInstruction: systemInstruction ?? AI_SYSTEM_INSTRUCTION,
       temperature: temperature ?? DEFAULT_TEMPERATURE,
       maxTokens: maxTokens ?? DEFAULT_MAX_TOKENS,
