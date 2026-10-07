@@ -261,19 +261,19 @@ export default function Journal() {
                     {isWinner ? 'WINNER' : 'LOSER'}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                  <button aria-label="Refresh journal" className="touch-target border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                <div className="journal-actions flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
+                  <button aria-label="Refresh journal" className="touch-target inline-flex items-center justify-center h-11 w-11 shrink-0 border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  <button className="touch-target flex items-center gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <FileText className="w-3.5 h-3.5" /> <span>Report</span>
                   </button>
-                  <button className="touch-target flex items-center gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> <span>Analytics</span>
                   </button>
                   <button onClick={handleSave} disabled={saveJournal.isPending}
                     className={cn(
-                      "touch-target w-full sm:w-auto text-white font-bold px-6 py-2 rounded-[20px] text-xs transition-all disabled:opacity-50 shadow-sm min-h-[44px]",
+                      "touch-target inline-flex items-center justify-center h-11 w-full sm:w-auto text-white font-bold px-6 py-2 rounded-[20px] text-xs leading-none transition-all disabled:opacity-50 shadow-sm min-h-[44px]",
                       isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                     )}>
                     {saveJournal.isPending ? 'Saving...' : 'Save'}

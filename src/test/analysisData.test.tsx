@@ -23,22 +23,28 @@ describe('complete analysis pagination', () => {
 });
 
 describe('isolated session clock', () => {
-  it('advances each second from actual UTC time, crosses boundaries, and cleans up', () => {
+  it('advances in IST, shows overlaps, resets at IST midnight, and cleans up', () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-05T07:59:59Z'));
     const parent = vi.fn(() => <AnalysisSessionTimeline />);
     const Parent = parent;
     const { container, unmount } = render(<Parent />);
-    expect(screen.getByLabelText('Current session: Asian')).toBeInTheDocument();
+    expect(screen.getByLabelText('IST market sessions. Active: Tokyo')).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1000));
-    expect(screen.getByLabelText('Current session: London')).toBeInTheDocument();
-    expect(container.querySelector('.an-now')).toHaveAttribute('title', '13:30:00 IST · London');
-    expect(container.querySelector('.an-session-times')).toHaveTextContent('05:3013:3018:3003:3005:30');
+    expect(screen.getByLabelText('IST market sessions. Active: Tokyo + London')).toBeInTheDocument();
+    expect(container.querySelector('.an-now')).toHaveAttribute('title', '13:30:00 IST · Tokyo + London');
+    expect(container.querySelector('.an-now')).toHaveStyle({ left: '56.25%' });
+    expect(container.querySelectorAll('[aria-current="time"]')).toHaveLength(2);
+    expect(container.querySelector('.an-session-times')).toHaveTextContent('00:00');
+    expect(container.querySelector('.an-session-times')).toHaveTextContent('24:00');
     expect(parent).toHaveBeenCalledTimes(1);
-    act(() => { vi.setSystemTime(new Date('2026-10-05T23:59:59Z')); window.dispatchEvent(new Event('focus')); });
+    act(() => { vi.setSystemTime(new Date('2026-10-05T18:29:59Z')); window.dispatchEvent(new Event('focus')); });
     expect(parseFloat((container.querySelector('.an-now') as HTMLElement).style.left)).toBeGreaterThan(99.99);
     act(() => vi.advanceTimersByTime(1000));
     expect(container.querySelector('.an-now')).toHaveStyle({ left: '0%' });
-    expect(container.querySelector('[aria-current="time"]')).toHaveTextContent('Asian');
+    expect(container.querySelector('[aria-current="time"]')).toHaveTextContent('New York');
+    expect(container.querySelector('.an-clock-time')).toHaveTextContent('Tue, 6 Oct 2026');
+    act(() => { vi.setSystemTime(new Date('2026-10-06T00:00:00Z')); document.dispatchEvent(new Event('visibilitychange')); });
+    expect(container.querySelector('.an-now')).toHaveAttribute('title', '05:30:00 IST · Sydney + Tokyo');
     unmount(); expect(vi.getTimerCount()).toBe(0);
   });
 });
