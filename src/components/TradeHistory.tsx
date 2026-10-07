@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Activity, ArrowDown, ArrowUp, ArrowDownRight, ArrowUpRight, ChevronDown, ChevronRight, DollarSign, Download, FileSpreadsheet, FileText, Filter, GripVertical, Pencil, RotateCcw, Share2, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { Activity, ArrowDown, ArrowUp, ArrowDownRight, ArrowUpRight, ChevronDown, ChevronRight, DollarSign, Download, FileSpreadsheet, FileText, Filter, GripVertical, Pencil, RotateCcw, Share2, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { Close as PopoverClose } from '@radix-ui/react-popover';
 import { toast } from 'sonner';
 import type { Trade } from '@/hooks/useTrades';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,7 +38,9 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [mobileViewTab, setMobileViewTab] = useState<'display' | 'columns'>('display');
   const columns = order.filter(id => visible.includes(id));
+  const summaryColumns = columns.filter(id => ['symbol', 'direction', 'pnl'].includes(id));
   const activeColumnFilters = useMemo(() => columnFiltersOn ? Object.fromEntries(Object.entries(columnFilters).filter(([id]) => visible.includes(id as ColumnId))) : {}, [columnFiltersOn, columnFilters, visible]);
   const filtered = useMemo(() => sortHistory(filterHistory(trades, filters, activeColumnFilters), sorts), [trades, filters, activeColumnFilters, sorts]);
   useEffect(() => { setPage(1); setSelected(new Set()); }, [filters, activeColumnFilters, sorts, pageSize]);
@@ -83,7 +86,14 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
       <div className="th-toolbar-buttons">
         <button className="th-button" data-active={showFilters || active} aria-expanded={showFilters} aria-controls="trade-history-filters" onClick={() => setShowFilters(!showFilters)}><Filter size={18} />Filters{active && <i className="th-dot" />}</button>
         <Popover><PopoverTrigger asChild><button className="th-button"><SlidersHorizontal size={18} />View</button></PopoverTrigger>
-          <PopoverContent align="end" sideOffset={9} className="th-view th-popover p-0" aria-label="Trade history view">
+          <PopoverContent align="end" sideOffset={9} collisionPadding={12} className="th-view th-popover p-0" data-mobile-tab={mobileViewTab} aria-label="Trade history view">
+            <div className="th-mobile-view-header">
+              <div className="th-mobile-view-tabs" aria-label="View settings sections">
+                <button aria-pressed={mobileViewTab === 'display'} onClick={() => setMobileViewTab('display')}>Display</button>
+                <button aria-pressed={mobileViewTab === 'columns'} onClick={() => setMobileViewTab('columns')}>Columns</button>
+              </div>
+              <PopoverClose className="th-popover-close" aria-label="Close view settings"><X size={18} /></PopoverClose>
+            </div>
             <div className="th-view-body"><div className="th-columns"><div className="th-columns-heading"><span className="th-label">Columns · {columns.length} of {COLUMNS.length}</span><button className="th-text-button" onClick={() => setVisible(order)}>Show all</button></div>
               {order.map((id, index) => <div className="th-column-option" key={id} draggable onDragStart={e => e.dataTransfer.setData('text/plain', id)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); moveColumn(e.dataTransfer.getData('text/plain') as ColumnId, id); }}>
                 <GripVertical size={16} className="th-grip" /><label><input type="checkbox" checked={visible.includes(id)} onChange={() => setVisible(visible.includes(id) ? visible.filter(c => c !== id) : [...visible, id])} />{labelFor(id)}</label>
@@ -101,7 +111,7 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
           </PopoverContent>
         </Popover>
         <Popover open={exportOpen} onOpenChange={setExportOpen}><PopoverTrigger asChild><button className="th-button"><Download size={18} />Export</button></PopoverTrigger>
-          <PopoverContent align="end" sideOffset={9} className="th-export th-popover p-0" aria-label="Export trade history">
+          <PopoverContent align="end" sideOffset={9} collisionPadding={12} className="th-export th-popover p-0" aria-label="Export trade history">
             <div className="th-export-options">{(['xlsx', 'csv'] as const).map(kind => <button key={kind} disabled={exporting || !columns.length || !exportable.length} onClick={() => download(kind)}>{kind === 'xlsx' ? <FileSpreadsheet size={18} /> : <FileText size={18} />}<strong>{kind === 'xlsx' ? 'Excel workbook' : 'CSV file'}</strong><span>{exportable.length} trades</span></button>)}</div>
             <p className="th-help">Uses your current filters, sort and visible columns. Tick rows in the table to export only those.{!columns.length && ' Show a column to export.'}</p>
           </PopoverContent>
@@ -109,6 +119,30 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
       </div>
     </div>
     {showFilters && <TradeHistoryFilters filters={filters} onChange={setFilters} profitable={trades.filter(t => Number(t.pnl) > 0).length} losses={trades.filter(t => Number(t.pnl) < 0).length} onClear={() => setColumnFilters({})} />}
+    <div className="th-mobile-history">
+      {columnFiltersOn && <div className="th-mobile-column-filters" aria-label="Column filters">
+        {columns.map(id => <label key={id}>{labelFor(id)}<input aria-label={`Filter ${labelFor(id)}`} placeholder="Filter…" value={columnFilters[id] || ''} onChange={e => setColumnFilters({ ...columnFilters, [id]: e.target.value })} /></label>)}
+      </div>}
+      {pageTrades.map(t => <article className="th-mobile-card" key={t.id} data-selected={selected.has(t.id)}>
+        <button className="th-mobile-summary" aria-label={`Trade details for ${t.symbol} ${formatHistoryDate(t.close_time)}`} aria-expanded={expanded.has(t.id)} aria-controls={`trade-details-${t.id}`} onClick={() => setExpanded(toggle(expanded, t.id))}>
+          <span className="th-mobile-summary-values">
+            {summaryColumns.map(id => <span key={id} className={`th-mobile-summary-${id}`}><Cell trade={t} column={id} /></span>)}
+            {!summaryColumns.length && <span>Trade details</span>}
+          </span>
+          <ChevronDown size={16} className="th-mobile-chevron" />
+        </button>
+        {expanded.has(t.id) && <div className="th-mobile-details" id={`trade-details-${t.id}`}>
+          <dl className="th-mobile-fields">
+            {columns.map(id => <div key={id} className={id === 'openClose' || id === 'notes' ? 'th-mobile-field-wide' : ''}><dt>{labelFor(id)}</dt><dd><Cell trade={t} column={id} /></dd></div>)}
+          </dl>
+          <div className="th-mobile-card-footer">
+            <label><input type="checkbox" aria-label={`Select trade ${t.id}`} checked={selected.has(t.id)} onChange={() => setSelected(toggle(selected, t.id))} />Select for export</label>
+            {actions(t)}
+          </div>
+        </div>}
+      </article>)}
+      {!pageTrades.length && <div className="th-empty"><Activity size={40} /><p>{trades.length ? 'No trades match the selected filters.' : 'No trades yet. Click "+ Add Trade" to get started.'}</p></div>}
+    </div>
     <div className="th-table-scroll"><table className="th-table"><thead><tr><th className="th-select-cell"><input type="checkbox" aria-label="Select all trades on this page" checked={allChecked} ref={el => { if (el) el.indeterminate = !allChecked && pageTrades.some(t => selected.has(t.id)); }} onChange={() => { const next = new Set(selected); pageTrades.forEach(t => allChecked ? next.delete(t.id) : next.add(t.id)); setSelected(next); }} /></th>
       {columns.map(id => <th key={id} aria-sort={sorts[0]?.column === id ? sorts[0].direction === 'asc' ? 'ascending' : 'descending' : 'none'} draggable onDragStart={e => e.dataTransfer.setData('text/plain', id)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); moveColumn(e.dataTransfer.getData('text/plain') as ColumnId, id); }}><button onClick={e => sortBy(id, e.shiftKey)}>{labelFor(id)}{sorts.some(s => s.column === id) && (sorts.find(s => s.column === id)!.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</button></th>)}<th><span className="sr-only">Actions</span></th></tr>
       {columnFiltersOn && <tr className="th-column-filters"><th />{columns.map(id => <th key={id}><input aria-label={`Filter ${labelFor(id)}`} placeholder="Filter…" value={columnFilters[id] || ''} onChange={e => setColumnFilters({ ...columnFilters, [id]: e.target.value })} /></th>)}<th /></tr>}

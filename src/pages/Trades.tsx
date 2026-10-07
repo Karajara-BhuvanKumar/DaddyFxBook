@@ -91,7 +91,7 @@ export default function Trades() {
   );
 
   return (
-    <div className="space-y-6 md:space-y-8 overflow-guard">
+    <div className="trades-page space-y-6 md:space-y-8 overflow-guard">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="page-title text-foreground hidden lg:block">Trades</h1>
@@ -100,7 +100,7 @@ export default function Trades() {
             <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Not connected</span>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
+        <div className="trades-page-actions flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
           <button className="touch-target w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
             Connect MT4/MT5
           </button>
