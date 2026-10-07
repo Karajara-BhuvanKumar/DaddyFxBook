@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTrades, useJournal, useSaveJournal, useChecklist, useSaveChecklist, useScreenshots, useUploadScreenshot, useAllJournals } from "@/hooks/useTrades";
-import { BookOpen, Save, Star, Check, Activity, ArrowUpRight, ArrowDownRight, RefreshCw, FileText, SlidersHorizontal, DollarSign, Smile, Tag, Image, Plus, X, CheckCircle2 } from "lucide-react";
+import { BookOpen, Save, Star, Check, Activity, ArrowLeft, Search, ArrowUpRight, ArrowDownRight, RefreshCw, FileText, SlidersHorizontal, DollarSign, Smile, Tag, Image, Plus, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { AITradeReviewPanel } from "@/components/ai-report/AITradeReviewPanel";
 import { StrategySetupCard } from "@/components/journal/StrategySetupCard";
 import { ExportJournalDialog } from "@/components/journal/ExportJournalDialog";
 import { emptyStrategySetup, parseStrategySetup, serializeStrategySetup, type StrategySetup } from "@/lib/strategySetup";
 import { cn } from "@/lib/utils";
+import { filterJournalTrades } from '@/lib/journalExport';
+import '@/styles/journal.css';
 
 export default function Journal() {
   const { data: trades = [], isLoading: isTradesLoading } = useTrades();
@@ -14,18 +16,20 @@ export default function Journal() {
   const isLoading = isTradesLoading || isJournalsLoading;
 
   const [activeTab, setActiveTab] = useState<'ALL' | 'JOURNALED' | 'PENDING'>('ALL');
+  const [search, setSearch] = useState('');
+  const [days, setDays] = useState('all');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [sort, setSort] = useState('newest');
+  const [mobileEditor, setMobileEditor] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const filters = useMemo(() => ({ search, days, start, end, sort, status: activeTab }), [search, days, start, end, sort, activeTab]);
   
   const journaledTradeIds = useMemo(() => new Set(allJournals.map(j => j.trade_id)), [allJournals]);
   const journaledTrades = useMemo(() => trades.filter(t => journaledTradeIds.has(t.id)), [trades, journaledTradeIds]);
   const pendingTrades = useMemo(() => trades.filter(t => !journaledTradeIds.has(t.id)), [trades, journaledTradeIds]);
   
-  const displayedTrades = useMemo(() => {
-    switch (activeTab) {
-      case 'JOURNALED': return journaledTrades;
-      case 'PENDING': return pendingTrades;
-      default: return trades;
-    }
-  }, [activeTab, trades, journaledTrades, pendingTrades]);
+  const displayedTrades = useMemo(() => filterJournalTrades(trades, allJournals, filters), [trades, allJournals, filters]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: existingJournal } = useJournal(selectedId);
@@ -44,6 +48,12 @@ export default function Journal() {
   const [checklist, setChecklist] = useState({ checked_higher_tf: false, risk_within_limits: false, fits_plan: false, key_levels: false, news_checked: false });
   const [customChecklist, setCustomChecklist] = useState<{ id: string; label: string; checked: boolean }[]>([]);
   const [newCustomLabel, setNewCustomLabel] = useState("");
+  useEffect(() => {
+    if (mobileEditor) {
+      editorRef.current?.scrollTo({ top: 0 });
+      if (window.innerWidth < 1280) editorRef.current?.focus({ preventScroll: true });
+    }
+  }, [selectedId, mobileEditor]);
 
   useEffect(() => { 
     if (displayedTrades.length > 0 && (!selectedId || !displayedTrades.some(t => t.id === selectedId))) {
@@ -120,21 +130,15 @@ export default function Journal() {
   );
 
   return (
-    <div className="space-y-6 md:space-y-8 overflow-guard">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="page-title text-foreground hidden lg:block">Journal</h1>
-          <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Sun, Jun 21</span>
-          </div>
-        </div>
-        <ExportJournalDialog />
+    <div className="journal-page">
+      <div className="journal-toolbar">
+        <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">{allJournals.length}</span> journaled · {trades.length} trades</p>
+        <ExportJournalDialog currentTradeId={selectedId} filters={filters} />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 min-h-0 lg:min-h-[calc(100vh-12rem)]">
+      <div className={cn('journal-workspace', mobileEditor && 'journal-show-editor')}>
         {/* Trade list */}
-        <div className="w-full lg:w-[40%] xl:w-80 shrink-0 rounded-[20px] border border-white/[0.08] bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm max-h-[420px] lg:max-h-none">
+        <div className="journal-list rounded-[20px] border border-white/[0.08] bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm">
           <div className="p-4 border-b border-white/[0.05] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-bold text-foreground">Trade Journal</h3>
@@ -147,7 +151,7 @@ export default function Journal() {
             </span>
           </div>
 
-          <div className="p-2 border-b border-white/[0.05] flex items-center gap-1.5 overflow-x-auto select-none">
+          <div className="journal-tabs p-2 border-b border-white/[0.05] flex items-center gap-1.5 overflow-x-auto select-none">
             <button 
               onClick={() => setActiveTab('ALL')}
               className={cn(
@@ -180,14 +184,22 @@ export default function Journal() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-auto p-3 space-y-2">
+          <div className="space-y-2 border-b border-white/5 p-3">
+            <label className="flex h-11 items-center gap-2 rounded-xl border border-white/[0.08] bg-secondary px-3"><Search className="h-4 w-4 shrink-0 text-muted-foreground" /><input aria-label="Search journal symbol" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search symbol…" className="min-w-0 w-full bg-transparent text-sm outline-none" /></label>
+            <div className="grid grid-cols-2 gap-2">
+              <select aria-label="Journal date range" value={days} onChange={e => setDays(e.target.value)} className="min-w-0 h-11 rounded-xl border border-white/[0.08] bg-secondary px-2 text-xs"><option value="all">All time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="custom">Custom dates</option></select>
+              <select aria-label="Sort journals" value={sort} onChange={e => setSort(e.target.value)} className="min-w-0 h-11 rounded-xl border border-white/[0.08] bg-secondary px-2 text-xs"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="pnl">Highest P&L</option></select>
+            </div>
+            {days === 'custom' && <div className="space-y-2"><div className="grid grid-cols-2 gap-2"><label className="min-w-0 text-xs text-muted-foreground">From<input aria-label="Journal start date" type="date" value={start} onChange={e => setStart(e.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/10 bg-secondary px-1 text-xs" /></label><label className="min-w-0 text-xs text-muted-foreground">Through<input aria-label="Journal end date" type="date" min={start || undefined} value={end} onChange={e => setEnd(e.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/10 bg-secondary px-1 text-xs" /></label></div>{start && end && end < start && <p className="text-xs text-amber-400">End date must be on or after start date.</p>}</div>}
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto p-3 space-y-2">
             {displayedTrades.length === 0 ? (
               <p className="text-center text-zinc-500 py-12 text-xs font-semibold">
                 {trades.length === 0 ? "Add trades first" : "No trades found"}
               </p>
             ) : (
               displayedTrades.map(t => (
-                <button key={t.id} onClick={() => setSelectedId(t.id)}
+                <button key={t.id} aria-label={`Open ${t.symbol} journal`} aria-current={selectedId === t.id ? 'true' : undefined} onClick={() => { setSelectedId(t.id); setMobileEditor(true); }}
                   className={cn(
                     "w-full text-left p-4 rounded-[20px] border transition-all duration-200 flex flex-col",
                     selectedId === t.id
@@ -202,7 +214,7 @@ export default function Journal() {
                       <span className="font-bold text-foreground text-xs">{t.symbol}</span>
                     </div>
                     <span className="bg-muted text-[9px] text-muted-foreground font-bold px-1.5 py-0.5 rounded">
-                      NEW
+                      {journaledTradeIds.has(t.id) ? 'JOURNALED' : 'NEW'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs mt-2 font-semibold">
@@ -223,14 +235,18 @@ export default function Journal() {
 
         {/* Journal editor */}
         <div
+          ref={editorRef}
+          tabIndex={-1}
+          aria-label="Selected trade journal"
           className={cn(
-            "flex-1 min-w-0 rounded-3xl border p-4 sm:p-6 overflow-auto transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
+            "journal-editor flex-1 min-w-0 rounded-3xl border p-4 sm:p-6 overflow-auto shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
             "bg-[#0B0B0B] border-white/[0.06]",
           )}
         >
           {selectedTrade ? (
             <div className="space-y-5 md:space-y-6 animate-fade-up">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.05] pb-4 md:pb-5">
+              <button onClick={() => { setMobileEditor(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.journal-list [aria-current="true"]')?.focus({ preventScroll: true })); }} className="journal-back min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-secondary px-3 text-sm font-semibold"><ArrowLeft className="h-4 w-4" />Trade Journal</button>
+              <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-4 border-b border-white/[0.05] pb-4 md:pb-5">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm shrink-0">
                     <DollarSign className="w-4 h-4 text-black stroke-[3]" />
@@ -246,14 +262,14 @@ export default function Journal() {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                  <button className="touch-target border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button aria-label="Refresh journal" className="touch-target border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <RefreshCw className="w-4 h-4" />
                   </button>
                   <button className="touch-target flex items-center gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
-                    <FileText className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Report</span>
+                    <FileText className="w-3.5 h-3.5" /> <span>Report</span>
                   </button>
                   <button className="touch-target flex items-center gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
-                    <SlidersHorizontal className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Analytics</span>
+                    <SlidersHorizontal className="w-3.5 h-3.5" /> <span>Analytics</span>
                   </button>
                   <button onClick={handleSave} disabled={saveJournal.isPending}
                     className={cn(
@@ -275,6 +291,7 @@ export default function Journal() {
                 <span>{formatJournalDate(selectedTrade.open_time)}</span>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Pre-Trade Analysis */}
               <div>
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
@@ -301,6 +318,7 @@ export default function Journal() {
                   )} />
               </div>
 
+              </div>
               {/* Risk Reward */}
               <div className={cn(
                 "rounded-[20px] p-4 flex items-center justify-between transition-all duration-300 bg-[#0B0B0B] border border-white/[0.06]"

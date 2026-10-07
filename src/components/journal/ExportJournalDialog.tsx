@@ -1,316 +1,120 @@
-import { useState } from "react";
-import { Download, FileText, FileSpreadsheet, File, Calendar as CalendarIcon, Check } from "lucide-react";
-import { format, subDays } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
-import { fetchExportData } from "@/hooks/useTrades";
-import { exportToCSV, exportToExcel, exportToWord, exportToPDF } from "@/lib/exportUtils";
+import { useEffect, useMemo, useState } from 'react';
+import { Download, FileText, FileSpreadsheet, Loader2, AlertCircle, Image } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchExportData, resolveExportScreenshots } from '@/hooks/useTrades';
+import { DEFAULT_EXPORT_FIELDS, DEFAULT_JOURNAL_FILTERS, EXPORT_FIELDS, filterJournalTrades, selectJournalExport, type ExportData, type ExportScope, type JournalFilters } from '@/lib/journalExport';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-
-const EXPORT_FIELDS = [
-  { id: "date", label: "Date and Time" },
-  { id: "symbol", label: "Symbol" },
-  { id: "direction", label: "Direction" },
-  { id: "entryPrice", label: "Entry Price" },
-  { id: "exitPrice", label: "Exit Price" },
-  { id: "pnl", label: "P&L" },
-  { id: "riskReward", label: "Risk Reward" },
-  { id: "strategySetup", label: "Strategy Setup" },
-  { id: "preTrade", label: "Pre-Trade Analysis" },
-  { id: "postTrade", label: "Post-Trade Review" },
-  { id: "emotions", label: "Emotions" },
-  { id: "lessons", label: "Lessons Learned" },
-  { id: "tags", label: "Tags" },
-  { id: "rating", label: "Rating" },
-  { id: "session", label: "Session Information" },
+const FORMATS = [
+  { id: 'pdf', label: 'PDF', detail: 'Journal report', icon: FileText },
+  { id: 'xlsx', label: 'Excel', detail: 'Analyze your data', icon: FileSpreadsheet },
+  { id: 'csv', label: 'CSV', detail: 'Portable data', icon: FileSpreadsheet },
+  { id: 'docx', label: 'Word', detail: 'Editable document', icon: FileText },
+] as const;
+const SCOPES: { id: ExportScope; label: string; detail: string }[] = [
+  { id: 'current', label: 'Current Trade', detail: 'The journal you have open' },
+  { id: 'journaled', label: 'All Journaled Trades', detail: 'Trades with a saved journal' },
+  { id: 'all', label: 'All Trades', detail: 'Journaled and pending trades' },
+  { id: 'selected', label: 'Selected Trades', detail: 'Choose individual entries below' },
 ];
+const EMPTY: ExportData = { trades: [], journals: [], checklists: [], screenshots: [] };
 
-const EXPORT_FORMATS = [
-  { id: "pdf", label: "PDF", description: "Beautiful report with cards and screenshots.", icon: File },
-  { id: "docx", label: "WORD (.docx)", description: "Editable document.", icon: FileText },
-  { id: "xlsx", label: "EXCEL (.xlsx)", description: "Spreadsheet with multiple sheets.", icon: FileSpreadsheet },
-  { id: "csv", label: "CSV", description: "Raw tabular data.", icon: FileText },
-];
-
-export function ExportJournalDialog() {
+export function ExportJournalDialog({ currentTradeId = null, filters = DEFAULT_JOURNAL_FILTERS }: { currentTradeId?: string | null; filters?: JournalFilters }) {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [dateRange, setDateRange] = useState("all");
-  const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
-  
-  const [fields, setFields] = useState<Record<string, boolean>>(
-    EXPORT_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: true }), {})
-  );
-  
-  const [selectedFormats, setSelectedFormats] = useState<string[]>(["pdf"]);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState("");
-
-  const handleExport = async () => {
-    if (!user) return;
-    setIsExporting(true);
-    setExportProgress("Preparing journal...");
-    
+  const userId = user?.id;
+  const [open, setOpen] = useState(false);
+  const [scope, setScope] = useState<ExportScope>('current');
+  const [format, setFormat] = useState('pdf');
+  const [fields, setFields] = useState({ ...DEFAULT_EXPORT_FIELDS });
+  const [data, setData] = useState<ExportData>(EMPTY);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [applyFilters, setApplyFilters] = useState(true);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [progress, setProgress] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setLoading(true); setError(''); setData(EMPTY);
+    if (!userId) { setLoading(false); setError('Sign in to export your journal.'); return; }
+    fetchExportData(userId).then(result => { if (active) setData(result); })
+      .catch(() => { if (active) setError('We could not load your complete journal. Please try again.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [open, userId, retry]);
+  const filtered = useMemo(() => applyFilters ? filterJournalTrades(data.trades, data.journals, filters) : data.trades, [data, filters, applyFilters]);
+  const exportData = useMemo(() => selectJournalExport(data, scope, currentTradeId, selectedIds, applyFilters ? filters : undefined), [data, scope, currentTradeId, selectedIds, applyFilters, filters]);
+  const candidates = filtered.filter(t => t.symbol.toLowerCase().includes(search.trim().toLowerCase()));
+  const count = exportData.trades.length;
+  const hasFields = Object.values(fields).some(Boolean);
+  const filtersActive = filters.status !== 'ALL' || filters.days !== 'all' || !!filters.search.trim();
+  const dateLabel = filters.days === 'all' ? 'All time' : filters.days === 'custom' ? `${filters.start || 'Any date'} to ${filters.end || 'Any date'}` : `Last ${filters.days} days`;
+  const toggle = (id: string) => setSelectedIds(previous => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  async function download() {
+    if (!count || !hasFields || busy || loading || error) return;
+    setBusy(true); setProgress('Preparing your journal…');
     try {
-      let startDateStr: string | undefined;
-      let endDateStr: string | undefined;
-
-      const now = new Date();
-      if (dateRange === "7") startDateStr = subDays(now, 7).toISOString();
-      else if (dateRange === "30") startDateStr = subDays(now, 30).toISOString();
-      else if (dateRange === "90") startDateStr = subDays(now, 90).toISOString();
-      else if (dateRange === "custom" && customRange.from && customRange.to) {
-        startDateStr = customRange.from.toISOString();
-        endDateStr = customRange.to.toISOString();
-      }
-
-      setExportProgress("Fetching data...");
-      const data = await fetchExportData(user.id, startDateStr, endDateStr);
-      
-      const options = { includeFields: fields, formats: selectedFormats };
-      
-      if (selectedFormats.includes("csv")) {
-        setExportProgress("Generating CSV...");
-        exportToCSV(data, options);
-      }
-      
-      if (selectedFormats.includes("xlsx")) {
-        setExportProgress("Generating Excel...");
-        exportToExcel(data, options);
-      }
-      
-      if (selectedFormats.includes("docx")) {
-        setExportProgress("Generating Word document...");
-        await exportToWord(data, options);
-      }
-      
-      if (selectedFormats.includes("pdf")) {
-        setExportProgress("Generating PDF...");
-        exportToPDF(data, options);
-      }
-      
-      setExportProgress("Export complete.");
-      setTimeout(() => {
-        setIsExporting(false);
-        setIsOpen(false);
-        setExportProgress("");
-      }, 1500);
-
-    } catch (error) {
-      console.error(error);
-      setIsExporting(false);
-      setExportProgress("Export failed.");
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-[20px] font-bold text-xs transition-colors shadow-[0_4px_30px_rgba(37,99,235,0.2)]">
-          <Download className="w-4 h-4" /> Export Journal
-        </button>
-      </DialogTrigger>
-      
-      <DialogContent className="max-w-3xl bg-[#0B0B0B] border-white/[0.06] rounded-[24px] shadow-2xl p-0 gap-0 overflow-hidden text-foreground max-h-[90vh] flex flex-col">
-        <DialogHeader className="p-6 border-b border-white/[0.06] shrink-0">
-          <DialogTitle className="text-2xl font-bold">Export Trading Journal</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Download your journal entries and all associated trade data.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
-          
-          {/* Date Range */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-blue-500" /> Date Range
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: "all", label: "All Time" },
-                { id: "7", label: "Last 7 Days" },
-                { id: "30", label: "Last 30 Days" },
-                { id: "90", label: "Last 90 Days" },
-                { id: "custom", label: "Custom Date Range" }
-              ].map(range => (
-                <button
-                  key={range.id}
-                  onClick={() => setDateRange(range.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-[20px] border text-xs font-bold transition-all",
-                    dateRange === range.id
-                      ? "bg-blue-500/10 border-blue-500/50 text-blue-500"
-                      : "bg-[#050505] border-white/[0.06] text-muted-foreground hover:bg-white/[0.02]"
-                  )}
-                >
-                  {range.label}
-                </button>
-              ))}
-            </div>
-
-            {dateRange === "custom" && (
-              <div className="flex items-center gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Start Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="flex items-center gap-2 w-48 px-3 py-2 rounded-xl bg-[#050505] border border-white/[0.06] text-sm hover:bg-white/[0.02] transition-colors">
-                        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                        {customRange.from ? format(customRange.from, "PPP") : <span className="text-muted-foreground">Pick a date</span>}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 border-white/[0.06] bg-[#0B0B0B]" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={customRange.from}
-                        onSelect={(date) => setCustomRange(prev => ({ ...prev, from: date }))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">End Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="flex items-center gap-2 w-48 px-3 py-2 rounded-xl bg-[#050505] border border-white/[0.06] text-sm hover:bg-white/[0.02] transition-colors">
-                        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                        {customRange.to ? format(customRange.to, "PPP") : <span className="text-muted-foreground">Pick a date</span>}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 border-white/[0.06] bg-[#0B0B0B]" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={customRange.to}
-                        onSelect={(date) => setCustomRange(prev => ({ ...prev, to: date }))}
-                        initialFocus
-                        disabled={(date) => customRange.from ? date < customRange.from : false}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* What to Include */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-500" /> What to Include
-              </h3>
-              <button 
-                onClick={() => {
-                  const allChecked = Object.values(fields).every(Boolean);
-                  setFields(EXPORT_FIELDS.reduce((acc, f) => ({ ...acc, [f.id]: !allChecked }), {}));
-                }}
-                className="text-xs text-blue-500 font-semibold hover:underline"
-              >
-                Toggle All
-              </button>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {EXPORT_FIELDS.map(field => (
-                <label
-                  key={field.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all",
-                    fields[field.id]
-                      ? "bg-blue-500/5 border-blue-500/30"
-                      : "bg-[#050505] border-white/[0.06] hover:bg-white/[0.02]"
-                  )}
-                >
-                  <Checkbox
-                    checked={fields[field.id]}
-                    onCheckedChange={(checked) => setFields(prev => ({ ...prev, [field.id]: checked as boolean }))}
-                    className="border-white/[0.2] data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                  />
-                  <span className={cn(
-                    "text-xs font-semibold",
-                    fields[field.id] ? "text-blue-500" : "text-muted-foreground"
-                  )}>{field.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Export Formats */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Download className="w-4 h-4 text-blue-500" /> Export Formats
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {EXPORT_FORMATS.map(format => {
-                const Icon = format.icon;
-                const isSelected = selectedFormats.includes(format.id);
-                return (
-                  <button
-                    key={format.id}
-                    onClick={() => {
-                      setSelectedFormats(prev => 
-                        prev.includes(format.id)
-                          ? prev.filter(id => id !== format.id)
-                          : [...prev, format.id]
-                      );
-                    }}
-                    className={cn(
-                      "flex items-start gap-4 p-4 rounded-[20px] border text-left transition-all",
-                      isSelected
-                        ? "bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
-                        : "bg-[#050505] border-white/[0.06] hover:bg-white/[0.04]"
-                    )}
-                  >
-                    <div className={cn(
-                      "p-2.5 rounded-xl border shrink-0",
-                      isSelected ? "bg-blue-500 border-blue-400 text-white" : "bg-[#0B0B0B] border-white/[0.08] text-muted-foreground"
-                    )}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className={cn("text-sm font-bold mb-1", isSelected ? "text-blue-500" : "text-white")}>
-                        {format.label}
-                      </h4>
-                      <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                        {format.description}
-                      </p>
-                    </div>
-                  </button>
-                );
+      const exporters = await import('@/lib/exportUtils');
+      const options = { includeFields: fields };
+      let missing = 0;
+      if (format === 'pdf') {
+        setProgress('Preparing report and screenshots…');
+        const report = fields.screenshots ? await resolveExportScreenshots(exportData) : exportData;
+        missing = await exporters.exportToPDF(report, options);
+      } else if (format === 'xlsx') exporters.exportToExcel(exportData, options);
+      else if (format === 'csv') exporters.exportToCSV(exportData, options);
+      else await exporters.exportToWord(exportData, options);
+      if (missing) toast.warning(`Report downloaded. ${missing} screenshot${missing === 1 ? ' was' : 's were'} unavailable; their references are included.`);
+      else toast.success(`Exported ${count} trade${count === 1 ? '' : 's'} as ${format === 'xlsx' ? 'Excel' : format.toUpperCase()}.`);
+      setOpen(false);
+    } catch {
+      setProgress('Export failed. Your journal is unchanged. Please try again.');
+    } finally { setBusy(false); }
+  }
+  return <Dialog open={open} onOpenChange={value => { if (!busy) { setOpen(value); setProgress(''); if (value) setScope(currentTradeId ? 'current' : 'all'); } }}>
+    <DialogTrigger asChild><Button className="min-h-11 gap-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"><Download className="h-4 w-4" />Export Journal</Button></DialogTrigger>
+    <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border-white/10 bg-[#0b0b0b] p-0 text-foreground sm:rounded-2xl sm:p-0" onEscapeKeyDown={e => { if (busy) e.preventDefault(); }} onInteractOutside={e => { if (busy) e.preventDefault(); }}>
+      <DialogHeader className="shrink-0 border-b border-white/[0.08] p-5 pr-12 text-left sm:p-6">
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-blue-400"><Download className="h-4 w-4" /> YOUR TRADING RECORD</div>
+        <DialogTitle className="text-xl font-bold">Export Journal</DialogTitle>
+        <DialogDescription className="leading-relaxed">Your trades, decisions, and lessons in one complete export.</DialogDescription>
+      </DialogHeader>
+      <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+        {loading ? <div role="status" className="flex items-center justify-center gap-3 py-16 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" />Loading complete journal…</div> : error ? <div role="alert" className="space-y-4 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm"><AlertCircle className="h-5 w-5 text-red-400" /><p>{error}</p><Button variant="outline" onClick={() => setRetry(v => v + 1)}>Try again</Button></div> : <fieldset disabled={busy} className="min-w-0 space-y-6 disabled:opacity-70">
+          <fieldset className="min-w-0"><legend className="mb-3 text-sm font-semibold">1. Choose trades</legend>
+            <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
+              {SCOPES.map(item => {
+                const amount = selectJournalExport(data, item.id, currentTradeId, selectedIds, applyFilters ? filters : undefined).trades.length;
+                return <label key={item.id} className={cn('flex min-h-20 cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors', scope === item.id ? 'border-blue-500/60 bg-blue-500/10' : 'border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05]', item.id === 'current' && !currentTradeId && 'cursor-not-allowed opacity-40')}>
+                  <input type="radio" name="export-scope" value={item.id} checked={scope === item.id} disabled={item.id === 'current' && !currentTradeId} onChange={() => setScope(item.id)} className="mt-1 h-4 w-4 shrink-0 accent-blue-500" />
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{item.label}</span><span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{item.detail}</span></span><span className="rounded-md bg-white/5 px-1.5 py-0.5 text-xs tabular-nums text-blue-400">{amount}</span>
+                </label>;
               })}
             </div>
-          </div>
-
-        </div>
-
-        <div className="p-6 border-t border-white/[0.06] bg-[#050505] shrink-0 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {isExporting && (
-              <>
-                <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-                <span className="text-sm font-bold text-blue-500 animate-pulse">{exportProgress}</span>
-              </>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isExporting} className="rounded-[20px] border-white/[0.08] text-white hover:bg-white/[0.02]">
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleExport} 
-              disabled={isExporting || selectedFormats.length === 0}
-              className="rounded-[20px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-[0_4px_20px_rgba(37,99,235,0.2)]"
-            >
-              Export Selected
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+          </fieldset>
+          {scope !== 'current' && <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.08] p-3 text-sm"><input type="checkbox" checked={applyFilters} onChange={e => setApplyFilters(e.target.checked)} className="mt-0.5 h-4 w-4 accent-blue-500" /><span>Use current list filters<span className="mt-1 block text-xs text-muted-foreground">{filtersActive ? `${filters.status === 'ALL' ? 'All statuses' : filters.status === 'JOURNALED' ? 'Journaled' : 'Pending'} · ${dateLabel}${filters.search ? ` · ${filters.search}` : ''}` : 'All statuses · All time'}{!applyFilters && ' · Filters ignored'}</span></span></label>}
+          {scope === 'selected' && <div className="space-y-2 rounded-xl border border-white/10 p-3">
+            <input aria-label="Find trades to export" placeholder="Find a symbol…" value={search} onChange={e => setSearch(e.target.value)} className="h-11 w-full rounded-lg border border-white/10 bg-secondary px-3 text-sm" />
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs"><span className="text-muted-foreground">{count} selected for export</span><div className="flex gap-3"><button type="button" className="min-h-9 text-blue-400" onClick={() => setSelectedIds(new Set([...selectedIds, ...candidates.map(t => t.id)]))}>Select visible</button><button type="button" className="min-h-9 text-muted-foreground" onClick={() => setSelectedIds(new Set())}>Clear</button></div></div>
+            <div className="max-h-48 overflow-y-auto">{candidates.length ? candidates.map(t => <label key={t.id} className="flex cursor-pointer items-center gap-3 border-t border-white/5 py-3"><input aria-label={`Select ${t.symbol} ${t.id}`} type="checkbox" checked={selectedIds.has(t.id)} onChange={() => toggle(t.id)} className="h-4 w-4 accent-blue-500" /><span className="min-w-0 flex-1 text-sm"><strong>{t.symbol}</strong><span className="block text-xs text-muted-foreground">{t.direction} · {new Date(t.open_time).toLocaleString()}</span></span><span className={cn('text-xs font-semibold', Number(t.pnl) >= 0 ? 'text-blue-400' : 'text-red-400')}>{Number(t.pnl).toFixed(2)}</span></label>) : <p className="py-4 text-center text-sm text-muted-foreground">No trades match these filters.</p>}</div>
+          </div>}
+          <fieldset className="min-w-0"><legend className="mb-3 text-sm font-semibold">2. Export format</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{FORMATS.map(item => <label key={item.id} className={cn('relative cursor-pointer rounded-xl border p-3', format === item.id ? 'border-blue-500/60 bg-blue-500/10' : 'border-white/[0.08] bg-white/[0.025]')}><input className="absolute right-3 top-3 h-4 w-4 accent-blue-500" type="radio" name="export-format" aria-label={item.label} checked={format === item.id} onChange={() => setFormat(item.id)} /><item.icon className="mb-3 h-5 w-5 text-blue-400" /><strong className="block text-sm">{item.label}</strong><span className="mt-1 block text-xs text-muted-foreground">{item.detail}</span></label>)}</div></fieldset>
+          <details className="rounded-xl border border-white/[0.08] p-3"><summary className="cursor-pointer text-sm font-semibold">Included sections <span className="ml-2 text-xs font-normal text-muted-foreground">{Object.values(fields).filter(Boolean).length} of {EXPORT_FIELDS.length}</span></summary><div className="mt-3 grid grid-cols-1 gap-1 sm:grid-cols-2">{EXPORT_FIELDS.map(([id, label]) => <label key={id} className="flex min-h-10 cursor-pointer items-center gap-2 text-xs"><input type="checkbox" className="h-4 w-4 accent-blue-500" checked={fields[id]} onChange={e => setFields(previous => ({ ...previous, [id]: e.target.checked }))} />{label}</label>)}</div></details>
+          <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"><Image className="mt-0.5 h-4 w-4 shrink-0" />{format === 'pdf' ? 'PDF embeds available screenshots. Unavailable images are identified in the report.' : 'Screenshots are included as original storage references. Choose PDF to embed images.'}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">Exports use saved journal data. Save any editor changes first. Dates in downloaded files use UTC.</p>
+        </fieldset>}
+      </div>
+      <div className="shrink-0 space-y-3 border-t border-white/[0.08] bg-white/[0.02] p-4 sm:px-6">
+        <div aria-live="polite" className="text-sm"><span className="font-semibold">{loading ? 'Preparing trade count…' : `${count} trade${count === 1 ? '' : 's'} ready to export`}</span>{!loading && !error && !count && <p className="mt-1 text-xs text-amber-400">{scope === 'selected' ? 'Select at least one trade to continue.' : 'No matching trades. Choose another scope or adjust your filters.'}</p>}{!hasFields && <p className="mt-1 text-xs text-amber-400">Choose at least one section to include.</p>}</div>
+        {progress && <p role="status" className="text-xs text-blue-300">{progress}</p>}
+        <div className="flex gap-2"><Button variant="outline" className="min-h-11 rounded-xl border-white/10" disabled={busy} onClick={() => setOpen(false)}>Cancel</Button><Button className="min-h-11 flex-1 gap-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700" disabled={loading || !!error || busy || !count || !hasFields} onClick={download}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busy ? 'Exporting…' : `Export ${count} trade${count === 1 ? '' : 's'}`}</Button></div>
+      </div>
+    </DialogContent>
+  </Dialog>;
 }

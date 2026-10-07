@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchAllAnalysisRows } from "@/lib/fetchAllAnalysisRows";
+import type { ExportData } from "@/lib/journalExport";
 
 export interface Trade {
   id: string;
@@ -142,6 +144,7 @@ export function useUpdateTrade() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['trades'] });
       qc.invalidateQueries({ queryKey: ['journal'] });
+      qc.invalidateQueries({ queryKey: ['journals-all'] });
       qc.invalidateQueries({ queryKey: ['checklist'] });
     },
   });
@@ -217,6 +220,7 @@ export function useSaveJournal() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['journal'] });
+      qc.invalidateQueries({ queryKey: ['journals-all'] });
       qc.invalidateQueries({ queryKey: ['trades'] });
     },
   });
@@ -306,60 +310,43 @@ export function useUploadScreenshot() {
   });
 }
 
-export async function fetchExportData(userId: string, startDate?: string, endDate?: string) {
-  let tradesQuery = supabase
-    .from('trades')
-    .select('*')
-    .eq('user_id', userId)
-    .order('close_time', { ascending: false });
-
-  if (startDate) tradesQuery = tradesQuery.gte('open_time', startDate);
-  if (endDate) tradesQuery = tradesQuery.lte('open_time', endDate);
-
-  const { data: trades, error: tradesError } = await tradesQuery;
-  if (tradesError) throw tradesError;
-
-  if (!trades || trades.length === 0) return { trades: [], journals: [], checklists: [], screenshots: [] };
-
-  const tradeIds = trades.map(t => t.id);
-
-  // Since Supabase has a limit on 'in' clause, we should chunk it if necessary, but 
-  // typically a user exports a reasonable amount. If very large, chunking is needed.
-  // We will fetch all and filter client side if the number of trades is huge, 
-  // but let's try the simple approach first for journals and checklists.
-
-  const [journalsRes, checklistsRes, screenshotsRes] = await Promise.all([
-    supabase.from('journals').select('*').in('trade_id', tradeIds),
-    supabase.from('checklists').select('*').in('trade_id', tradeIds),
-    supabase.from('screenshots').select('*').in('trade_id', tradeIds),
+/** Read a complete, user-scoped snapshot. Never silently export only the first API page. */
+export async function fetchExportData(userId: string, startDate?: string, endDate?: string): Promise<ExportData> {
+  const read = (table: 'trades' | 'journals' | 'checklists' | 'screenshots') => fetchAllAnalysisRows(after => {
+    let query = supabase.from(table).select('*').eq('user_id', userId).order('id').limit(500);
+    if (after) query = query.gt('id', after);
+    if (table === 'trades') {
+      if (startDate) query = query.gte('open_time', startDate);
+      if (endDate) query = query.lte('open_time', endDate);
+    }
+    return query;
+  });
+  const [trades, journals, checklists, screenshots] = await Promise.all([
+    read('trades'), read('journals'), read('checklists'), read('screenshots'),
   ]);
-
-  if (journalsRes.error) throw journalsRes.error;
-  if (checklistsRes.error) throw checklistsRes.error;
-  if (screenshotsRes.error) throw screenshotsRes.error;
-
-  const journals = journalsRes.data as Journal[];
-  const checklists = checklistsRes.data as Checklist[];
-  const rawScreenshots = screenshotsRes.data as any[];
-
-  // Generate signed URLs for screenshots
-  const screenshots = await Promise.all(
-    rawScreenshots.map(async (row) => {
-      let path = row.image_url as string;
-      const marker = '/object/public/screenshots/';
-      if (path.includes(marker)) {
-        path = decodeURIComponent(path.split(marker)[1]);
-      }
-      const { data: signed } = await supabase.storage
-        .from('screenshots')
-        .createSignedUrl(path, 3600);
-      return { ...row, signed_url: signed?.signedUrl ?? '' };
-    })
-  );
-
-  return { trades, journals, checklists, screenshots };
+  const ids = new Set(trades.map(t => t.id));
+  return {
+    trades: (trades as Trade[]).sort((a, b) => new Date(b.open_time).getTime() - new Date(a.open_time).getTime()),
+    journals: (journals as Journal[]).filter(j => ids.has(j.trade_id)),
+    checklists: (checklists as Checklist[]).filter(c => ids.has(c.trade_id)),
+    screenshots: (screenshots as ExportData['screenshots']).filter(s => ids.has(s.trade_id)),
+  };
 }
 
+/** Sign only the chosen report's images immediately before PDF generation. */
+export async function resolveExportScreenshots(data: ExportData): Promise<ExportData> {
+  const screenshots: ExportData['screenshots'] = [];
+  for (let offset = 0; offset < data.screenshots.length; offset += 50) {
+    const batch = data.screenshots.slice(offset, offset + 50);
+    const paths = batch.map(row => {
+      const marker = '/object/public/screenshots/';
+      return row.image_url.includes(marker) ? decodeURIComponent(row.image_url.split(marker)[1]) : row.image_url;
+    });
+    const { data: signed } = await supabase.storage.from('screenshots').createSignedUrls(paths, 3600);
+    screenshots.push(...batch.map((row, i) => ({ ...row, signed_url: signed?.[i]?.signedUrl || '' })));
+  }
+  return { ...data, screenshots };
+}
 export function usePublicTrade(tradeId: string | null) {
   return useQuery({
     queryKey: ['public-trade', tradeId],
@@ -425,5 +412,3 @@ export function useAllJournals() {
     enabled: !!user,
   });
 }
-
-
