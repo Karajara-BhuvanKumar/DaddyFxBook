@@ -80,7 +80,7 @@ export function useUserSettings() {
   const uid = user?.id ?? "";
   const { setTheme } = useTheme();
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading, isError, refetch } = useQuery({
     queryKey: ["user_settings", uid],
     enabled: !!uid,
     queryFn: async () => {
@@ -97,51 +97,55 @@ export function useUserSettings() {
   });
 
   // Automatically apply appearance globally whenever settings are loaded/updated
+  const theme = settings?.theme;
+  const accent = settings?.accent_color;
+  const compact = settings?.compact_mode;
   useEffect(() => {
-    if (settings) {
-      applyAppearance(settings.theme, settings.accent_color, settings.compact_mode);
-      setTheme(settings.theme);
+    if (theme && accent && compact !== undefined) {
+      applyAppearance(theme, accent, compact);
+      setTheme(theme);
     }
-  }, [settings?.theme, settings?.accent_color, settings?.compact_mode, setTheme]);
+  }, [theme, accent, compact, setTheme]);
 
   const updateMutation = useMutation({
     mutationFn: async (patch: Partial<UserSettings>) => {
-      const { error } = await supabase.from("user_settings").update(patch).eq("user_id", uid);
+      if (!uid) throw new Error("Please sign in again.");
+      const { data, error } = await supabase.from("user_settings").update(patch).eq("user_id", uid).select("*").single();
       if (error) throw error;
-      return patch;
+      return data as UserSettings;
     },
-    onSuccess: (patch) => {
-      // Optimistically update cache or invalidate
-      qc.invalidateQueries({ queryKey: ["user_settings", uid] });
+    onSuccess: (saved) => {
+      qc.setQueryData(["user_settings", uid], saved);
     },
-    onError: (e: any) => toast({ title: "Failed to update settings", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Failed to update settings", description: e.message, variant: "destructive" }),
   });
 
   const uploadAvatar = async (file: File) => {
-    if (!uid) return;
-    const ext = file.name.split(".").pop() || "png";
-    const path = `${uid}/avatar-${Date.now()}.${ext}`;
-    
-    toast({ title: "Uploading avatar..." });
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    
-    if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      return;
-    }
-    
-    const { data: signed } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365);
-    const url = signed?.signedUrl ?? null;
-    
-    if (url) {
-      await updateMutation.mutateAsync({ avatar_url: url });
-      toast({ title: "Avatar updated successfully" });
+    if (!uid) throw new Error("Please sign in again.");
+    const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const ext = extensions[file.type];
+    if (!ext) throw new Error("Choose a JPG, PNG, or WebP image.");
+    if (file.size > 2 * 1024 * 1024) throw new Error("Your photo must be 2 MB or smaller.");
+    const path = `${uid}/avatar-${crypto.randomUUID()}.${ext}`;
+    const bucket = supabase.storage.from("avatars");
+    const { error } = await bucket.upload(path, file, { contentType: file.type });
+    if (error) throw error;
+    try {
+      const { data, error: urlError } = await bucket.createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (urlError) throw urlError;
+      if (!data?.signedUrl) throw new Error("Could not load your uploaded photo. Please try again.");
+      await updateMutation.mutateAsync({ avatar_url: data.signedUrl });
+    } catch (error) {
+      await bucket.remove([path]);
+      throw error;
     }
   };
 
   return {
     settings,
     isLoading,
+    isError,
+    refetch,
     updateSettings: updateMutation.mutate,
     updateSettingsAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,

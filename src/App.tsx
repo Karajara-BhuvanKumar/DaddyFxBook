@@ -19,6 +19,7 @@ const AIReport = lazy(() => import("./pages/AIReport"));
 const Backtesting = lazy(() => import("./pages/Backtesting"));
 const BacktestSession = lazy(() => import("./pages/BacktestSession"));
 const Settings = lazy(() => import("./pages/Settings"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ShareTrade = lazy(() => import("./pages/ShareTrade"));
 const Preview = import.meta.env.DEV ? lazy(() => import("./pages/Preview")) : null;
 const AnalysisPreview = import.meta.env.DEV ? lazy(() => import("./pages/AnalysisPreview")) : null;
@@ -75,6 +76,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/auth" element={<AuthRoute />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 {import.meta.env.DEV && Preview && (
                   <Route path="/preview" element={<AppLayout />}>
                     <Route index element={<Preview />} />

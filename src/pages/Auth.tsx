@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import GlowBackdrop from "@/components/GlowBackdrop";
@@ -84,6 +85,7 @@ export default function AuthPage() {
             </button>
           </form>
 
+          {isLogin && <Link to="/reset-password" className="block text-center text-sm text-primary mt-5 hover:underline">Forgot your password?</Link>}
           <p className="text-base text-muted-foreground text-center mt-6">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button onClick={() => { setIsLogin(!isLogin); setError(""); setMessage(""); }} className="text-primary hover:text-primary/80 font-medium transition-colors">

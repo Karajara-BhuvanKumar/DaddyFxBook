@@ -1,492 +1,203 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { Camera, Check, ChevronRight, Download, Globe2, Loader2, LogOut, Mail, Monitor, Moon, Palette, ShieldCheck, SlidersHorizontal, Sun, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
-import { useUserSettings, ACCENT_COLORS } from "@/hooks/useUserSettings";
+import { useUserSettings, ACCENT_COLORS, type UserSettings } from "@/hooks/useUserSettings";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { PasswordForm } from "@/components/PasswordForm";
+import { sendPasswordReset } from "@/lib/passwordReset";
 import { toast } from "@/hooks/use-toast";
-import {
-  User, Settings as SettingsIcon, ShieldCheck, Clock, Palette, Bell, Database, Lock, Info,
-  Upload, Trash2, Download, LogOut, KeyRound, ChevronRight
-} from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import "@/styles/settings.css";
 
-const TIMEZONES = [
-  "UTC", "Asia/Kolkata", "America/New_York", "America/Chicago", "America/Los_Angeles",
-  "Europe/London", "Europe/Berlin", "Europe/Paris", "Asia/Tokyo", "Asia/Singapore",
-  "Asia/Dubai", "Australia/Sydney",
-];
-const CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"];
-const SESSIONS = ["Asian", "London", "New York"];
+const TIMEZONES = ["UTC", "Asia/Kolkata", "America/New_York", "America/Chicago", "America/Los_Angeles", "Europe/London", "Europe/Berlin", "Europe/Paris", "Asia/Tokyo", "Asia/Singapore", "Asia/Dubai", "Australia/Sydney"];
+const NUMBERS = [
+  { key: "account_size", label: "Account size", max: 1e12, step: "any" },
+  { key: "default_risk_pct", label: "Default risk (%)", max: 100, step: "0.1" },
+  { key: "max_daily_risk", label: "Daily risk limit (%)", max: 100, step: "0.1" },
+  { key: "max_weekly_risk", label: "Weekly risk limit (%)", max: 100, step: "0.1" },
+  { key: "max_trades_per_day", label: "Trades per day", max: 10000, step: "1" },
+] as const;
 
-const APP_VERSION = "1.5.0";
-const BUILD_VERSION = "2026.06.21";
-const SUBSCRIPTION = "Elite";
-
-function toCSV(rows: any[]): string {
-  if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
-  const escape = (v: any) => {
-    if (v == null) return "";
-    const s = typeof v === "object" ? JSON.stringify(v) : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  return [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
-}
-
-function downloadCSV(name: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  URL.revokeObjectURL(url);
-}
+type ExportTable = "trades" | "journals" | "backtest_sessions";
 
 export default function Settings() {
-  const { user, signOut } = useAuth();
-  const uid = user?.id ?? "";
-  const navigate = useNavigate();
-  
-  const { settings, isLoading, updateSettingsAsync, uploadAvatar } = useUserSettings();
-
+  const { user } = useAuth();
+  const { settings, isLoading, isError, refetch, updateSettingsAsync, isUpdating, uploadAvatar } = useUserSettings();
+  const [draft, setDraft] = useState<Partial<UserSettings>>({});
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [exporting, setExporting] = useState<ExportTable | null>(null);
+  const [signOutScope, setSignOutScope] = useState<"local" | "global" | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const [newPassword, setNewPassword] = useState("");
-  const [activeTab, setActiveTab] = useState("profile");
+  const values = settings ? { ...settings, ...draft } : null;
+  const dirty = Object.keys(draft).length > 0;
+  const busy = isUpdating || photoBusy;
 
-  const exportTable = async (table: "trades" | "journals" | "backtest_sessions", filename: string) => {
-    const { data, error } = await supabase.from(table).select("*").eq("user_id", uid);
-    if (error) return toast({ title: "Export failed", description: error.message, variant: "destructive" });
-    if (!data?.length) return toast({ title: "Nothing to export" });
-    downloadCSV(filename, toCSV(data));
-  };
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
-  const changePassword = async () => {
-    if (newPassword.length < 8) return toast({ title: "Password too short", description: "Min 8 characters", variant: "destructive" });
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) return toast({ title: "Update failed", description: error.message, variant: "destructive" });
-    setNewPassword("");
-    toast({ title: "Password updated" });
-  };
-
-  const signOutAll = async () => {
-    await supabase.auth.signOut({ scope: "global" });
-    toast({ title: "Signed out from all devices" });
-  };
-
-  const utcNow = useMemo(() => new Date().toUTCString(), []);
-  const istNow = useMemo(
-    () => new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }),
-    [],
-  );
-
-  if (isLoading || !settings) {
-    return <div className="text-muted-foreground py-20 text-center animate-pulse">Loading workspace settings...</div>;
+  function edit<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
+    setDraft(previous => {
+      const next = { ...previous };
+      if (value === settings?.[key]) delete next[key]; else next[key] = value;
+      return next;
+    });
+  }
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    const patch = { ...draft };
+    if (NUMBERS.some(({ key, max, step }) => key in patch && (!Number.isFinite(patch[key]) || patch[key]! < 0 || patch[key]! > max || (step === "1" && !Number.isInteger(patch[key]))))) {
+      toast({ title: "Check your trading defaults", description: "Enter valid, non-negative amounts. Risk must be 0–100%, and trades per day must be a whole number.", variant: "destructive" });
+      return;
+    }
+    if (patch.username && !/^[a-zA-Z0-9_.]{1,30}$/.test(patch.username)) {
+      toast({ title: "Check your username", description: "Use up to 30 letters, numbers, underscores or dots.", variant: "destructive" });
+      return;
+    }
+    if (patch.display_name !== undefined) patch.display_name = patch.display_name?.trim() || null;
+    if (patch.username !== undefined) patch.username = patch.username?.trim() || null;
+    try { await updateSettingsAsync(patch); setDraft({}); toast({ title: "Changes saved", description: "Your settings are up to date." }); }
+    catch { /* The settings hook reports the error; keep the draft for retry. */ }
+  }
+  async function changePhoto(file?: File) {
+    if (!file) return;
+    setPhotoBusy(true);
+    try { await uploadAvatar(file); toast({ title: "Profile photo updated" }); }
+    catch (error) { reportError("Couldn't upload your photo", error); }
+    finally { setPhotoBusy(false); if (fileInput.current) fileInput.current.value = ""; }
+  }
+  async function removePhoto() {
+    setPhotoBusy(true);
+    try { await updateSettingsAsync({ avatar_url: null }); toast({ title: "Profile photo removed" }); }
+    catch { /* Reported by the settings hook. */ }
+    finally { setPhotoBusy(false); }
+  }
+  async function resetPassword() {
+    if (!user?.email) return;
+    setResetBusy(true);
+    try { await sendPasswordReset(user.email); setResetSent(true); }
+    catch (error) { reportError("Couldn't send reset email", error); }
+    finally { setResetBusy(false); }
+  }
+  async function signOut() {
+    if (!signOutScope) return;
+    setSigningOut(true);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: signOutScope });
+      if (error) throw error;
+    } catch (error) { reportError("Couldn't sign out", error); }
+    finally { setSigningOut(false); setSignOutScope(null); }
+  }
+  async function exportData(table: ExportTable) {
+    if (!user) return;
+    setExporting(table);
+    try {
+      // Paginate so exports include more than the API's default 1,000 rows.
+      const rows: Record<string, unknown>[] = [];
+      for (let start = 0; ; start += 1000) {
+        const { data, error } = await supabase.from(table).select("*").eq("user_id", user.id).order("id").range(start, start + 999);
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      if (!rows.length) { toast({ title: "Nothing to export yet" }); return; }
+      const keys = Object.keys(rows[0]);
+      const cell = (value: unknown) => {
+        let text = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+        if (typeof value === "string" && /^[\s]*[=+@-]/.test(text)) text = `'${text}`;
+        return `"${text.replace(/"/g, '""')}"`;
+      };
+      const csv = [keys.map(cell).join(","), ...rows.map(row => keys.map(key => cell(row[key])).join(","))].join("\r\n");
+      const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a"); link.href = url; link.download = `${table}.csv`; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast({ title: "Export ready", description: `${rows.length} records downloaded.` });
+    } catch (error) { reportError("Export failed", error); }
+    finally { setExporting(null); }
   }
 
-  const initials = (settings.display_name || user?.email || "U").slice(0, 2).toUpperCase();
+  if (isLoading) return <div className="settings-loading" role="status"><Loader2 className="animate-spin" /> Loading your settings…</div>;
+  if (isError || !values) return <div className="settings-loading"><p>We couldn't load your settings.</p><Button variant="outline" onClick={() => refetch()}>Try again</Button></div>;
+  const initials = (values.display_name || user?.email || "U").slice(0, 2).toUpperCase();
+  const saveFooter = <div className="settings-savebar"><span role="status">{isUpdating ? "Saving your changes…" : dirty ? "You have unsaved changes" : <><Check size={14} /> All changes saved</>}</span><div><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={() => setDraft({})}>Cancel</Button><Button type="submit" disabled={!dirty || busy}>{isUpdating && <Loader2 size={15} className="animate-spin" />}Save changes</Button></div></div>;
 
-  const TABS = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "trading", label: "Trading", icon: SettingsIcon },
-    { id: "rules", label: "Rules", icon: ShieldCheck },
-    { id: "time", label: "Time", icon: Clock },
-    { id: "appearance", label: "Appearance", icon: Palette },
-    { id: "notifications", label: "Notify", icon: Bell },
-    { id: "data", label: "Data", icon: Database },
-    { id: "security", label: "Security", icon: Lock },
-    { id: "about", label: "About", icon: Info },
-  ];
+  return <div className="settings-page">
+    <header className="settings-header"><div><p className="settings-eyebrow">MAKE IT YOURS</p><h1>Account settings</h1><p>A few simple details. A workspace that feels like you.</p></div><span className="settings-private"><ShieldCheck size={15} /> Your personal workspace</span></header>
+    <Tabs defaultValue="profile" className="settings-tabs">
+      <TabsList aria-label="Account settings" className="settings-tab-list">
+        <TabsTrigger value="profile"><UserRound size={17} />Profile</TabsTrigger>
+        <TabsTrigger value="preferences"><SlidersHorizontal size={17} />Preferences</TabsTrigger>
+        <TabsTrigger value="security"><ShieldCheck size={17} />Security</TabsTrigger>
+      </TabsList>
 
-  return (
-    <div className="overflow-guard space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 md:pb-12">
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="page-title font-bold tracking-tight">Settings</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your workspace preferences, identity, and security.</p>
-        </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <ThemeToggle />
-          <Button 
-            className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-6 font-medium rounded-xl h-11 min-h-[44px]"
-            onClick={() => toast({ title: "Settings automatically saved" })}
-          >
-            All changes saved
-          </Button>
-        </div>
-      </div>
-
-      {/* Custom Animated Tab Bar */}
-      <div className="relative flex w-full overflow-x-auto overflow-y-hidden pb-1 scrollbar-none border-b border-border">
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors whitespace-nowrap outline-none
-                ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}
-              `}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-              {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary rounded-t-full shadow-[0_-2px_10px_rgba(var(--primary),0.3)]" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab Contents */}
-      <div className="min-h-[500px]">
-
-        {/* PROFILE */}
-        {activeTab === "profile" && (
-          <SettingsCard title="Profile" description="Your identity across DaddyFXBook.">
-            <div className="flex flex-col md:flex-row items-center gap-6 p-4 rounded-xl bg-muted/20 border border-border/50">
-              <Avatar className="h-24 w-24 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                <AvatarImage src={settings.avatar_url ?? undefined} className="object-cover" />
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="space-y-3 flex-1 text-center md:text-left">
-                <h3 className="font-semibold text-lg">{settings.display_name || "Set a display name"}</h3>
-                <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-2">
-                  <input
-                    ref={fileInput} type="file" accept="image/*" className="hidden"
-                    onChange={(e) => { if (e.target.files?.[0]) uploadAvatar(e.target.files[0]); }}
-                  />
-                  <Button variant="secondary" onClick={() => fileInput.current?.click()} className="rounded-lg h-9">
-                    <Upload className="h-4 w-4 mr-2" /> Upload picture
-                  </Button>
-                  {settings.avatar_url && (
-                    <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg h-9" onClick={() => updateSettingsAsync({ avatar_url: null })}>
-                      Remove
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">PNG or JPG. Max 2MB recommended.</p>
+      <TabsContent value="profile" forceMount className="settings-tab-panel">
+        <form onSubmit={save}>
+          <Card title="Personal information" description="Your profile, just the way you like it." icon={<UserRound size={19} />}>
+            <fieldset disabled={busy}>
+              <div className="settings-photo-row">
+                <Avatar className="settings-avatar"><AvatarImage src={settings?.avatar_url || undefined} alt="Your profile photo" className="object-cover" /><AvatarFallback>{initials}</AvatarFallback></Avatar>
+                <div className="settings-photo-content"><h3>Profile photo</h3><p>JPG, PNG or WebP. Up to 2 MB.</p><div className="settings-photo-actions"><input ref={fileInput} aria-label="Upload profile photo" type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void changePhoto(e.target.files?.[0])} /><Button type="button" variant="outline" onClick={() => fileInput.current?.click()}>{photoBusy ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}{photoBusy ? "Updating…" : "Change photo"}</Button>{settings?.avatar_url && <Button type="button" variant="ghost" onClick={removePhoto}>Remove</Button>}</div></div>
               </div>
-            </div>
-            
-            <Separator className="my-6 bg-border/50" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Display name">
-                <Input 
-                  value={settings.display_name ?? ""} 
-                  onChange={(e) => updateSettingsAsync({ display_name: e.target.value })} 
-                  placeholder="Your name" 
-                  className="bg-input border-border/60 focus-visible:ring-primary h-11 rounded-xl"
-                />
-              </Field>
-              <Field label="Username">
-                <Input 
-                  value={settings.username ?? ""} 
-                  onChange={(e) => updateSettingsAsync({ username: e.target.value })} 
-                  placeholder="username" 
-                  className="bg-input border-border/60 focus-visible:ring-primary h-11 rounded-xl"
-                />
-              </Field>
-              <Field label="Email (read-only)">
-                <Input value={user?.email ?? ""} disabled className="bg-muted/50 border-border/30 h-11 rounded-xl text-muted-foreground opacity-100" />
-              </Field>
-              <Field label="Timezone">
-                <SelectInput value={settings.timezone} onChange={(v) => updateSettingsAsync({ timezone: v })} options={TIMEZONES} />
-              </Field>
-              <Field label="Time format">
-                <SelectInput value={settings.time_format} onChange={(v) => updateSettingsAsync({ time_format: v })} options={["12h", "24h"]} />
-              </Field>
-              <Field label="Default currency">
-                <SelectInput value={settings.currency} onChange={(v) => updateSettingsAsync({ currency: v })} options={CURRENCIES} />
-              </Field>
-              <Field label="Account size">
-                <Input 
-                  type="number" 
-                  value={settings.account_size} 
-                  onChange={(e) => updateSettingsAsync({ account_size: Number(e.target.value) })} 
-                  className="bg-input border-border/60 focus-visible:ring-primary h-11 rounded-xl font-mono"
-                />
-              </Field>
-            </div>
-          </SettingsCard>
-        )}
-
-        {/* TRADING PREFERENCES */}
-        {activeTab === "trading" && (
-          <SettingsCard title="Trading Preferences" description="Define risk envelope and execution defaults.">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Default risk %">
-                <Input type="number" step="0.1" value={settings.default_risk_pct}
-                  onChange={(e) => updateSettingsAsync({ default_risk_pct: Number(e.target.value) })} className="bg-input border-border/60 h-11 rounded-xl" />
-              </Field>
-              <Field label="Max daily risk (%)">
-                <Input type="number" step="0.1" value={settings.max_daily_risk}
-                  onChange={(e) => updateSettingsAsync({ max_daily_risk: Number(e.target.value) })} className="bg-input border-border/60 h-11 rounded-xl" />
-              </Field>
-              <Field label="Max weekly risk (%)">
-                <Input type="number" step="0.1" value={settings.max_weekly_risk}
-                  onChange={(e) => updateSettingsAsync({ max_weekly_risk: Number(e.target.value) })} className="bg-input border-border/60 h-11 rounded-xl" />
-              </Field>
-              <Field label="Max trades / day">
-                <Input type="number" value={settings.max_trades_per_day}
-                  onChange={(e) => updateSettingsAsync({ max_trades_per_day: Number(e.target.value) })} className="bg-input border-border/60 h-11 rounded-xl" />
-              </Field>
-              <Field label="Preferred session">
-                <SelectInput value={settings.preferred_session} onChange={(v) => updateSettingsAsync({ preferred_session: v })} options={SESSIONS} />
-              </Field>
-            </div>
-          </SettingsCard>
-        )}
-
-        {/* RULES */}
-        {activeTab === "rules" && (
-          <SettingsCard title="Trading Rules" description="Rules have moved to their own page with advanced features.">
-            <div className="flex flex-col items-center py-8 text-center">
-              <ShieldCheck className="w-10 h-10 text-primary/50 mb-3" />
-              <h3 className="font-medium text-foreground">Rules have a new home</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-5 max-w-md">
-                Manage your trading rules, set up auto-checked limits, and track discipline on the dedicated Rules page.
-              </p>
-              <Button
-                onClick={() => navigate("/rules")}
-                className="h-11 px-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-              >
-                <ChevronRight className="h-4 w-4 mr-2" /> Go to Rules
-              </Button>
-            </div>
-          </SettingsCard>
-        )}
-
-        {/* TIME */}
-        {activeTab === "time" && (
-          <SettingsCard title="Time Settings" description="All trades are stored in UTC. Display follows your timezone.">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-              <div className="rounded-xl border border-border/50 bg-muted/20 p-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">UTC Reference</p>
-                <p className="font-mono text-xl font-bold">{utcNow}</p>
+              <div className="settings-card-body settings-fields">
+                <Field label="Display name" id="display-name"><Input id="display-name" autoComplete="name" maxLength={80} placeholder="Your name" value={values.display_name || ""} onChange={e => edit("display_name", e.target.value)} /></Field>
+                <Field label="Username" id="username" hint="Letters, numbers, underscores and dots."><Input id="username" autoComplete="username" maxLength={30} pattern="[a-zA-Z0-9_.]+" placeholder="your.username" value={values.username || ""} onChange={e => edit("username", e.target.value)} /></Field>
+                <Field label="Email address" id="profile-email" hint="The email connected to your account."><div className="settings-email"><Mail size={16} /><Input id="profile-email" value={user?.email || ""} readOnly /></div></Field>
               </div>
-              <div className="rounded-xl border border-border/50 bg-muted/20 p-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Local (IST)</p>
-                <p className="font-mono text-xl font-bold">{istNow}</p>
-              </div>
-            </div>
-            <div className="max-w-md">
-              <Field label="Your timezone">
-                <SelectInput value={settings.timezone} onChange={(v) => updateSettingsAsync({ timezone: v })} options={TIMEZONES} />
-              </Field>
-            </div>
-          </SettingsCard>
-        )}
+            </fieldset>
+            {saveFooter}
+          </Card>
+        </form>
+        <section className="settings-data"><details><summary><span><Download size={17} /><span>Your data<span>Download a copy of your trading history.</span></span></span><ChevronRight size={16} /></summary><div className="settings-export-buttons">{([["trades", "Trades"], ["journals", "Journal"], ["backtest_sessions", "Backtests"]] as const).map(([table, label]) => <Button key={table} variant="outline" disabled={!!exporting} onClick={() => exportData(table)}>{exporting === table ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}{exporting === table ? "Exporting…" : `Export ${label}`}</Button>)}<p className="settings-hint">CSV files, ready to open in your spreadsheet app.</p></div></details></section>
+      </TabsContent>
 
-        {/* APPEARANCE */}
-        {activeTab === "appearance" && (
-          <SettingsCard title="Appearance" description="Personalize your workspace aesthetics.">
-            <div className="space-y-8">
-              <Field label="Theme Preference">
-                <div className="grid grid-cols-3 gap-3">
-                  {["dark", "light", "system"].map((t) => (
-                    <button 
-                      key={t} 
-                      onClick={() => updateSettingsAsync({ theme: t })} 
-                      className={`
-                        h-12 rounded-xl flex items-center justify-center capitalize font-medium transition-all border
-                        ${settings.theme === t 
-                          ? "bg-primary/10 border-primary text-primary shadow-sm" 
-                          : "bg-card border-border hover:bg-muted text-muted-foreground hover:text-foreground"
-                        }
-                      `}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-              
-              <Field label="Accent Color">
-                <div className="flex flex-wrap gap-4">
-                  {ACCENT_COLORS.map((c) => (
-                    <button 
-                      key={c.id} 
-                      onClick={() => updateSettingsAsync({ accent_color: c.id })}
-                      className={`
-                        h-14 w-14 rounded-full flex items-center justify-center transition-all duration-300
-                        ${settings.accent_color === c.id ? "scale-110 shadow-[0_0_15px_rgba(0,0,0,0.2)] ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-105 opacity-80 hover:opacity-100"}
-                      `}
-                      style={{ background: `hsl(${c.hsl})` }} 
-                      aria-label={c.label} 
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground mt-3">This color will be used for buttons, charts, and highlights.</p>
-              </Field>
-              
-              <Separator className="bg-border/50" />
-              
-              <ToggleRow 
-                label="Compact Mode" 
-                desc="Use denser layouts and smaller spacing across the dashboard." 
-                checked={settings.compact_mode} 
-                onChange={(v) => updateSettingsAsync({ compact_mode: v })} 
-              />
-            </div>
-          </SettingsCard>
-        )}
+      <TabsContent value="preferences" forceMount className="settings-tab-panel">
+        <form onSubmit={save}>
+          <Card title="Workspace preferences" description="Set the look and everyday defaults for your workspace." icon={<Palette size={19} />}>
+            <fieldset disabled={busy} className="settings-card-body settings-preferences">
+              <div><h3>Appearance</h3><p className="settings-hint">Choose the theme that works for you.</p><div className="settings-themes">{([{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "system", label: "System", icon: Monitor }]).map(({ value, label, icon: Icon }) => <button type="button" key={value} className={values.theme === value ? "selected" : ""} aria-pressed={values.theme === value} onClick={() => edit("theme", value)}><span className={`settings-theme-preview preview-${value}`}><i /><i /><i /></span><span><Icon size={15} />{label}{values.theme === value && <Check size={14} />}</span></button>)}</div></div>
+              <div className="settings-preference-row"><div><h3>Accent color</h3><p className="settings-hint">A little color for your buttons and highlights.</p></div><div className="settings-colors">{ACCENT_COLORS.map(color => <button type="button" key={color.id} aria-label={`${color.label} accent`} aria-pressed={values.accent_color === color.id} onClick={() => edit("accent_color", color.id)} style={{ backgroundColor: `hsl(${color.hsl})` }}>{values.accent_color === color.id && <Check size={18} />}</button>)}</div></div>
+              <div className="settings-preference-row"><div><Label htmlFor="compact-mode">Compact layout</Label><p className="settings-hint">Smaller text and tighter spacing.</p></div><Switch id="compact-mode" checked={values.compact_mode} onCheckedChange={v => edit("compact_mode", v)} /></div>
+              <div className="settings-preference-section"><h3><Globe2 size={17} />Region & time</h3><div className="settings-fields"><Field label="Timezone" id="timezone"><select id="timezone" value={values.timezone} onChange={e => edit("timezone", e.target.value)}>{Array.from(new Set([...TIMEZONES, values.timezone])).map(zone => <option key={zone}>{zone}</option>)}</select></Field><Field label="Time format" id="time-format"><select id="time-format" value={values.time_format} onChange={e => edit("time_format", e.target.value)}><option value="12h">12-hour (2:30 PM)</option><option value="24h">24-hour (14:30)</option></select></Field><Field label="Default currency" id="currency"><select id="currency" value={values.currency} onChange={e => edit("currency", e.target.value)}>{Array.from(new Set(["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", values.currency])).map(currency => <option key={currency}>{currency}</option>)}</select></Field></div></div>
+              <details className="settings-trading"><summary>Trading defaults <ChevronRight size={16} /></summary><p className="settings-hint">Your account and risk preferences.</p><div className="settings-fields">{NUMBERS.map(({ key, label, max, step }) => <Field key={key} label={label} id={key}><Input id={key} type="number" required min={0} max={max} step={step} value={Number.isNaN(values[key]) ? "" : values[key]} onChange={e => edit(key, e.target.value === "" ? NaN : Number(e.target.value))} /></Field>)}<Field label="Preferred session" id="session"><select id="session" value={values.preferred_session} onChange={e => edit("preferred_session", e.target.value)}>{["Asian", "London", "New York"].map(session => <option key={session}>{session}</option>)}</select></Field></div><Link to="/rules" className="settings-back-link">Manage your trading rules <ChevronRight size={15} /></Link></details>
+            </fieldset>
+            {saveFooter}
+          </Card>
+        </form>
+      </TabsContent>
 
-        {/* NOTIFICATIONS */}
-        {activeTab === "notifications" && (
-          <SettingsCard title="Notifications" description="Manage your reminders and alerts.">
-            <div className="space-y-4">
-              <ToggleRow label="Daily reminder" desc="A nudge to log today's trades." checked={settings.notify_daily} onChange={(v) => updateSettingsAsync({ notify_daily: v })} />
-              <ToggleRow label="Weekly review" desc="Weekly AI report and reflection reminder." checked={settings.notify_weekly} onChange={(v) => updateSettingsAsync({ notify_weekly: v })} />
-              <ToggleRow label="Monthly review" desc="Monthly performance recap." checked={settings.notify_monthly} onChange={(v) => updateSettingsAsync({ notify_monthly: v })} />
-            </div>
-          </SettingsCard>
-        )}
-
-        {/* DATA */}
-        {activeTab === "data" && (
-          <SettingsCard title="Data Management" description="Export your data securely to your device.">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-24 flex flex-col gap-3 rounded-xl border-border bg-card hover:bg-muted transition-colors" onClick={() => exportTable("trades", "trades.csv")}>
-                <Download className="h-6 w-6 text-primary" /> 
-                <span className="font-medium">Export Trades</span>
-              </Button>
-              <Button variant="outline" className="h-24 flex flex-col gap-3 rounded-xl border-border bg-card hover:bg-muted transition-colors" onClick={() => exportTable("journals", "journal.csv")}>
-                <Download className="h-6 w-6 text-primary" /> 
-                <span className="font-medium">Export Journal</span>
-              </Button>
-              <Button variant="outline" className="h-24 flex flex-col gap-3 rounded-xl border-border bg-card hover:bg-muted transition-colors" onClick={() => exportTable("backtest_sessions", "backtests.csv")}>
-                <Download className="h-6 w-6 text-primary" /> 
-                <span className="font-medium">Export Backtests</span>
-              </Button>
-            </div>
-            
-            <div className="mt-10 border border-destructive/20 bg-destructive/5 rounded-xl p-6">
-              <h4 className="text-destructive font-semibold flex items-center gap-2 mb-2">
-                <Trash2 className="w-4 h-4" /> Danger Zone
-              </h4>
-              <p className="text-sm text-muted-foreground mb-4">Deleting your data is irreversible. All your trades, journals, and backtests will be lost forever.</p>
-              <Button variant="destructive" className="rounded-lg font-medium">Delete All Data</Button>
-            </div>
-          </SettingsCard>
-        )}
-
-        {/* SECURITY */}
-        {activeTab === "security" && (
-          <SettingsCard title="Security" description="Keep your account protected and manage active sessions.">
-            <div className="space-y-8">
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold text-foreground">Change Password</Label>
-                <div className="flex flex-col sm:flex-row gap-3 max-w-md">
-                  <Input 
-                    type="password" 
-                    placeholder="New password (min 8 chars)" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)} 
-                    className="bg-input border-border/60 h-11 rounded-xl"
-                  />
-                  <Button onClick={changePassword} className="h-11 rounded-xl bg-primary hover:bg-primary/90">
-                    <KeyRound className="h-4 w-4 mr-2" /> Update
-                  </Button>
-                </div>
-              </div>
-              
-              <Separator className="bg-border/50" />
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-border/50 bg-muted/20 p-5">
-                <div>
-                  <p className="font-semibold text-foreground">Sign out from all devices</p>
-                  <p className="text-sm text-muted-foreground mt-1">Revoke every active session globally across all your devices.</p>
-                </div>
-                <Button variant="secondary" onClick={signOutAll} className="whitespace-nowrap rounded-xl h-10 hover:bg-destructive hover:text-destructive-foreground transition-colors border border-border/50">
-                  <LogOut className="h-4 w-4 mr-2" /> Sign out all
-                </Button>
-              </div>
-            </div>
-          </SettingsCard>
-        )}
-
-        {/* ABOUT */}
-        {activeTab === "about" && (
-          <SettingsCard title="About DaddyFXBook" description="System information and plan details.">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-              <InfoTile label="Version" value={`v${APP_VERSION}`} />
-              <InfoTile label="Build Date" value={BUILD_VERSION} />
-              <InfoTile label="Current Plan" value={<Badge className="bg-primary/10 text-primary border-primary/20 px-3 py-1 text-sm">{SUBSCRIPTION}</Badge>} />
-            </div>
-          </SettingsCard>
-        )}
-        
-      </div>
-    </div>
-  );
+      <TabsContent value="security" forceMount className="settings-tab-panel">
+        <Card title="Password & security" description="Simple ways to keep your account protected." icon={<ShieldCheck size={19} />}>
+          <div className="settings-card-body"><h3 className="settings-section-title">Change password</h3><PasswordForm /></div>
+          <div className="settings-security-row"><div><h3>Prefer a reset link?</h3><p>We'll email a secure link to {user?.email || "your account email"}.</p>{resetSent && <p role="status" className="settings-success">Reset email requested. Check your inbox and spam folder.</p>}</div><Button variant="outline" disabled={!user?.email || resetBusy || resetSent} onClick={resetPassword}><Mail size={15} />{resetBusy ? "Sending…" : resetSent ? "Email sent" : "Send reset link"}</Button></div>
+        </Card>
+        <Card title="Sign-in sessions" description="Choose where you stay signed in." icon={<Monitor size={19} />}>
+          <div className="settings-security-row"><div><h3>This device</h3><p>Sign out of your current session.</p></div><Button variant="outline" onClick={() => setSignOutScope("local")}><LogOut size={15} />Sign out</Button></div>
+          <div className="settings-security-row"><div><h3>All devices</h3><p>End your sessions everywhere, including this device.</p></div><Button variant="outline" className="settings-signout-all" onClick={() => setSignOutScope("global")}>Sign out everywhere</Button></div>
+        </Card>
+      </TabsContent>
+    </Tabs>
+    <p className="settings-footnote">DaddyFXBook <span>·</span> Your trading journey, your way.</p>
+    <AlertDialog open={!!signOutScope} onOpenChange={open => { if (!open && !signingOut) setSignOutScope(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{signOutScope === "global" ? "Sign out on all devices?" : "Sign out of this device?"}</AlertDialogTitle><AlertDialogDescription>{dirty ? "Your unsaved settings will be lost. " : ""}You'll need to sign in again to access your workspace.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel><AlertDialogAction disabled={signingOut} onClick={e => { e.preventDefault(); void signOut(); }}>{signingOut ? "Signing out…" : "Sign out"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  </div>;
 }
 
-// ----------------------------------------------------------------------
-// Subcomponents
-// ----------------------------------------------------------------------
-
-function SettingsCard({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm overflow-hidden">
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-foreground tracking-tight">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-1.5">{description}</p>
-      </div>
-      {children}
-    </div>
-  );
+function reportError(title: string, error: unknown) { toast({ title, description: error && typeof error === "object" && "message" in error ? String(error.message) : "Please try again.", variant: "destructive" }); }
+function Card({ title, description, icon, children }: { title: string; description: string; icon: ReactNode; children: ReactNode }) {
+  return <section className="settings-card"><div className="settings-card-heading"><span className="settings-heading-icon">{icon}</span><div><h2>{title}</h2><p>{description}</p></div></div>{children}</section>;
 }
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2.5">
-      <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</Label>
-      {children}
-    </div>
-  );
-}
-
-function SelectInput({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="bg-input border-border/60 h-11 rounded-xl focus:ring-primary">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent className="bg-card border-border rounded-xl">
-        {options.map((o) => <SelectItem key={o} value={o} className="rounded-lg cursor-pointer focus:bg-muted/50 focus:text-foreground">{o}</SelectItem>)}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-border/50 bg-muted/10 p-4 sm:p-5 hover:bg-muted/20 transition-colors">
-      <div className="sm:pr-6">
-        <p className="font-semibold text-foreground">{label}</p>
-        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
-      </div>
-      <Switch checked={checked} onCheckedChange={onChange} className="data-[state=checked]:bg-primary shrink-0 self-start sm:self-center" />
-    </div>
-  );
-}
-
-function InfoTile({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-muted/10 p-5">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
-      <div className="text-lg font-semibold text-foreground">{value}</div>
-    </div>
-  );
+function Field({ label, id, hint, children }: { label: string; id: string; hint?: string; children: ReactNode }) {
+  return <div className="settings-field"><Label htmlFor={id}>{label}</Label>{children}{hint && <p className="settings-hint">{hint}</p>}</div>;
 }
