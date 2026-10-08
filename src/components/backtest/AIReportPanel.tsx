@@ -83,7 +83,7 @@ export default function AIReportPanel({ sessionId, hasTrades }: { sessionId: str
         <button 
           onClick={onGenerate} 
           disabled={!hasTrades || gen.isPending} 
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-[16px] transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 flex items-center gap-2 shrink-0"
+          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-[16px] transition-all shadow-[0_0_15px_hsl(var(--primary)/0.3)] disabled:opacity-50 flex items-center gap-2 shrink-0"
         >
           <Sparkles className="w-4 h-4" />
           {gen.isPending ? "Generating…" : report ? "Regenerate report" : "Generate report"}

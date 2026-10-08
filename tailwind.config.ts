@@ -38,6 +38,20 @@ export default {
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
+        // Existing blue utility classes are workspace accents, including profit text.
+        blue: {
+          50: "hsl(var(--primary) / <alpha-value>)",
+          100: "hsl(var(--primary) / <alpha-value>)",
+          200: "hsl(var(--primary) / <alpha-value>)",
+          300: "hsl(var(--primary) / <alpha-value>)",
+          400: "hsl(var(--primary) / <alpha-value>)",
+          500: "hsl(var(--primary) / <alpha-value>)",
+          600: "hsl(var(--primary) / <alpha-value>)",
+          700: "hsl(var(--primary) / <alpha-value>)",
+          800: "hsl(var(--primary) / <alpha-value>)",
+          900: "hsl(var(--primary) / <alpha-value>)",
+          950: "hsl(var(--primary) / <alpha-value>)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

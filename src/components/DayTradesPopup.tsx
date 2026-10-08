@@ -144,8 +144,8 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
                   </span>
                   <span
                     style={{
-                      background: isLong ? "rgba(59,130,246,.15)" : "rgba(239,68,68,.15)",
-                      color: isLong ? "#3B82F6" : "#EF4444",
+                      background: isLong ? "hsl(var(--primary)/.15)" : "rgba(239,68,68,.15)",
+                      color: isLong ? "hsl(var(--primary))" : "#EF4444",
                       borderRadius: 999,
                       padding: "4px 10px",
                       fontSize: 11,
@@ -160,7 +160,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
                 <span
                   className="text-num"
                   style={{
-                    color: positive ? "#3B82F6" : "#EF4444",
+                    color: positive ? "hsl(var(--primary))" : "#EF4444",
                     fontWeight: 700,
                     fontSize: 15,
                   }}

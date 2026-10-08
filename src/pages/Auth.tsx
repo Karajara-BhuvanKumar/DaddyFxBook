@@ -36,7 +36,7 @@ export default function AuthPage() {
             <img
               src="/daddyfxbook-logo.png"
               alt="DaddyFxBook Logo"
-              className="w-24 h-24 object-contain drop-shadow-[0_0_40px_rgba(59,130,246,0.3)]"
+              className="w-24 h-24 object-contain drop-shadow-[0_0_40px_hsl(var(--primary)/0.3)]"
             />
           </div>
           <h1 className="text-4xl font-extrabold text-foreground tracking-tight">

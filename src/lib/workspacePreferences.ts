@@ -29,7 +29,8 @@ export function resolvePreferences(settings?: Partial<WorkspacePreferences> | nu
 export function applyWorkspaceAppearance(preferences: WorkspacePreferences) {
   const root = document.documentElement;
   const accent = ACCENT_COLORS.find(color => color.id === preferences.accent_color) ?? ACCENT_COLORS[0];
-  for (const property of ["--primary", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.setProperty(property, accent.hsl);
+  for (const property of ["--primary", "--profit", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.setProperty(property, accent.hsl);
+  root.style.setProperty("--profit-color", `hsl(${accent.hsl})`);
   root.dataset.accent = accent.id;
   root.dataset.compact = String(preferences.compact_mode);
   // next-themes owns theme classes and OS theme changes. CSS owns density.

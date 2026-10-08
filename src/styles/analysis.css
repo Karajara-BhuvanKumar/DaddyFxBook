@@ -1,5 +1,5 @@
-.analysis-page { --an-surface: #101010; --an-text: #f6f6f7; --an-muted: #85858b; --an-line: #232323; --an-control: #1b1b1b; --an-blue: #2985f5; --an-red: #f2444b; display: flex; flex-direction: column; gap: 16px; min-width: 0; color: var(--an-text); font-size: 13px; }
-.light .analysis-page { --an-surface: #fff; --an-text: #17191d; --an-muted: #68707b; --an-line: #e5e7eb; --an-control: #f1f3f6; --an-blue: #216fd4; --an-red: #d12f3c; }
+.analysis-page { --an-surface: #101010; --an-text: #f6f6f7; --an-muted: #85858b; --an-line: #232323; --an-control: #1b1b1b; --an-blue: hsl(var(--primary)); --an-red: #f2444b; display: flex; flex-direction: column; gap: 16px; min-width: 0; color: var(--an-text); font-size: 13px; }
+.light .analysis-page { --an-surface: #fff; --an-text: #17191d; --an-muted: #68707b; --an-line: #e5e7eb; --an-control: #f1f3f6; --an-blue: hsl(var(--primary)); --an-red: #d12f3c; }
 .analysis-page * { min-width: 0; letter-spacing: 0; }
 .analysis-page .an-profit { color: var(--an-blue); }
 .analysis-page .an-loss { color: var(--an-red); }
@@ -19,7 +19,7 @@
 .an-segments { display: flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid var(--an-line); border-radius: 10px; background: var(--an-control); }
 .an-segments button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 12px; min-height: 32px; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--an-muted); white-space: nowrap; }
 .an-segments button > svg { width: 14px; height: 14px; }
-.an-segments button[aria-pressed="true"] { background: #006cff; color: #fff; box-shadow: 0 2px 9px #006cff30; }
+.an-segments button[aria-pressed="true"] { background: hsl(var(--primary)); color: #fff; box-shadow: 0 2px 9px hsl(var(--primary) / .19); }
 .an-surface { border: 1px solid var(--an-line); border-radius: 16px; background: var(--an-surface); overflow: hidden; }
 .an-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 20px; }
 .an-section-heading p { margin-top: 3px; }
@@ -122,7 +122,7 @@
 .an-session-name svg { width: 19px; height: 19px; }
 .an-session-name h3 { font-size: 15px; font-weight: 600; }
 .an-session-name p { font-size: 10px; margin-top: 2px; }
-.an-session-1 > span { background: #2985f518; color: var(--an-blue); }
+.an-session-1 > span { background: hsl(var(--primary) / .09); color: var(--an-blue); }
 .an-session-2 > span { background: #02988a18; color: #0eae9d; }
 .an-session-pnl { display: block; font-size: 25px; margin: 14px 0 10px; overflow-wrap: anywhere; }
 .an-session-meter { height: 4px; background: var(--an-control); border-radius: 4px; overflow: hidden; }

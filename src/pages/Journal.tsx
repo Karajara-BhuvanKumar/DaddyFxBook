@@ -301,7 +301,7 @@ export default function Journal() {
                   placeholder="What did you see? Plan, thesis, levels, risk..."
                   className={cn(
                     "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
-                    "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                    "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                   )} />
               </div>
 
@@ -314,7 +314,7 @@ export default function Journal() {
                   placeholder="What happened? Execution, slippage, improvements..."
                   className={cn(
                     "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
-                    "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                    "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                   )} />
               </div>
 
@@ -333,7 +333,7 @@ export default function Journal() {
                     placeholder="1"
                     className={cn(
                       "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
-                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                   <span className="text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
                   <input
@@ -342,7 +342,7 @@ export default function Journal() {
                     placeholder="2"
                     className={cn(
                       "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
-                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
               </div>
@@ -356,7 +356,7 @@ export default function Journal() {
                   <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
                     className={cn(
                       "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
-                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
                 <div>
@@ -366,7 +366,7 @@ export default function Journal() {
                   <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
                     className={cn(
                       "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
-                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
               </div>
@@ -380,7 +380,7 @@ export default function Journal() {
                   <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
                     className={cn(
                       "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
-                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
                 <div>
@@ -480,7 +480,7 @@ export default function Journal() {
                   <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
                     className={cn(
                       "flex-1 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
-                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                      "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                   <button type="submit" className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center text-white transition-colors",

@@ -163,13 +163,13 @@ Shared from DaddyFXBook
             <div className="flex items-center justify-between mb-4 relative z-10">
               <div>
                 <h3 className="font-bold text-lg text-white">{trade.symbol}</h3>
-                <span className={`text-[11px] font-bold px-2 py-1 rounded-lg inline-flex items-center gap-1 mt-1 ${trade.direction === 'Long' ? 'bg-[#0A1224] text-[#3B82F6]' : 'bg-[#240A0A] text-[#EF4444]'}`}>
+                <span className={`text-[11px] font-bold px-2 py-1 rounded-lg inline-flex items-center gap-1 mt-1 ${trade.direction === 'Long' ? 'bg-[#0A1224] text-[hsl(var(--primary))]' : 'bg-[#240A0A] text-[#EF4444]'}`}>
                   {trade.direction === 'Long' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                   {trade.direction}
                 </span>
               </div>
               <div className="text-right">
-                <p className={`font-black text-2xl ${isProfit ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
+                <p className={`font-black text-2xl ${isProfit ? 'text-[hsl(var(--primary))]' : 'text-[#EF4444]'}`}>
                   {isProfit ? '+' : '-'}${Math.abs(pnl).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider mt-1">Net Profit</p>
@@ -205,7 +205,7 @@ Shared from DaddyFXBook
 
           {/* Share Actions */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <button onClick={handleWebShare} className="sm:hidden col-span-2 touch-target flex items-center justify-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white p-3 rounded-xl font-bold text-sm transition-all">
+            <button onClick={handleWebShare} className="sm:hidden col-span-2 touch-target flex items-center justify-center gap-2 bg-[hsl(var(--primary))] hover:bg-blue-600 text-white p-3 rounded-xl font-bold text-sm transition-all">
               <Share2 className="w-4 h-4" /> Share...
             </button>
             <button onClick={handleCopyLink} className="touch-target flex flex-col items-center justify-center gap-2 bg-[#121212] hover:bg-white/[0.05] border border-white/[0.08] text-white p-3 min-h-[80px] rounded-xl font-semibold text-xs transition-all">

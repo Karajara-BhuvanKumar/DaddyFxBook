@@ -58,79 +58,105 @@ async function openSettings() {
   return { ...view, panel, hide: () => view.rerender(tree(false)) };
 }
 
-describe("Workspace preferences", () => {
-  it("previews appearance without saving and Cancel restores all saved choices", async () => {
-    const { panel } = await openSettings();
-    fireEvent.click(panel.getByRole("button", { name: "Light" }));
-    fireEvent.click(panel.getByRole("button", { name: "Purple accent" }));
-    fireEvent.click(panel.getByRole("switch", { name: "Compact layout" }));
-    expect(document.documentElement).toHaveClass("light");
-    expect(document.documentElement.dataset.accent).toBe("purple");
-    expect(document.documentElement.dataset.compact).toBe("true");
-    expect(document.documentElement.style.getPropertyValue("--primary")).toBe("262 83% 65%");
-    expect(backend.save).not.toHaveBeenCalled();
-    fireEvent.click(panel.getByRole("button", { name: "Cancel" }));
-    expect(document.documentElement).toHaveClass("dark");
-    expect(document.documentElement.dataset.accent).toBe("blue");
-    expect(document.documentElement.dataset.compact).toBe("false");
-    expect(panel.getByRole("button", { name: "Save changes" })).toBeDisabled();
-  });
 
-  it("saves the selected preferences and restores them after a fresh mount", async () => {
-    const { panel, unmount } = await openSettings();
-    fireEvent.click(panel.getByRole("button", { name: "Light" }));
-    fireEvent.click(panel.getByRole("button", { name: "Green accent" }));
-    fireEvent.click(panel.getByRole("switch", { name: "Compact layout" }));
-    fireEvent.change(panel.getByLabelText("Timezone"), { target: { value: "Asia/Kolkata" } });
-    fireEvent.change(panel.getByLabelText("Time format"), { target: { value: "12h" } });
-    fireEvent.change(panel.getByLabelText("Default currency"), { target: { value: "INR" } });
-    expect(screen.getByTestId("clock")).toHaveTextContent("Oct 9, 2026 05:00 AM");
-    expect(panel.getByLabelText("Account size (INR)")).toHaveValue(10000);
-    fireEvent.submit(panel.getByRole("button", { name: "Save changes" }).closest("form")!);
-    await waitFor(() => expect(panel.getByRole("button", { name: "Save changes" })).toBeDisabled());
-    expect(backend.save).toHaveBeenCalledWith({ theme: "light", accent_color: "green", compact_mode: true, timezone: "Asia/Kolkata", time_format: "12h", currency: "INR" });
+describe("Workspace preferences", () => {
+  it("automatically saves accent and keeps it when leaving Settings during the save", async () => {
+    let finish!: (result: { data: UserSettings; error: null }) => void;
+    backend.save.mockImplementationOnce(patch => new Promise(resolve => {
+      saved = { ...saved, ...patch }; finish = resolve;
+    }));
+    const { panel, hide, unmount } = await openSettings();
+    fireEvent.click(panel.getByRole("button", { name: "Purple accent" }));
+    await waitFor(() => expect(document.documentElement.dataset.accent).toBe("purple"));
+    expect(document.documentElement.style.getPropertyValue("--profit")).toBe("262 83% 65%");
+    expect(backend.save).toHaveBeenCalledWith({ accent_color: "purple" });
+    hide();
+    expect(document.documentElement.dataset.accent).toBe("purple");
+    await act(async () => finish({ data: saved, error: null }));
+    expect(document.documentElement.dataset.accent).toBe("purple");
     unmount();
     const next = await openSettings();
-    expect(document.documentElement).toHaveClass("light");
-    expect(document.documentElement.dataset.compact).toBe("true");
-    expect(document.documentElement.dataset.accent).toBe("green");
-    expect(next.panel.getByLabelText("Timezone")).toHaveValue("Asia/Kolkata");
-    expect(screen.getByTestId("clock")).toHaveTextContent("05:00 AM");
+    expect(next.panel.getByRole("button", { name: "Purple accent" })).toHaveAttribute("aria-pressed", "true");
+    expect(document.documentElement.dataset.accent).toBe("purple");
   });
 
-  it("retains edits after a save failure and allows retry", async () => {
+  it("saves theme and density on selection without requiring the footer Save button", async () => {
+    const { panel, hide } = await openSettings();
+    fireEvent.click(panel.getByRole("button", { name: "Light" }));
+    await waitFor(() => expect(panel.getByRole("switch", { name: "Compact layout" })).toBeEnabled());
+    expect(saved.theme).toBe("light");
+    fireEvent.click(panel.getByRole("switch", { name: "Compact layout" }));
+    await waitFor(() => expect(saved.compact_mode).toBe(true));
+    await waitFor(() => expect(panel.getByRole("switch", { name: "Compact layout" })).toBeEnabled());
+    expect(panel.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    hide();
+    expect(document.documentElement).toHaveClass("light");
+    expect(document.documentElement.dataset.compact).toBe("true");
+  });
+
+  it("rolls back a failed automatic save and allows selecting the accent again", async () => {
     backend.save.mockResolvedValueOnce({ data: null, error: new Error("Connection lost") });
     const { panel } = await openSettings();
     fireEvent.click(panel.getByRole("button", { name: "Gold accent" }));
-    const submit = () => fireEvent.submit(panel.getByRole("button", { name: "Save changes" }).closest("form")!);
-    submit();
     await waitFor(() => expect(backend.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "Failed to update settings" })));
-    expect(panel.getByRole("button", { name: "Gold accent" })).toHaveAttribute("aria-pressed", "true");
-    expect(panel.getByRole("button", { name: "Save changes" })).toBeEnabled();
-    expect(backend.toast).not.toHaveBeenCalledWith(expect.objectContaining({ title: "Changes saved" }));
-    submit();
-    await waitFor(() => expect(panel.getByRole("button", { name: "Save changes" })).toBeDisabled());
-    expect(saved.accent_color).toBe("gold");
+    await waitFor(() => expect(panel.getByRole("button", { name: "Gold accent" })).toBeEnabled());
+    expect(document.documentElement.dataset.accent).toBe("blue");
+    expect(saved.accent_color).toBe("blue");
+    fireEvent.click(panel.getByRole("button", { name: "Gold accent" }));
+    await waitFor(() => expect(saved.accent_color).toBe("gold"));
+    expect(document.documentElement.dataset.accent).toBe("gold");
   });
 
-  it("follows OS changes in System mode and discards previews when leaving Settings", async () => {
+  it("keeps Cancel and Save for region preferences without reverting a saved accent", async () => {
+    const { panel, unmount } = await openSettings();
+    fireEvent.click(panel.getByRole("button", { name: "Purple accent" }));
+    await waitFor(() => expect(panel.getByLabelText("Timezone")).toBeEnabled());
+    fireEvent.change(panel.getByLabelText("Timezone"), { target: { value: "Asia/Kolkata" } });
+    expect(screen.getByTestId("clock")).toHaveTextContent("Oct 9, 2026 05:00");
+    fireEvent.click(panel.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByTestId("clock")).toHaveTextContent("Oct 8, 2026 23:30");
+    expect(document.documentElement.dataset.accent).toBe("purple");
+    fireEvent.change(panel.getByLabelText("Timezone"), { target: { value: "Asia/Kolkata" } });
+    fireEvent.change(panel.getByLabelText("Time format"), { target: { value: "12h" } });
+    fireEvent.change(panel.getByLabelText("Default currency"), { target: { value: "INR" } });
+    fireEvent.submit(panel.getByRole("button", { name: "Save changes" }).closest("form")!);
+    await waitFor(() => expect(saved.time_format).toBe("12h"));
+    await waitFor(() => expect(panel.getByRole("button", { name: "Save changes" })).toBeDisabled());
+    unmount();
+    const next = await openSettings();
+    expect(next.panel.getByLabelText("Account size (INR)")).toHaveValue(10000);
+    expect(screen.getByTestId("clock")).toHaveTextContent("05:00 AM");
+    expect(document.documentElement.dataset.accent).toBe("purple");
+  });
+
+  it("preserves unsaved region edits after a failed manual save", async () => {
+    backend.save.mockResolvedValueOnce({ data: null, error: new Error("Connection lost") });
+    const { panel } = await openSettings();
+    fireEvent.change(panel.getByLabelText("Timezone"), { target: { value: "Asia/Kolkata" } });
+    fireEvent.submit(panel.getByRole("button", { name: "Save changes" }).closest("form")!);
+    await waitFor(() => expect(backend.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "Failed to update settings" })));
+    await waitFor(() => expect(panel.getByRole("button", { name: "Save changes" })).toBeEnabled());
+    expect(panel.getByLabelText("Timezone")).toHaveValue("Asia/Kolkata");
+    expect(saved.timezone).toBe("UTC");
+  });
+
+  it("follows OS changes in System mode and saves an explicit theme choice", async () => {
     saved.theme = "system";
     const { panel, hide } = await openSettings();
     expect(document.documentElement).toHaveClass("light");
     act(() => { systemDark = true; systemListeners.forEach(callback => callback({ matches: true })); });
     expect(document.documentElement).toHaveClass("dark");
     fireEvent.click(panel.getByRole("button", { name: "Light" }));
-    expect(document.documentElement).toHaveClass("light");
+    await waitFor(() => expect(saved.theme).toBe("light"));
     hide();
-    expect(document.documentElement).toHaveClass("dark");
-    expect(backend.save).not.toHaveBeenCalled();
+    expect(document.documentElement).toHaveClass("light");
   });
 
   it("persists header theme changes so other settings consumers cannot revert them", async () => {
     const { panel } = await openSettings();
     fireEvent.click(screen.getByRole("button", { name: "Switch to light theme" }));
-    await waitFor(() => expect(document.documentElement).toHaveClass("light"));
-    expect(saved.theme).toBe("light");
+    await waitFor(() => expect(saved.theme).toBe("light"));
+    expect(document.documentElement).toHaveClass("light");
     expect(panel.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
   });
 });

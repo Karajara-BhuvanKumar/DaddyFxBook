@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useIsMutating } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -55,6 +55,8 @@ export function useUserSettings() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const uid = user?.id ?? "";
+  const mutationKey = ["user_settings", uid];
+  const pendingUpdates = useIsMutating({ mutationKey });
 
 
   const { data: settings, isLoading, isError, refetch } = useQuery({
@@ -74,6 +76,15 @@ export function useUserSettings() {
   });
 
   const updateMutation = useMutation({
+    mutationKey,
+    onMutate: async (patch: Partial<UserSettings>) => {
+      await qc.cancelQueries({ queryKey: ["user_settings", uid] });
+      const previous = qc.getQueryData<UserSettings>(["user_settings", uid]);
+      // Appearance is saved on selection and must survive navigation while saving.
+      const appearance = Object.fromEntries(Object.entries(patch).filter(([key]) => ["theme", "accent_color", "compact_mode"].includes(key)));
+      if (previous && Object.keys(appearance).length) qc.setQueryData(["user_settings", uid], { ...previous, ...appearance });
+      return { previous, optimistic: Object.keys(appearance).length > 0 };
+    },
     mutationFn: async (patch: Partial<UserSettings>) => {
       if (!uid) throw new Error("Please sign in again.");
       const { data, error } = await supabase.from("user_settings").update(patch).eq("user_id", uid).select("*").single();
@@ -83,7 +94,10 @@ export function useUserSettings() {
     onSuccess: (saved) => {
       qc.setQueryData(["user_settings", uid], saved);
     },
-    onError: (e: Error) => toast({ title: "Failed to update settings", description: e.message, variant: "destructive" }),
+    onError: (e: Error, _patch, context) => {
+      if (context?.optimistic && context.previous) qc.setQueryData(["user_settings", uid], context.previous);
+      toast({ title: "Failed to update settings", description: e.message, variant: "destructive" });
+    },
   });
 
   const uploadAvatar = async (file: File) => {
@@ -114,7 +128,7 @@ export function useUserSettings() {
     refetch,
     updateSettings: updateMutation.mutate,
     updateSettingsAsync: updateMutation.mutateAsync,
-    isUpdating: updateMutation.isPending,
+    isUpdating: pendingUpdates > 0 || updateMutation.isPending,
     uploadAvatar,
   };
 }

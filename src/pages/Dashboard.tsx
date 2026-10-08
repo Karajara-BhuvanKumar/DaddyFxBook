@@ -196,19 +196,19 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 12, right: 3, left: 0, bottom: 8 }}>
                 <defs>
-                  <linearGradient id="dashboardLine" x1="0" y1="0" x2="0" y2="1"><stop offset={gradientOffset} stopColor="#2985f5" /><stop offset={gradientOffset} stopColor="#f2444b" /></linearGradient>
-                  <linearGradient id="dashboardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2985f5" stopOpacity={0.32} /><stop offset={gradientOffset} stopColor="#2985f5" stopOpacity={0.015} /><stop offset={gradientOffset} stopColor="#f2444b" stopOpacity={0.015} /><stop offset="1" stopColor="#f2444b" stopOpacity={dataMin < 0 ? 0.3 : 0.015} /></linearGradient>
+                  <linearGradient id="dashboardLine" x1="0" y1="0" x2="0" y2="1"><stop offset={gradientOffset} stopColor="hsl(var(--primary))" /><stop offset={gradientOffset} stopColor="#f2444b" /></linearGradient>
+                  <linearGradient id="dashboardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="hsl(var(--primary))" stopOpacity={0.32} /><stop offset={gradientOffset} stopColor="hsl(var(--primary))" stopOpacity={0.015} /><stop offset={gradientOffset} stopColor="#f2444b" stopOpacity={0.015} /><stop offset="1" stopColor="#f2444b" stopOpacity={dataMin < 0 ? 0.3 : 0.015} /></linearGradient>
                 </defs>
                 <CartesianGrid stroke="var(--chart-grid)" vertical horizontal />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-muted)", fontSize: 12 }} minTickGap={40} tickMargin={14} interval="preserveStartEnd" />
-                <YAxis orientation="right" domain={[dataMin < 0 ? "auto" : 0, "auto"]} axisLine={false} tickLine={false} tick={{ fill: "#2985f5", fontSize: 12 }} width={55} tickMargin={10} tickCount={6} tickFormatter={(value: number) => compactMoney(value, false)} />
+                <YAxis orientation="right" domain={[dataMin < 0 ? "auto" : 0, "auto"]} axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--primary))", fontSize: 12 }} width={55} tickMargin={10} tickCount={6} tickFormatter={(value: number) => compactMoney(value, false)} />
                 <ReferenceLine y={0} stroke="var(--dashboard-line)" strokeDasharray="5 7" />
-                <Tooltip cursor={{ stroke: "#2985f5", strokeOpacity: 0.35, strokeDasharray: "4 4" }} content={({ active, payload }) => {
+                <Tooltip cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.35, strokeDasharray: "4 4" }} content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const point = payload[0].payload as { fullDate: string; cumulative: number };
                   return <div className="performance-tooltip"><p>{point.fullDate}</p><strong className={pnlTone(point.cumulative)}>{money(point.cumulative)}</strong><span>Cumulative P&L</span></div>;
                 }} />
-                <Area type="monotone" dataKey="cumulative" stroke="url(#dashboardLine)" fill="url(#dashboardFill)" strokeWidth={2.4} dot={false} activeDot={{ r: 5, fill: "#2985f5", stroke: "#d7e9ff", strokeWidth: 2 }} isAnimationActive={false} />
+                <Area type="monotone" dataKey="cumulative" stroke="url(#dashboardLine)" fill="url(#dashboardFill)" strokeWidth={2.4} dot={false} activeDot={{ r: 5, fill: "hsl(var(--primary))", stroke: "hsl(var(--background))", strokeWidth: 2 }} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div> : <div className="dashboard-empty"><ChartNoAxesCombined size={38} /><h3>Your performance starts here</h3><p>Add a trade to see your progress over time.</p><Link to="/trades?add=true">Add your first trade <ArrowRight size={16} /></Link></div>}

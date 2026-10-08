@@ -20,10 +20,10 @@ const HERO_CONFIG = {
   fade: "linear-gradient(to bottom, transparent 0%, transparent 22%, rgba(5,5,5,0.55) 40%, #050505 62%)",
   animationClass: "glow-backdrop-enter",
   circles: [
-    { w: "clamp(260px, 65vw, 400px)", h: "clamp(260px, 65vw, 400px)", top: "-15%", left: "-8%",  right: undefined, bg: "#3b82f6", opacity: 0.6  },
-    { w: "clamp(200px, 50vw, 340px)", h: "clamp(200px, 50vw, 340px)", top: "8%",   left: "28%",  right: undefined, bg: "#1e3a8a", opacity: 0.7  },
-    { w: "clamp(160px, 38vw, 240px)", h: "clamp(160px, 38vw, 240px)", top: "-8%",  left: undefined, right: "-2%",  bg: "#3b82f6", opacity: 0.35 },
-    { w: "clamp(90px, 22vw, 150px)",  h: "clamp(90px, 22vw, 150px)",  top: "20%",  left: "18%",  right: undefined, bg: "#60a5fa", opacity: 0.5  },
+    { w: "clamp(260px, 65vw, 400px)", h: "clamp(260px, 65vw, 400px)", top: "-15%", left: "-8%",  right: undefined, bg: "hsl(var(--primary))", opacity: 0.6  },
+    { w: "clamp(200px, 50vw, 340px)", h: "clamp(200px, 50vw, 340px)", top: "8%",   left: "28%",  right: undefined, bg: "hsl(var(--primary))", opacity: 0.7  },
+    { w: "clamp(160px, 38vw, 240px)", h: "clamp(160px, 38vw, 240px)", top: "-8%",  left: undefined, right: "-2%",  bg: "hsl(var(--primary))", opacity: 0.35 },
+    { w: "clamp(90px, 22vw, 150px)",  h: "clamp(90px, 22vw, 150px)",  top: "20%",  left: "18%",  right: undefined, bg: "hsl(var(--primary))", opacity: 0.5  },
   ],
 } as const;
 

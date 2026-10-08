@@ -18,7 +18,7 @@ export function WorkspacePreferencesProvider({ saved, children }: { saved?: Part
   }, [saved?.theme, preview?.theme, preferences.theme, setTheme]);
   useEffect(() => () => {
     const root = document.documentElement;
-    for (const property of ["--primary", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.removeProperty(property);
+    for (const property of ["--primary", "--profit", "--profit-color", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.removeProperty(property);
     delete root.dataset.compact;
     delete root.dataset.accent;
   }, []);

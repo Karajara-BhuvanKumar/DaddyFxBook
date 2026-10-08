@@ -30,8 +30,8 @@ function classColor(c: string) {
 }
 
 function scoreColor(score: number) {
-  if (score >= 85) return "#3B82F6"; // blue-500
-  if (score >= 70) return "#60A5FA"; // blue-400
+  if (score >= 85) return "hsl(var(--primary))"; // blue-500
+  if (score >= 70) return "hsl(var(--primary))"; // blue-400
   if (score >= 50) return "#F59E0B"; // amber-500
   return "#EF4444"; // red-500
 }
@@ -132,7 +132,7 @@ export function ScorecardTab() {
           <button 
             onClick={onGenerate} 
             disabled={generate.isPending || trades.length === 0} 
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_hsl(var(--primary)/0.3)] disabled:opacity-50 flex items-center gap-2"
           >
             {generate.isPending ? <><RefreshCw className="w-4 h-4 animate-spin" /> Scoring...</> : <><Sparkles className="w-4 h-4" /> {latest ? "Re-score with AI" : "Score with AI"}</>}
           </button>
@@ -301,7 +301,7 @@ function HistoryChart({ history }: { history: ScorecardRecord[] }) {
             <XAxis dataKey="date" stroke="#A1A1AA" fontSize={11} tickLine={false} axisLine={false} />
             <YAxis domain={[0, 100]} stroke="#A1A1AA" fontSize={11} tickLine={false} axisLine={false} />
             <Tooltip contentStyle={{ background: "#121212", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} itemStyle={{ color: "#fff" }} />
-            <Line type="monotone" dataKey="Overall" stroke="#3B82F6" strokeWidth={3} dot={false} />
+            <Line type="monotone" dataKey="Overall" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} />
             <Line type="monotone" dataKey="Discipline" stroke="#10B981" strokeWidth={1.5} dot={false} opacity={0.5} />
             <Line type="monotone" dataKey="Risk" stroke="#F59E0B" strokeWidth={1.5} dot={false} opacity={0.5} />
             <Line type="monotone" dataKey="Execution" stroke="#EF4444" strokeWidth={1.5} dot={false} opacity={0.5} />

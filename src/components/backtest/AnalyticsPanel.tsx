@@ -59,7 +59,7 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
       </div>
     );
   }
-  const distColors = ["#3B82F6", "#EF4444", "#71717A"];
+  const distColors = ["hsl(var(--primary))", "#EF4444", "#71717A"];
 
   return (
     <div className="space-y-4">
@@ -89,8 +89,8 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
             <AreaChart data={a.equityCurve}>
               <defs>
                 <linearGradient id="eqg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
@@ -106,7 +106,7 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
                 }}
                 itemStyle={{ color: "#fff" }}
               />
-              <Area type="monotone" dataKey="equity" stroke="#3B82F6" fill="url(#eqg)" strokeWidth={3} />
+              <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" fill="url(#eqg)" strokeWidth={3} />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
@@ -175,7 +175,7 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
                 }}
                 itemStyle={{ color: "#fff" }}
               />
-              <Line type="monotone" dataKey="r" stroke="#3B82F6" dot={false} strokeWidth={3} />
+              <Line type="monotone" dataKey="r" stroke="hsl(var(--primary))" dot={false} strokeWidth={3} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

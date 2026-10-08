@@ -1,4 +1,4 @@
-.pc-page { --pc-blue: #3b82f6; --pc-green: #34b991; --pc-amber: #d8a653; --pc-red: #ed7575; max-width: 1420px; margin: 0 auto; color: hsl(var(--foreground)); padding-bottom: 12px; }
+.pc-page { --pc-blue: hsl(var(--primary)); --pc-green: #34b991; --pc-amber: #d8a653; --pc-red: #ed7575; max-width: 1420px; margin: 0 auto; color: hsl(var(--foreground)); padding-bottom: 12px; }
 .pc-page *, .pc-dialog * { min-width: 0; }
 .pc-page button, .pc-dialog button { gap: 7px; }
 .pc-page button:not([role=checkbox]), .pc-dialog button { border-radius: 9px; }

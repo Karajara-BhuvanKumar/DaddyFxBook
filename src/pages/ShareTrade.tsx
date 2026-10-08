@@ -44,7 +44,7 @@ export default function ShareTrade() {
     <div className="min-h-screen bg-[#050505] flex flex-col">
       <header className="border-b border-white/[0.05] bg-[#0A0A0A] p-4 flex items-center justify-between">
         <div className="font-black text-xl text-white tracking-tight">DADDYFXBOOK</div>
-        <Link to="/" className="bg-[#3B82F6] hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+        <Link to="/" className="bg-[hsl(var(--primary))] hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
           Open App <ExternalLink className="w-4 h-4" />
         </Link>
       </header>
@@ -61,13 +61,13 @@ export default function ShareTrade() {
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
                 <h3 className="font-bold text-2xl text-white">{trade.symbol}</h3>
-                <span className={`text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 mt-2 ${trade.direction === 'Long' ? 'bg-[#0A1224] text-[#3B82F6]' : 'bg-[#240A0A] text-[#EF4444]'}`}>
+                <span className={`text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 mt-2 ${trade.direction === 'Long' ? 'bg-[#0A1224] text-[hsl(var(--primary))]' : 'bg-[#240A0A] text-[#EF4444]'}`}>
                   {trade.direction === 'Long' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                   {trade.direction}
                 </span>
               </div>
               <div className="text-right">
-                <p className={`font-black text-3xl ${isProfit ? 'text-[#3B82F6]' : 'text-[#EF4444]'}`}>
+                <p className={`font-black text-3xl ${isProfit ? 'text-[hsl(var(--primary))]' : 'text-[#EF4444]'}`}>
                   {isProfit ? '+' : '-'}${Math.abs(pnl).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-xs font-bold text-[#71717A] uppercase tracking-wider mt-1.5">Net Profit</p>

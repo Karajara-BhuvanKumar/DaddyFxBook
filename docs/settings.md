@@ -1,10 +1,10 @@
 # Account settings
 
-The settings page has three sections: Profile, Preferences, and Security. Profile and preference edits are saved together with Save changes; Cancel restores saved values. Photo changes are saved immediately. Exports include all accessible records, paginated in batches of 1,000.
+The settings page has three sections: Profile, Preferences, and Security. Theme, accent, compact layout, and photo changes save immediately. Profile, region, and trading-default edits use Save changes; Cancel restores those unsaved values. Exports include all accessible records, paginated in batches of 1,000.
 
-Workspace preferences preview immediately. A single workspace provider applies saved settings and temporary previews, so other settings consumers cannot overwrite the selected appearance. Cancel or leaving Settings discards the preview; failed saves retain the draft for retry. System appearance follows OS theme changes, and the header theme toggle persists its choice through the same settings mutation.
+Appearance selections update the shared settings cache immediately and save automatically, including when navigating away during a save. Failed automatic saves restore the previous appearance and show an error. Region preferences still preview until Save or Cancel; failed manual saves retain the draft for retry. System appearance follows OS theme changes, and the header theme toggle persists its choice through the same settings mutation.
 
-Accent colors apply to shared buttons, focus indicators, and shell highlights. Compact mode adjusts shell, settings, and dashboard spacing, retaining mobile input touch sizes. The region controls configure the header date and clock; trading timestamps, analysis session definitions, and the dedicated market clock keep their existing behavior. Default currency labels the account-size default; it does not convert recorded trading amounts.
+Accent colors apply to profit numbers, calendar profit cells, chart lines and fills, shared buttons, focus indicators, and shell highlights. Existing blue Tailwind utilities use the selected primary color. Loss styling stays red. Compact mode adjusts shell, settings, and dashboard spacing, retaining mobile input touch sizes. The region controls configure the header date and clock; trading timestamps, analysis session definitions, and the dedicated market clock keep their existing behavior. Default currency labels the account-size default; it does not convert recorded trading amounts.
 
 ## Deployment configuration
 
@@ -18,7 +18,7 @@ Use the existing Supabase project and tables. No database migration is required.
 
 ## Verification
 
-Workspace preference repair: the 5 new integration tests exercise preview/cancel, save/remount, failed-save retry, OS theme changes, and header-toggle persistence using mocked database responses with the real settings hook. Desktop, tablet, and phone browser checks use an isolated local fixture, without accessing a real account. Live settings persistence still requires validation against the configured Supabase project.
+Workspace preference repair: 7 integration tests exercise automatic appearance saving, navigation during an outstanding save, save/remount, rollback on failure, manual region Save/Cancel, OS theme changes, and header-toggle persistence using mocked database responses with the real settings hook. The production build and all 155 tests pass. Browser checks confirm purple Dashboard profits, calendar cells, chart gradients, and Trades profits, including after a reload. Desktop, tablet, and phone browser checks use an isolated local fixture, without accessing a real account. Live settings persistence still requires validation against the configured Supabase project.
 
 The production build, existing 99 tests, and 5 added password-control tests passed. Browser checks used mocked Supabase responses at 320, 390, 768, and 1440 pixels. They covered profile save/reload/cancel/error recovery, image type and size rejection, photo upload/removal, theme and timezone saving, password validation/error/success, reset requests, the recovery page, sign-out confirmation cancellation, and CSV export.
 
