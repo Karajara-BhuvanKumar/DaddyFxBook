@@ -78,7 +78,9 @@
 .pnl-day { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 6px 8px 7px; text-align: left; position: relative; transition: border-color .15s, background .15s; }
 .pnl-day:hover { border-color: #46464c; background: #18181a; }
 .pnl-day-number { font-size: 12px; line-height: 16px; color: #707075; }
-.pnl-day strong { align-self: center; font-size: clamp(10px, .8vw, 14px); font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pnl-day strong { align-self: center; font-size: clamp(10px, .8vw, 14px); font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: clip; }
+.calendar-pnl-value { position: relative; }
+.calendar-pnl-measure { position: absolute; visibility: hidden; pointer-events: none; width: max-content; white-space: nowrap; }
 .pnl-day.today .pnl-day-number { color: #2985f5; }
 .pnl-day.today::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: #2985f5; position: absolute; top: 10px; right: 7px; }
 .pnl-day.profit-day, .pnl-week-total.profit-day { background: #0b141d; border-color: #17334f; color: #2985f5; }
@@ -88,7 +90,7 @@
 .pnl-day.flat-day { color: #a5a5aa; }
 .pnl-week-total { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #626266; text-align: center; padding: 3px; background: #0d0d0e; }
 .pnl-week-total > span { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; line-height: 12px; }
-.pnl-week-total > strong { font-size: 12px; font-weight: 700; line-height: 16px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pnl-week-total > strong { font-size: 12px; font-weight: 700; line-height: 16px; max-width: 100%; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .pnl-week-total > small { font-size: 9px; opacity: .65; line-height: 12px; white-space: nowrap; }
 .calendar-legend { display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 12px; color: var(--dashboard-muted); margin-top: 13px; }
 .calendar-legend span { display: flex; gap: 7px; align-items: center; }

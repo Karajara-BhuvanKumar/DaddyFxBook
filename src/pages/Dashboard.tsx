@@ -4,6 +4,7 @@ import { useTrades, type Trade } from "@/hooks/useTrades";
 import { Activity, ArrowRight, Banknote, ChartNoAxesCombined, ChevronLeft, ChevronRight, ChevronsUp, LayoutDashboard, SlidersHorizontal, Trophy, Wallet } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { DayTradesPopup } from "@/components/DayTradesPopup";
+import { CalendarPnlValue } from "@/components/CalendarPnlValue";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import "@/styles/dashboard.css";
@@ -229,10 +230,10 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
                   const { day, key, data } = entry;
                   const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                   return <button key={column} className={cn("pnl-day", data && (data.pnl < 0 ? "loss-day" : data.pnl > 0 ? "profit-day" : "flat-day"), today && "today")} aria-label={`${monthLabel} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}`} aria-current={today ? "date" : undefined} onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
-                    <span className="pnl-day-number">{day}</span>{data && <strong title={money(data.pnl)}>{compactMoney(data.pnl)}</strong>}
+                    <span className="pnl-day-number">{day}</span>{data && <CalendarPnlValue title={money(data.pnl)} formatted={compactMoney(data.pnl)} />}
                   </button>;
                 })}
-                {showWeekly && <div className={cn("pnl-week-total", week.count > 0 && (week.pnl < 0 ? "loss-day" : week.pnl > 0 ? "profit-day" : "flat-day"))} title={`Week ${weekIndex + 1}: ${money(week.pnl)}, ${week.count} trades`}><span>Weekly</span><strong>{compactMoney(week.pnl)}</strong><small>{week.count} trade{week.count !== 1 ? "s" : ""}</small></div>}
+                {showWeekly && <div className={cn("pnl-week-total", week.count > 0 && (week.pnl < 0 ? "loss-day" : week.pnl > 0 ? "profit-day" : "flat-day"))} title={`Week ${weekIndex + 1}: ${money(week.pnl)}, ${week.count} trades`}><span>Weekly</span><CalendarPnlValue formatted={compactMoney(week.pnl)} /><small>{week.count} trade{week.count !== 1 ? "s" : ""}</small></div>}
               </div>)}
             </div>
           </div>
