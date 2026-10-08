@@ -129,6 +129,7 @@
 .an-session-meter i { display: block; height: 100%; background: var(--an-blue); }
 .an-session-grid dl { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 16px; }
 .an-session-grid dd { margin-top: 4px; font-size: 13px; font-weight: 600; }
+.an-session-unassigned { border-top: 1px solid var(--an-line); padding: 12px 20px; }
 .an-period-badge { padding: 5px 11px; border-radius: 20px; border: 1px solid color-mix(in srgb, var(--an-blue) 30%, transparent); background: color-mix(in srgb, var(--an-blue) 6%, transparent); font-size: 10px; font-weight: 600; color: var(--an-blue); text-transform: uppercase; white-space: nowrap; }
 .an-setup-columns, .an-setup-row { display: grid; grid-template-columns: minmax(0, 1fr) 70px 110px 135px; align-items: center; gap: 24px; padding: 14px 20px; }
 .an-setup-columns { border-top: 1px solid var(--an-line); border-bottom: 1px solid var(--an-line); background: color-mix(in srgb, var(--an-control) 40%, transparent); color: var(--an-muted); font-size: 10px; text-transform: uppercase; }

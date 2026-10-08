@@ -100,6 +100,16 @@ function streaks(values: number[]) {
   return { winStreak, lossStreak };
 }
 
+function journalSession(journal?: Journal): 'Asian' | 'London' | 'New York' | null {
+  const value = parseStrategySetup(journal?.strategy_setup).market_session;
+  if (typeof value !== 'string') return null;
+  const name = value.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^off session /, '');
+  if (['asian', 'sydney', 'tokyo'].includes(name)) return 'Asian';
+  if (name === 'london') return 'London';
+  if (name === 'new york') return 'New York';
+  return null;
+}
+
 export function analyzeTrades(trades: Trade[], journals: Journal[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
   const { includedClosedTrades, rejected } = includedTrades(trades, period, outcome, now);
   const core = metrics(includedClosedTrades);
@@ -110,6 +120,8 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
   const monthly: Record<string, number> = {};
   const dayPerf = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({ day, pnl: 0, count: 0 }));
   const sessionPerf = ['Asian', 'London', 'New York'].map(name => ({ name, pnl: 0, count: 0, wins: 0, losses: 0 }));
+  const unassignedSession = { pnl: 0, count: 0, wins: 0, losses: 0 };
+  const journalMap = new Map(journals.map(j => [j.trade_id, j]));
   const symbolGroups: Record<string, { pnl: number; count: number; wins: number; losses: number }> = {};
   let cumulative = 0, peak = 0, maxDD = 0;
   const chartData: { date: string; cumulative: number; drawdown: number }[] = includedClosedTrades.length ? [{ date: 'Start', cumulative: 0, drawdown: 0 }] : [];
@@ -120,8 +132,9 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
     monthly[month] = sum([monthly[month] ?? 0, t.pnl]);
     const weekday = dayPerf[(date.getUTCDay() + 6) % 7];
     weekday.pnl = sum([weekday.pnl, t.pnl]); weekday.count++;
-    // The displayed fixed UTC sessions describe entry-time windows, not journal tags.
-    const session = sessionPerf.find(s => s.name === utcSession(new Date(t.open_time)).name)!;
+    // Only the saved journal assigns performance to a session. Never infer it from time
+    // or a possibly stale trade.session value when a journal session is missing.
+    const session = sessionPerf.find(s => s.name === journalSession(journalMap.get(t.id))) ?? unassignedSession;
     const symbol = symbolGroups[t.symbol] ??= { pnl: 0, count: 0, wins: 0, losses: 0 };
     for (const group of [session, symbol]) {
       group.pnl = sum([group.pnl, t.pnl]); group.count++;
@@ -137,7 +150,6 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
   const dayStreaks = streaks(dailyPnl.map(([, v]) => v));
   const months = Object.entries(monthly).sort((a, b) => b[1] - a[1]);
   const monthValue = (value?: [string, number]) => value ? { label: new Date(value[0] + '-01T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }), value: value[1] } : { label: '—', value: 0 };
-  const journalMap = new Map(journals.map(j => [j.trade_id, j]));
   const setupMap = new Map<string, { trades: Trade[]; children: Map<string, Trade[]> }>();
   for (const trade of includedClosedTrades) {
     const journal = journalMap.get(trade.id);
@@ -159,7 +171,7 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
   return { ...core, ...streaks(includedClosedTrades.map(t => t.pnl)), includedClosedTrades, rejected,
     avgHoldAll: hold(includedClosedTrades), avgHoldWinners: hold(core.winners), avgHoldLosers: hold(core.losers),
     longTrades, shortTrades, longPnl: long.totalPnl, shortPnl: short.totalPnl, longWinRate: long.winRate, shortWinRate: short.winRate,
-    calendarData, dailyPnl, dayPerf, sessionPerf, chartData, setupRows,
+    calendarData, dailyPnl, dayPerf, sessionPerf, unassignedSession, chartData, setupRows,
     symbols: Object.entries(symbolGroups).sort(([, a], [, b]) => b.pnl - a.pnl).slice(0, 3),
     winningDays: winningDays.length, losingDays: losingDays.length,
     winDayStreak: dayStreaks.winStreak, lossDayStreak: dayStreaks.lossStreak,

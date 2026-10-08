@@ -51,7 +51,7 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
     winRate, profitFactor, expectancy, avgWin, avgLoss, bestTrade, worstTrade, winStreak, lossStreak,
     avgHoldAll, avgHoldWinners, avgHoldLosers, longTrades, shortTrades, longPnl, shortPnl, longWinRate, shortWinRate,
     dailyPnl, winningDays, losingDays, avgDailyPnl, avgDailyVolume, largestProfitableDay, largestLosingDay, avgWinningDayPnl,
-    avgLosingDayPnl, winDayStreak, lossDayStreak, maxDD, dayPerf, sessionPerf, calendarData,
+    avgLosingDayPnl, winDayStreak, lossDayStreak, maxDD, dayPerf, sessionPerf, unassignedSession, calendarData,
     bestMonthStr, worstMonthStr, avgMonthPnl, chartData, setupRows, symbols } = analysis;
   const winCount = winners.length, lossCount = losers.length, totalCount = winCount + lossCount;
   const breakEvenCount = filteredTrades.length - totalCount;
@@ -226,12 +226,13 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
         <div className="an-session-grid">{sessionPerf.map((session, index) => {
           const Icon = [Sunrise, Landmark, Building2][index];
           const sessionRate = session.wins + session.losses ? session.wins / (session.wins + session.losses) * 100 : 0;
-          return <div key={session.name}><div className={`an-session-name an-session-${index}`}><span><Icon /></span><div><h3>{session.name}</h3><p>{["03:30 – 14:30 IST · Sydney + Tokyo", "13:30 – 22:30 IST", "18:30 – 03:30 IST · next day"][index]}</p><p className="an-session-entry-window">Entry group · {["03:30 – 13:30", "13:30 – 18:30", "18:30 – 03:30"][index]} IST</p></div></div>
+          return <div key={session.name}><div className={`an-session-name an-session-${index}`}><span><Icon /></span><div><h3>{session.name}</h3><p>{["03:30 – 14:30 IST · Sydney + Tokyo", "13:30 – 22:30 IST", "18:30 – 03:30 IST · next day"][index]}</p></div></div>
             <strong className={cn("an-session-pnl", tone(session.pnl))}>{money(session.pnl)}</strong>
             <div className="an-session-meter" aria-hidden="true"><i className={session.pnl < 0 ? "an-loss-fill" : ""} style={{ width: `${Math.abs(session.pnl) / Math.max(...sessionPerf.map(s => Math.abs(s.pnl)), 1) * 100}%` }} /></div>
             <dl>{[{ label: "Trades", value: session.count }, { label: "Win Rate", value: `${sessionRate.toFixed(1)}%`, color: sessionRate ? "an-profit" : "" }, { label: "Avg Trade", value: money(session.count ? session.pnl / session.count : 0), color: tone(session.pnl) }, { label: "Trade Share", value: `${filteredTrades.length ? Math.round(session.count / filteredTrades.length * 100) : 0}%` }].map(stat => <div key={stat.label}><dt className="an-label">{stat.label}</dt><dd className={stat.color}>{stat.value}</dd></div>)}</dl>
           </div>;
         })}</div>
+        {unassignedSession.count > 0 && <p className="an-session-unassigned">{unassignedSession.count} trade{unassignedSession.count === 1 ? '' : 's'} ({money(unassignedSession.pnl)}) {unassignedSession.count === 1 ? 'has' : 'have'} no recognized journal session and {unassignedSession.count === 1 ? 'is' : 'are'} excluded from these cards. Trade Share is based on all trades in the current filter.</p>}
       </section>
 
       <section className="an-surface an-setups" aria-label="Performance by Setup">

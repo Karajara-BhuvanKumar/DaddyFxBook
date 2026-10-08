@@ -45,6 +45,6 @@ export const AnalysisSessionTimeline = memo(function AnalysisSessionTimeline() {
         })}
       </div>
     </div>
-    <div className="an-clock-note"><span>Aligned lanes show session overlaps. New York continues across midnight.</span><span>Performance cards group each trade once by entry time.</span></div>
+    <div className="an-clock-note"><span>Aligned lanes show session overlaps. New York continues across midnight.</span><span>Performance uses your saved journal’s Market Session, including off-session entries under their named session.</span></div>
   </div>;
 });

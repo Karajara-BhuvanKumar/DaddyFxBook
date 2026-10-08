@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeTrades, includedTrades, metrics, sum, utcSession } from '@/lib/analysisStats';
-import type { Trade } from '@/hooks/useTrades';
+import type { Trade, Journal } from '@/hooks/useTrades';
 
 const now = Date.parse('2026-10-05T15:00:00Z');
 const make = (pnl: number, index = 0): Trade => ({ id: `t${String(index).padStart(5, '0')}`, user_id: 'test', symbol: 'XAUUSD', direction: 'Long', entry_price: 100, exit_price: 101, lot_size: 0.1, stop_loss: null, take_profit: null, pnl, open_time: '2026-10-01T08:00:00Z', close_time: `2026-10-01T09:${String(index % 60).padStart(2, '0')}:00Z`, session: null, source: 'test', created_at: '', updated_at: '' });
@@ -19,9 +19,9 @@ describe('analysis accounting', () => {
     expect(m.profitFactor.toFixed(2)).toBe('1.73');
     expect(m.expectancy).toBeCloseTo(13.072, 12); expect(m.expectancy.toFixed(2)).toBe('13.07');
     expect(m.chartData[m.chartData.length - 1].cumulative).toBe(m.totalPnl);
-    expect(sum(m.sessionPerf.map(s => s.pnl))).toBe(m.totalPnl);
+    expect(sum([...m.sessionPerf.map(s => s.pnl), m.unassignedSession.pnl])).toBe(m.totalPnl);
     expect(sum(m.dailyPnl.map(([, pnl]) => pnl))).toBe(m.totalPnl);
-    expect(m.sessionPerf.reduce((n, s) => n + s.count, 0)).toBe(25);
+    expect(m.sessionPerf.reduce((n, s) => n + s.count, m.unassignedSession.count)).toBe(25);
   });
   it.each([[], [10, 20], [-10, -20], [0, -0], [100, -40, 0]].map(values => ({ values })))('handles empty, one-sided and break-even results: $values', ({ values }) => {
     const m = analyze(values.map(make));
@@ -83,6 +83,50 @@ describe('analysis accounting', () => {
     const future = { ...make(1, 3), close_time: '2026-10-05T18:16:00Z' };
     expect(includedTrades([before, boundary, future], '30 Days', 'All Trades', now).includedClosedTrades.map(t => t.id)).toEqual(['boundary']);
     expect(includedTrades([future], 'All Time', 'All Trades', now).includedClosedTrades).toHaveLength(0);
+  });
+});
+
+describe('journal-based session performance', () => {
+  const entry = (trade: Trade, session: unknown): Journal => ({ id: `journal-${trade.id}`, trade_id: trade.id, user_id: trade.user_id,
+    pre_trade_notes: null, post_trade_notes: null, emotions: null, lessons: null, tags: null, rating: null, risk_reward: null,
+    strategy_setup: JSON.stringify({ market_session: session }), created_at: '', updated_at: '' });
+  it('uses the journal selection even when the timestamp and trade session disagree', () => {
+    const trades = [make(100, 0), make(-40, 1), make(20, 2)].map(t => ({ ...t, session: 'London' }));
+    const journals = trades.map((t, i) => entry(t, ['New York', 'New York', 'Asian'][i]));
+    const result = analyzeTrades(trades, journals, '30 Days', 'All Trades', now);
+    expect(result.sessionPerf).toEqual([
+      { name: 'Asian', pnl: 20, count: 1, wins: 1, losses: 0 },
+      { name: 'London', pnl: 0, count: 0, wins: 0, losses: 0 },
+      { name: 'New York', pnl: 60, count: 2, wins: 1, losses: 1 },
+    ]);
+    expect(result.unassignedSession.count).toBe(0);
+    const winners = analyzeTrades(trades, journals, '30 Days', 'Winners', now);
+    expect(winners.sessionPerf[2]).toMatchObject({ pnl: 100, count: 1, wins: 1, losses: 0 });
+    expect(analyzeTrades(trades, journals, 'Today', 'All Trades', now).sessionPerf.every(s => s.count === 0)).toBe(true);
+  });
+  it('includes all six journal session choices in their named group exactly once', () => {
+    const names = ['Asian', 'Off Session Asian', 'London', 'Off Session London', 'New York', 'Off Session New York'];
+    const trades = names.map((_, i) => make(i % 2 ? -10 : 25, i));
+    const result = analyzeTrades(trades, trades.map((t, i) => entry(t, names[i])), '30 Days', 'All Trades', now);
+    result.sessionPerf.forEach(s => expect(s).toMatchObject({ count: 2, pnl: 15, wins: 1, losses: 1 }));
+    expect(sum(result.sessionPerf.map(s => s.pnl))).toBe(result.totalPnl);
+  });
+  it('keeps missing, malformed and unknown journal sessions unassigned without a time or trade-tag fallback', () => {
+    const trades = [1, 2, 3, 4, 5].map((value, i) => ({ ...make(value, i), session: 'London' }));
+    const journals = [entry(trades[1], ''), entry(trades[2], 'Unknown'), entry(trades[3], 12), { ...entry(trades[4], 'London'), strategy_setup: 'broken JSON' }];
+    const result = analyzeTrades(trades, journals, '30 Days', 'All Trades', now);
+    expect(result.sessionPerf.every(s => s.count === 0)).toBe(true);
+    expect(result.unassignedSession).toMatchObject({ pnl: 15, count: 5 });
+    expect(result.totalPnl).toBe(15);
+  });
+  it('moves performance when a journal session is edited, without changing overall P&L', () => {
+    const trade = make(0);
+    const initial = analyzeTrades([trade], [entry(trade, 'London')], '30 Days', 'All Trades', now);
+    const edited = analyzeTrades([trade], [entry(trade, '  off session   NEW YORK  ')], '30 Days', 'All Trades', now);
+    expect(initial.sessionPerf[1].count).toBe(1);
+    expect(edited.sessionPerf[1].count).toBe(0);
+    expect(edited.sessionPerf[2]).toMatchObject({ pnl: 0, count: 1, wins: 0, losses: 0 });
+    expect(initial.totalPnl).toBe(edited.totalPnl);
   });
 });
 
