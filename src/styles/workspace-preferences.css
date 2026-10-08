@@ -1,0 +1,55 @@
+/* Saved preferences and unsaved previews use the same tokens throughout the shell. */
+html[data-accent] { --shell-blue: hsl(var(--primary)); --shell-active: hsl(var(--primary) / .12); }
+html[data-accent] .app-account-avatar { border-color: hsl(var(--primary)); }
+html[data-accent] .app-nav-item.is-active > svg,
+html[data-accent] .app-nav-badge { color: hsl(var(--primary)); }
+html[data-accent] .app-nav-badge { background: hsl(var(--primary) / .1); }
+html[data-accent] .app-add-trade { background: hsl(var(--primary)); border-color: hsl(var(--primary)); box-shadow: 0 5px 14px hsl(var(--primary) / .15); }
+html[data-accent] .app-add-trade:hover { background: hsl(var(--primary) / .85); }
+html[data-accent] .app-header-search:hover { border-color: hsl(var(--primary) / .5); }
+html[data-accent] .app-account:hover { border-color: hsl(var(--primary) / .5); }
+html[data-accent] .trading-dashboard button:focus-visible,
+html[data-accent] .trading-dashboard a:focus-visible { outline-color: hsl(var(--primary)); }
+html[data-accent] .performance-timeframes button.selected { box-shadow: inset 0 -2px hsl(var(--primary)); }
+html[data-accent] .dashboard-customize input { accent-color: hsl(var(--primary)); }
+html[data-accent] .dashboard-customize > button { color: hsl(var(--primary)); }
+html[data-accent] .btn-premium:hover { background: hsl(var(--primary) / .85); }
+
+html[data-compact] { font-size: 14px; }
+html[data-compact=true] { font-size: 13px; }
+html[data-compact=true] .app-content { padding: 16px 20px 28px; }
+html[data-compact=true] .settings-header { margin-bottom: 20px; }
+html[data-compact=true] .settings-card-heading { padding: 17px 21px; }
+html[data-compact=true] .settings-card-body { padding: 19px 21px; }
+html[data-compact=true] .settings-preferences { gap: 19px; }
+html[data-compact=true] .settings-fields { gap: 16px 20px; }
+html[data-compact=true] .settings-field { gap: 6px; }
+html[data-compact=true] .settings-preference-section,
+html[data-compact=true] .settings-trading { padding-top: 18px; }
+html[data-compact=true] .settings-card-heading p { font-size: 11px; }
+html[data-compact=true] .settings-hint { font-size: 10px; }
+html[data-compact=true] .settings-security-row { padding: 18px 21px; }
+html[data-compact=true] .settings-savebar { padding: 12px 21px; }
+html[data-compact=true] .trading-dashboard .dashboard-stats { gap: 12px; margin-bottom: 16px; }
+html[data-compact=true] .trading-dashboard .dashboard-panels { gap: 16px; }
+@media (min-width: 1024px) {
+  html[data-compact=true] .app-header { min-height: 62px; padding-top: 6px; padding-bottom: 6px; }
+  html[data-compact=true] .app-header-title h1 { font-size: 19px; }
+  html[data-compact=true] .app-nav-item { min-height: 36px; padding-top: 6px; padding-bottom: 6px; font-size: 12px; }
+  html[data-compact=true] .app-nav-items { gap: 2px; }
+  html[data-compact=true] .settings-field input,
+  html[data-compact=true] .settings-field select { height: 36px; font-size: 12px; }
+  html[data-compact=true] .trading-dashboard .dashboard-stat { min-height: 92px; padding: 15px; gap: 10px; }
+  html[data-compact=true] .trading-dashboard .dashboard-stat-value { font-size: 23px; }
+  html[data-compact=true] .trading-dashboard .performance-panel { padding: 20px; }
+  html[data-compact=true] .trading-dashboard .calendar-panel { padding: 16px; }
+  html[data-compact=true] .trading-dashboard .pnl-calendar { margin-top: 18px; }
+  html[data-compact=true] .trading-dashboard .performance-heading { margin-bottom: 24px; }
+  html[data-compact=true] .trading-dashboard .dashboard-panel { min-height: 380px; }
+}
+@media (max-width: 767px) {
+  html[data-compact=true] .app-content { padding: 14px 12px 24px; }
+  html[data-compact=true] .settings-card-body { padding: 16px; }
+  html[data-compact=true] .settings-card-heading { padding: 16px; }
+  html[data-compact=true] .settings-savebar { padding: 12px 16px; }
+}

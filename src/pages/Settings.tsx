@@ -4,6 +4,7 @@ import { Camera, Check, ChevronRight, Download, Globe2, Loader2, LogOut, Mail, M
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings, ACCENT_COLORS, type UserSettings } from "@/hooks/useUserSettings";
+import { useWorkspacePreferences } from "@/contexts/WorkspacePreferencesContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { settings, isLoading, isError, refetch, updateSettingsAsync, isUpdating, uploadAvatar } = useUserSettings();
   const [draft, setDraft] = useState<Partial<UserSettings>>({});
+  const { previewPreferences } = useWorkspacePreferences();
   const [photoBusy, setPhotoBusy] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -41,6 +43,12 @@ export default function Settings() {
   const values = settings ? { ...settings, ...draft } : null;
   const dirty = Object.keys(draft).length > 0;
   const busy = isUpdating || photoBusy;
+
+  useEffect(() => {
+    const preview = Object.fromEntries(Object.entries(draft).filter(([key]) => ["theme", "accent_color", "compact_mode", "timezone", "time_format", "currency"].includes(key)));
+    previewPreferences(preview);
+  }, [draft, previewPreferences]);
+  useEffect(() => () => previewPreferences(null), [previewPreferences]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -167,11 +175,11 @@ export default function Settings() {
         <form onSubmit={save}>
           <Card title="Workspace preferences" description="Set the look and everyday defaults for your workspace." icon={<Palette size={19} />}>
             <fieldset disabled={busy} className="settings-card-body settings-preferences">
-              <div><h3>Appearance</h3><p className="settings-hint">Choose the theme that works for you.</p><div className="settings-themes">{([{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "system", label: "System", icon: Monitor }]).map(({ value, label, icon: Icon }) => <button type="button" key={value} className={values.theme === value ? "selected" : ""} aria-pressed={values.theme === value} onClick={() => edit("theme", value)}><span className={`settings-theme-preview preview-${value}`}><i /><i /><i /></span><span><Icon size={15} />{label}{values.theme === value && <Check size={14} />}</span></button>)}</div></div>
+              <div><h3>Appearance</h3><p className="settings-hint">Preview changes instantly. Save changes to keep them.</p><div className="settings-themes">{([{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "system", label: "System", icon: Monitor }]).map(({ value, label, icon: Icon }) => <button type="button" key={value} className={values.theme === value ? "selected" : ""} aria-pressed={values.theme === value} onClick={() => edit("theme", value)}><span className={`settings-theme-preview preview-${value}`}><i /><i /><i /></span><span><Icon size={15} />{label}{values.theme === value && <Check size={14} />}</span></button>)}</div></div>
               <div className="settings-preference-row"><div><h3>Accent color</h3><p className="settings-hint">A little color for your buttons and highlights.</p></div><div className="settings-colors">{ACCENT_COLORS.map(color => <button type="button" key={color.id} aria-label={`${color.label} accent`} aria-pressed={values.accent_color === color.id} onClick={() => edit("accent_color", color.id)} style={{ backgroundColor: `hsl(${color.hsl})` }}>{values.accent_color === color.id && <Check size={18} />}</button>)}</div></div>
               <div className="settings-preference-row"><div><Label htmlFor="compact-mode">Compact layout</Label><p className="settings-hint">Smaller text and tighter spacing.</p></div><Switch id="compact-mode" checked={values.compact_mode} onCheckedChange={v => edit("compact_mode", v)} /></div>
-              <div className="settings-preference-section"><h3><Globe2 size={17} />Region & time</h3><div className="settings-fields"><Field label="Timezone" id="timezone"><select id="timezone" value={values.timezone} onChange={e => edit("timezone", e.target.value)}>{Array.from(new Set([...TIMEZONES, values.timezone])).map(zone => <option key={zone}>{zone}</option>)}</select></Field><Field label="Time format" id="time-format"><select id="time-format" value={values.time_format} onChange={e => edit("time_format", e.target.value)}><option value="12h">12-hour (2:30 PM)</option><option value="24h">24-hour (14:30)</option></select></Field><Field label="Default currency" id="currency"><select id="currency" value={values.currency} onChange={e => edit("currency", e.target.value)}>{Array.from(new Set(["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", values.currency])).map(currency => <option key={currency}>{currency}</option>)}</select></Field></div></div>
-              <details className="settings-trading"><summary>Trading defaults <ChevronRight size={16} /></summary><p className="settings-hint">Your account and risk preferences.</p><div className="settings-fields">{NUMBERS.map(({ key, label, max, step }) => <Field key={key} label={label} id={key}><Input id={key} type="number" required min={0} max={max} step={step} value={Number.isNaN(values[key]) ? "" : values[key]} onChange={e => edit(key, e.target.value === "" ? NaN : Number(e.target.value))} /></Field>)}<Field label="Preferred session" id="session"><select id="session" value={values.preferred_session} onChange={e => edit("preferred_session", e.target.value)}>{["Asian", "London", "New York"].map(session => <option key={session}>{session}</option>)}</select></Field></div><Link to="/rules" className="settings-back-link">Manage your trading rules <ChevronRight size={15} /></Link></details>
+              <div className="settings-preference-section"><h3><Globe2 size={17} />Region & time</h3><div className="settings-fields"><Field label="Timezone" id="timezone" hint="Timezone for the workspace header date and clock."><select id="timezone" value={values.timezone} onChange={e => edit("timezone", e.target.value)}>{Array.from(new Set([...TIMEZONES, values.timezone])).map(zone => <option key={zone}>{zone}</option>)}</select></Field><Field label="Time format" id="time-format"><select id="time-format" value={values.time_format} onChange={e => edit("time_format", e.target.value)}><option value="12h">12-hour (2:30 PM)</option><option value="24h">24-hour (14:30)</option></select></Field><Field label="Default currency" id="currency" hint="Currency for your account-size default. Trade amounts are not converted."><select id="currency" value={values.currency} onChange={e => edit("currency", e.target.value)}>{Array.from(new Set(["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", values.currency])).map(currency => <option key={currency}>{currency}</option>)}</select></Field></div></div>
+              <details className="settings-trading"><summary>Trading defaults <ChevronRight size={16} /></summary><p className="settings-hint">Your account and risk preferences.</p><div className="settings-fields">{NUMBERS.map(({ key, label, max, step }) => <Field key={key} label={key === "account_size" ? `${label} (${values.currency})` : label} id={key}><Input id={key} type="number" required min={0} max={max} step={step} value={Number.isNaN(values[key]) ? "" : values[key]} onChange={e => edit(key, e.target.value === "" ? NaN : Number(e.target.value))} /></Field>)}<Field label="Preferred session" id="session"><select id="session" value={values.preferred_session} onChange={e => edit("preferred_session", e.target.value)}>{["Asian", "London", "New York"].map(session => <option key={session}>{session}</option>)}</select></Field></div><Link to="/rules" className="settings-back-link">Manage your trading rules <ChevronRight size={15} /></Link></details>
             </fieldset>
             {saveFooter}
           </Card>

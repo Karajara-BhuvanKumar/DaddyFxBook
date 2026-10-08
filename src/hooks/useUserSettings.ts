@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { useTheme } from "next-themes";
-import { useEffect } from "react";
+export { ACCENT_COLORS } from "@/lib/workspacePreferences";
+
 
 export type UserSettings = {
   user_id: string;
@@ -51,34 +51,11 @@ export const DEFAULTS = (uid: string): UserSettings => ({
   notify_monthly: false,
 });
 
-export const ACCENT_COLORS = [
-  { id: "blue", hsl: "217 91% 60%", label: "Blue" },
-  { id: "purple", hsl: "262 83% 65%", label: "Purple" },
-  { id: "green", hsl: "142 71% 45%", label: "Green" },
-  { id: "gold", hsl: "45 93% 47%", label: "Gold" }, // Requested in prompt
-];
-
-export function applyAppearance(theme: string, accent: string, compact: boolean) {
-  const root = document.documentElement;
-  if (theme === "light") root.classList.remove("dark");
-  else if (theme === "dark") root.classList.add("dark");
-  else {
-    const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.classList.toggle("dark", dark);
-  }
-  const accentDef = ACCENT_COLORS.find((c) => c.id === accent) ?? ACCENT_COLORS[0];
-  root.style.setProperty("--primary", accentDef.hsl);
-  root.style.setProperty("--ring", accentDef.hsl);
-  root.style.setProperty("--sidebar-primary", accentDef.hsl);
-  root.style.setProperty("--sidebar-accent", accentDef.hsl);
-  root.style.fontSize = compact ? "13px" : "14px";
-}
-
 export function useUserSettings() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const uid = user?.id ?? "";
-  const { setTheme } = useTheme();
+
 
   const { data: settings, isLoading, isError, refetch } = useQuery({
     queryKey: ["user_settings", uid],
@@ -92,27 +69,16 @@ export function useUserSettings() {
         if (insErr) throw insErr;
         return def;
       }
-      return data as UserSettings;
+      return { ...DEFAULTS(uid), ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== null)) } as UserSettings;
     },
   });
-
-  // Automatically apply appearance globally whenever settings are loaded/updated
-  const theme = settings?.theme;
-  const accent = settings?.accent_color;
-  const compact = settings?.compact_mode;
-  useEffect(() => {
-    if (theme && accent && compact !== undefined) {
-      applyAppearance(theme, accent, compact);
-      setTheme(theme);
-    }
-  }, [theme, accent, compact, setTheme]);
 
   const updateMutation = useMutation({
     mutationFn: async (patch: Partial<UserSettings>) => {
       if (!uid) throw new Error("Please sign in again.");
       const { data, error } = await supabase.from("user_settings").update(patch).eq("user_id", uid).select("*").single();
       if (error) throw error;
-      return data as UserSettings;
+      return { ...DEFAULTS(uid), ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== null)) } as UserSettings;
     },
     onSuccess: (saved) => {
       qc.setQueryData(["user_settings", uid], saved);

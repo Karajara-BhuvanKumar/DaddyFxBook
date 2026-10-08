@@ -3,6 +3,8 @@ import { Search, Plus, Clock3, Bell, Menu, ChevronDown, LayoutDashboard, Briefca
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { useWorkspacePreferences } from "@/contexts/WorkspacePreferencesContext";
+import { formatWorkspaceDate, formatWorkspaceTime } from "@/lib/workspacePreferences";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -24,6 +26,7 @@ const searchPages = [
 function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { user } = useAuth();
   const { settings } = useUserSettings();
+  const { preferences } = useWorkspacePreferences();
   const { setMobileOpen } = useSidebar();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -58,7 +61,7 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
         <button onClick={() => setMobileOpen(true)} className="app-icon-button app-menu-button" aria-label="Open navigation menu"><Menu /></button>
         <div className="app-header-title">
           <h1>{title}</h1>
-          {subtitle && <p>{subtitle}</p>}
+          <p>{subtitle ?? formatWorkspaceDate(time, preferences.timezone, { weekday: "short", month: "short", day: "numeric" })}</p>
         </div>
         <button className="app-header-search" onClick={() => setSearchOpen(true)} aria-label="Search pages and actions">
           <Search aria-hidden="true" /><span>Search...</span><kbd>Ctrl+K</kbd>
@@ -66,7 +69,7 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
         <div className="app-header-actions">
           <ThemeToggle />
           <button onClick={() => navigate("/trades?add=true")} className="app-icon-button app-add-trade" aria-label="Add trade" title="Add trade"><Plus /></button>
-          <div className="app-header-clock"><Clock3 aria-hidden="true" /><time suppressHydrationWarning>{time.toLocaleTimeString("en-US", { hour12: true })}</time></div>
+          <div className="app-header-clock" title={preferences.timezone}><Clock3 aria-hidden="true" /><time suppressHydrationWarning>{formatWorkspaceTime(time, preferences, true)}</time></div>
           <Popover>
             <PopoverTrigger asChild><button className="app-icon-button app-notifications" aria-label="Notifications"><Bell /></button></PopoverTrigger>
             <PopoverContent align="end" className="app-notification-popover">
