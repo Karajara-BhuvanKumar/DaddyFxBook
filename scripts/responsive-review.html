@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Local responsive review</title>
+<style>body{margin:0;background:#ddd;font:14px system-ui}nav{padding:10px;position:sticky;left:0;top:0;background:white;width:740px;z-index:2}button{margin:4px;padding:8px}iframe{display:block;border:0;background:white}body{width:max-content}</style>
+<nav>Local responsive review · Uses configured account<br>
+<button onclick="resize(390,844)">Phone 390</button><button onclick="resize(768,1024)">Tablet 768</button><button onclick="resize(1440,1000)">Desktop 1440</button><button onclick="resize(320,740)">Small phone 320</button>
+<span id="size">1440 × 1000</span></nav>
+<iframe title="TradeFXBook review" id="app" src="/" width="1440" height="1000"></iframe>
+<script>function resize(w,h){const app=document.getElementById('app');app.width=w;app.height=h;document.getElementById('size').textContent=w+' × '+h}</script>
+</html>

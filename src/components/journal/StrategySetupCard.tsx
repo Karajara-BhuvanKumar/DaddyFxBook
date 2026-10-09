@@ -51,7 +51,7 @@ function FieldSelect({
     <div>
       <Label className="text-muted-foreground dark:text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">{label}</Label>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className={selectTriggerClass}>
+        <SelectTrigger aria-label={label} className={selectTriggerClass}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-card dark:bg-[#0b0b0b] border-border dark:border-zinc-800 text-foreground dark:text-white">

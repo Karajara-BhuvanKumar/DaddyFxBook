@@ -1,7 +1,8 @@
+import LoadError from '@/components/LoadError';
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toUtcTimestamp } from "@/lib/tradeTimestamps";
-import { useTrades, useAddTrade, useDeleteTrade, calculatePnl, Trade, useAllJournals } from "@/hooks/useTrades";
+import { useTrades, useAddTrade, useDeleteTrade, useDeleteTrades, calculatePnl, Trade, useAllJournals } from "@/hooks/useTrades";
 import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X } from "lucide-react";
 import { toast } from "sonner";
 import TradeHistory from "@/components/TradeHistory";
@@ -16,9 +17,11 @@ function localNow(): string {
 
 // ─── Main Component ────────────────────────────────────────────
 export default function Trades() {
-  const { data: trades = [], isLoading } = useTrades();
+  const { data: trades = [], isLoading, isError, refetch } = useTrades();
   const addTrade = useAddTrade();
   const deleteTrade = useDeleteTrade();
+  const deleteTrades = useDeleteTrades();
+  const [clearing, setClearing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
@@ -72,17 +75,19 @@ export default function Trades() {
   }
 
   async function handleClearAll() {
+    if (clearing || !trades.length) return;
     if (window.confirm("Are you sure you want to clear all trades? This cannot be undone.")) {
+      setClearing(true);
       try {
-        for (const t of trades) {
-          await deleteTrade.mutateAsync(t.id);
-        }
+        await deleteTrades.mutateAsync(trades.map(t => t.id));
         toast.success("All trades cleared!");
       } catch (err: any) {
-        toast.error(err.message);
-      }
+        toast.error("Some trades could not be deleted. The list shows the remaining trades; please try again.");
+      } finally { setClearing(false); }
     }
   }
+
+  if (isError) return <LoadError name="your trades" retry={refetch} />;
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
@@ -97,17 +102,17 @@ export default function Trades() {
           <h1 className="page-title text-foreground hidden lg:block">Trades</h1>
           <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
             <span className="w-2 h-2 rounded-full bg-zinc-600" />
-            <span className="text-[13px] text-muted-foreground dark:text-zinc-500 font-semibold tracking-wide">Not connected</span>
+            <span className="text-[13px] text-muted-foreground dark:text-zinc-500 font-semibold tracking-wide">Manual trade entry</span>
           </div>
         </div>
         <div className="trades-page-actions flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
-          <button className="touch-target w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
-            Connect MT4/MT5
+          <button disabled title="Broker sync is not available yet. Add trades manually." className="touch-target disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
+            MT4/MT5 · Coming soon
           </button>
-          <button onClick={handleClearAll} className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 border border-loss/20 bg-card text-loss hover:bg-loss-tint px-5 py-2.5 rounded-[20px] font-semibold text-[13px] transition-all duration-200">
-            <Trash2 className="w-4 h-4" /> Clear All
+          <button onClick={handleClearAll} disabled={clearing || trades.length === 0} className="touch-target w-full sm:w-auto flex items-center justify-center gap-2 border border-loss/20 bg-card text-loss hover:bg-loss-tint px-5 py-2.5 rounded-[20px] font-semibold text-[13px] transition-all duration-200">
+            <Trash2 className="w-4 h-4" /> {clearing ? "Clearing…" : "Clear All"}
           </button>
-          <button onClick={() => setShowForm(!showForm)} className="touch-target w-full sm:w-auto flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
+          <button disabled={clearing} aria-expanded={showForm} onClick={() => setShowForm(!showForm)} className="touch-target w-full sm:w-auto flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
             <Plus className="w-4 h-4" /> Add Trade
           </button>
         </div>
@@ -117,11 +122,11 @@ export default function Trades() {
         <form onSubmit={handleSubmit} className="glass-card rounded-[20px] p-6 space-y-5 animate-fade-up">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-foreground">New XAUUSD Trade</h3>
-            <button type="button" onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="w-5 h-5" /></button>
+            <button type="button" aria-label="Close new trade form" onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="w-5 h-5" /></button>
           </div>
           <div className="flex gap-2">
             {(['Long', 'Short'] as const).map(d => (
-              <button key={d} type="button" onClick={() => setForm(f => ({ ...f, direction: d }))}
+              <button key={d} type="button" aria-pressed={form.direction === d} onClick={() => setForm(f => ({ ...f, direction: d }))}
                 className={`flex-1 py-3 rounded-[20px] font-semibold text-base transition-all duration-200 flex items-center justify-center gap-2 ${form.direction === d
                     ? (d === 'Long' ? 'btn-premium text-primary-foreground' : 'bg-loss text-primary-foreground shadow-[0_4px_14px_-3px_hsl(0,84%,60%,0.5)]')
                     : 'bg-card text-foreground border border-border hover:bg-secondary'
@@ -139,18 +144,18 @@ export default function Trades() {
             ].map(field => (
               <div key={field.key}>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{field.label}</label>
-                <input type="number" step="0.01" value={form[field.key as keyof typeof form]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
+                <input aria-label={field.label} type="number" min="0.01" step="0.01" value={form[field.key as keyof typeof form]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                   placeholder={field.placeholder} className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/50" required />
               </div>
             ))}
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Open Date</label>
-              <input type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
+              <input aria-label="Open Date" required type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
                 className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200" />
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Close Date</label>
-              <input type="datetime-local" value={form.closeDate} onChange={e => setForm(f => ({ ...f, closeDate: e.target.value }))}
+              <input aria-label="Close Date" required min={form.openDate} type="datetime-local" value={form.closeDate} onChange={e => setForm(f => ({ ...f, closeDate: e.target.value }))}
                 className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200" />
             </div>
             <div className="flex items-end">

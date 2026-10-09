@@ -5,10 +5,10 @@
 import { GoogleGenAI } from "@google/genai";
 import type { AIProvider, AIRequest, AIResponse } from "./types";
 import {
-  GEMINI_MODELS,
+  OPENROUTER_MODELS,
   HTTP_ERROR_MESSAGES,
   REQUEST_TIMEOUT_MS,
-  RETRIABLE_HTTP_CODES,
+  RETRIABLE_STATUS_CODES,
 } from "../constants";
 
 function parseGeminiError(err: unknown): { message: string; code: number | "network" | "timeout"; retriable: boolean } {
@@ -26,7 +26,7 @@ function parseGeminiError(err: unknown): { message: string; code: number | "netw
   if (httpMatch) {
     const code = parseInt(httpMatch[1], 10);
     const friendly = HTTP_ERROR_MESSAGES[code] ?? msg;
-    return { message: friendly, code, retriable: RETRIABLE_HTTP_CODES.has(code) };
+    return { message: friendly, code, retriable: RETRIABLE_STATUS_CODES.has(code) };
   }
 
   if (msg.toLowerCase().includes("api_key") || msg.toLowerCase().includes("api key")) {
@@ -43,7 +43,7 @@ export class GeminiProvider implements AIProvider {
   readonly name = "gemini" as const;
 
   getSupportedModels(): string[] {
-    return Object.keys(GEMINI_MODELS);
+    return Object.values(OPENROUTER_MODELS).filter(model => model.provider === "gemini").map(model => model.id.replace("google/", ""));
   }
 
   async validateKey(apiKey: string, model = "gemini-2.5-flash"): Promise<boolean> {

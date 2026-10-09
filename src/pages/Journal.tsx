@@ -1,3 +1,7 @@
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import LoadError from '@/components/LoadError';
+import { journalDrafts, readCustomChecklist, serializeJournalSetup } from '@/lib/journalDrafts';
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTrades, useJournal, useSaveJournal, useChecklist, useSaveChecklist, useScreenshots, useUploadScreenshot, useAllJournals } from "@/hooks/useTrades";
 import { BookOpen, Save, Star, Check, Activity, ArrowLeft, Search, ArrowUpRight, ArrowDownRight, RefreshCw, FileText, SlidersHorizontal, DollarSign, Smile, Tag, Image, Plus, X, CheckCircle2 } from "lucide-react";
@@ -5,14 +9,17 @@ import { toast } from "sonner";
 import { AITradeReviewPanel } from "@/components/ai-report/AITradeReviewPanel";
 import { StrategySetupCard } from "@/components/journal/StrategySetupCard";
 import { ExportJournalDialog } from "@/components/journal/ExportJournalDialog";
-import { emptyStrategySetup, parseStrategySetup, serializeStrategySetup, type StrategySetup } from "@/lib/strategySetup";
+import { emptyStrategySetup, parseStrategySetup, type StrategySetup } from "@/lib/strategySetup";
 import { cn } from "@/lib/utils";
 import { filterJournalTrades } from '@/lib/journalExport';
 import '@/styles/journal.css';
 
 export default function Journal() {
-  const { data: trades = [], isLoading: isTradesLoading } = useTrades();
-  const { data: allJournals = [], isLoading: isJournalsLoading } = useAllJournals();
+  const { user } = useAuth();
+  const tradesQuery = useTrades();
+  const { data: trades = [], isLoading: isTradesLoading } = tradesQuery;
+  const journalsQuery = useAllJournals();
+  const { data: allJournals = [], isLoading: isJournalsLoading } = journalsQuery;
   const isLoading = isTradesLoading || isJournalsLoading;
 
   const [activeTab, setActiveTab] = useState<'ALL' | 'JOURNALED' | 'PENDING'>('ALL');
@@ -32,9 +39,12 @@ export default function Journal() {
   const displayedTrades = useMemo(() => filterJournalTrades(trades, allJournals, filters), [trades, allJournals, filters]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data: existingJournal } = useJournal(selectedId);
-  const { data: existingChecklist } = useChecklist(selectedId);
-  const { data: screenshots = [] } = useScreenshots(selectedId);
+  const journalQuery = useJournal(selectedId);
+  const { data: existingJournal } = journalQuery;
+  const checklistQuery = useChecklist(selectedId);
+  const { data: existingChecklist } = checklistQuery;
+  const screenshotsQuery = useScreenshots(selectedId);
+  const { data: screenshots = [] } = screenshotsQuery;
   const saveJournal = useSaveJournal();
   const saveChecklist = useSaveChecklist();
   const uploadScreenshot = useUploadScreenshot();
@@ -48,6 +58,18 @@ export default function Journal() {
   const [checklist, setChecklist] = useState({ checked_higher_tf: false, risk_within_limits: false, fits_plan: false, key_levels: false, news_checked: false });
   const [customChecklist, setCustomChecklist] = useState<{ id: string; label: string; checked: boolean }[]>([]);
   const [newCustomLabel, setNewCustomLabel] = useState("");
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const [baseline, setBaseline] = useState('');
+  const [saving, setSaving] = useState(false);
+  const snapshot = JSON.stringify({ journal, strategySetup, checklist, customChecklist });
+  const draftKey = `${user?.id}:${selectedId}`;
+  const dirty = loadedId === selectedId && !!baseline && baseline !== snapshot;
+  const editorLoading = journalQuery.isLoading || checklistQuery.isLoading || loadedId !== selectedId;
+  useEffect(() => {
+    if (!selectedId || loadedId !== selectedId || !baseline) return;
+    if (dirty) journalDrafts.set(draftKey, { snapshot, baseline });
+    else journalDrafts.delete(draftKey);
+  }, [snapshot, baseline, dirty, draftKey, loadedId, selectedId]);
   useEffect(() => {
     if (mobileEditor) {
       editorRef.current?.scrollTo({ top: 0 });
@@ -56,30 +78,37 @@ export default function Journal() {
   }, [selectedId, mobileEditor]);
 
   useEffect(() => { 
+    if (saving) return;
+    if (selectedId && journalDrafts.has(`${user?.id}:${selectedId}`) && trades.some(t => t.id === selectedId)) return;
     if (displayedTrades.length > 0 && (!selectedId || !displayedTrades.some(t => t.id === selectedId))) {
       setSelectedId(displayedTrades[0].id); 
     } else if (displayedTrades.length === 0) {
       setSelectedId(null);
     }
-  }, [displayedTrades, selectedId]);
+  }, [displayedTrades, selectedId, saving, trades, user?.id]);
 
   useEffect(() => {
-    if (existingJournal) {
-      setJournal({ pre_trade_notes: existingJournal.pre_trade_notes || '', post_trade_notes: existingJournal.post_trade_notes || '', emotions: existingJournal.emotions || '', lessons: existingJournal.lessons || '', tags: existingJournal.tags || '', rating: existingJournal.rating || 5, risk_reward: existingJournal.risk_reward ?? '' });
-      setStrategySetup(parseStrategySetup(existingJournal.strategy_setup));
-    } else {
-      setJournal({ pre_trade_notes: '', post_trade_notes: '', emotions: '', lessons: '', tags: '', rating: 5, risk_reward: '' });
-      setStrategySetup(emptyStrategySetup);
-    }
-  }, [existingJournal, selectedId]);
+    if (!selectedId || loadedId === selectedId || !journalQuery.isSuccess || !checklistQuery.isSuccess) return;
+    const saved = {
+      journal: { pre_trade_notes: existingJournal?.pre_trade_notes || '', post_trade_notes: existingJournal?.post_trade_notes || '', emotions: existingJournal?.emotions || '', lessons: existingJournal?.lessons || '', tags: existingJournal?.tags || '', rating: existingJournal?.rating ?? 5, risk_reward: existingJournal?.risk_reward || '' },
+      strategySetup: parseStrategySetup(existingJournal?.strategy_setup),
+      checklist: { checked_higher_tf: existingChecklist?.checked_higher_tf || false, risk_within_limits: existingChecklist?.risk_within_limits || false, fits_plan: existingChecklist?.fits_plan || false, key_levels: existingChecklist?.key_levels || false, news_checked: existingChecklist?.news_checked || false },
+      customChecklist: readCustomChecklist(existingJournal?.strategy_setup),
+    };
+    const draft = journalDrafts.get(draftKey);
+    const values = draft ? JSON.parse(draft.snapshot) as typeof saved : saved;
+    setJournal(values.journal); setStrategySetup(values.strategySetup); setChecklist(values.checklist); setCustomChecklist(values.customChecklist);
+    setBaseline(draft?.baseline || JSON.stringify(saved));
+    setLoadedId(selectedId); setNewCustomLabel('');
+  }, [selectedId, loadedId, draftKey, existingJournal, existingChecklist, journalQuery.isSuccess, checklistQuery.isSuccess]);
 
-  useEffect(() => {
-    if (existingChecklist) {
-      setChecklist({ checked_higher_tf: existingChecklist.checked_higher_tf || false, risk_within_limits: existingChecklist.risk_within_limits || false, fits_plan: existingChecklist.fits_plan || false, key_levels: existingChecklist.key_levels || false, news_checked: existingChecklist.news_checked || false });
-    } else {
-      setChecklist({ checked_higher_tf: false, risk_within_limits: false, fits_plan: false, key_levels: false, news_checked: false });
-    }
-  }, [existingChecklist, selectedId]);
+  async function refreshJournal() {
+    if (saving || (dirty && !window.confirm('Discard unsaved changes and reload this journal?'))) return;
+    const results = await Promise.all([journalQuery.refetch(), checklistQuery.refetch(), screenshotsQuery.refetch()]);
+    if (results.some(result => result.isError)) { toast.error('Could not refresh the journal. Your draft is still available.'); return; }
+    journalDrafts.delete(draftKey); setLoadedId(null);
+    toast.success('Journal refreshed');
+  }
 
   const formatJournalDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -91,24 +120,29 @@ export default function Journal() {
   };
 
   async function handleSave() {
-    if (!selectedId) return;
+    if (!selectedId || editorLoading || saving) return;
+    setSaving(true);
     try {
-      await saveJournal.mutateAsync({ trade_id: selectedId, ...journal, strategy_setup: serializeStrategySetup(strategySetup) });
+      await saveJournal.mutateAsync({ trade_id: selectedId, ...journal, strategy_setup: serializeJournalSetup(strategySetup, customChecklist) });
       await saveChecklist.mutateAsync({ trade_id: selectedId, ...checklist });
+      setBaseline(snapshot); journalDrafts.delete(draftKey);
       toast.success("Journal saved!");
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message || "Could not save. Your draft has been kept; please retry."); }
+    finally { setSaving(false); }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file || !selectedId) return;
+    if (!file.type.startsWith('image/') || file.size > 10 * 1024 * 1024) { toast.error('Choose an image smaller than 10 MB.'); return; }
     try { await uploadScreenshot.mutateAsync({ tradeId: selectedId, file }); toast.success("Screenshot uploaded!"); } catch (err: any) { toast.error(err.message); }
   }
 
   const handleAddCustomChecklist = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomLabel.trim()) return;
-    setCustomChecklist(c => [...c, { id: Math.random().toString(), label: newCustomLabel.trim(), checked: false }]);
+    setCustomChecklist(c => [...c, { id: crypto.randomUUID(), label: newCustomLabel.trim(), checked: false }]);
     setNewCustomLabel("");
   };
 
@@ -123,6 +157,8 @@ export default function Journal() {
   const checkCount = Object.values(checklist).filter(Boolean).length + customChecklist.filter(item => item.checked).length;
   const totalCheckCount = 5 + customChecklist.length;
 
+  if (tradesQuery.isError || journalsQuery.isError) return <LoadError name="your journal" retry={() => Promise.all([tradesQuery.refetch(), journalsQuery.refetch()])} />;
+
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
       <div className="flex items-center gap-3 text-muted-foreground"><Activity className="w-5 h-5 animate-pulse" /><span className="text-base font-medium">Loading journal...</span></div>
@@ -132,7 +168,7 @@ export default function Journal() {
   return (
     <div className="journal-page">
       <div className="journal-toolbar">
-        <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">{allJournals.length}</span> journaled · {trades.length} trades</p>
+        <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">{journaledTrades.length}</span> journaled · {trades.length} trades</p>
         <ExportJournalDialog currentTradeId={selectedId} filters={filters} />
       </div>
 
@@ -142,9 +178,9 @@ export default function Journal() {
           <div className="p-4 border-b border-border dark:border-white/[0.05] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-bold text-foreground">Trade Journal</h3>
-              <button className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-border dark:border-white/[0.08] text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" /> Live
-              </button>
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-border dark:border-white/[0.08] text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-0.5" /> Saved trades
+              </span>
             </div>
             <span className="text-[10px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/10 px-2 py-0.5 rounded-full">
               {trades.length} entries
@@ -199,7 +235,7 @@ export default function Journal() {
               </p>
             ) : (
               displayedTrades.map(t => (
-                <button key={t.id} aria-label={`Open ${t.symbol} journal`} aria-current={selectedId === t.id ? 'true' : undefined} onClick={() => { setSelectedId(t.id); setMobileEditor(true); }}
+                <button key={t.id} aria-label={`Open ${t.symbol} journal`} aria-current={selectedId === t.id ? 'true' : undefined} disabled={saving} onClick={() => { setSelectedId(t.id); setMobileEditor(true); }}
                   className={cn(
                     "w-full text-left p-4 rounded-[20px] border transition-all duration-200 flex flex-col",
                     selectedId === t.id
@@ -243,8 +279,8 @@ export default function Journal() {
             "bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06]",
           )}
         >
-          {selectedTrade ? (
-            <div className="space-y-5 md:space-y-6 animate-fade-up">
+          {selectedTrade && (journalQuery.isError || checklistQuery.isError) ? <LoadError name="this journal" retry={() => Promise.all([journalQuery.refetch(), checklistQuery.refetch()])} /> : selectedTrade && editorLoading ? <p role="status">Loading journal details…</p> : selectedTrade ? (
+            <fieldset disabled={saving} className="min-w-0 space-y-5 md:space-y-6 animate-fade-up">
               <button onClick={() => { setMobileEditor(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.journal-list [aria-current="true"]')?.focus({ preventScroll: true })); }} className="journal-back min-h-11 items-center gap-2 rounded-xl border border-border dark:border-white/10 bg-secondary px-3 text-sm font-semibold"><ArrowLeft className="h-4 w-4" />Trade Journal</button>
               <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-4 border-b border-border dark:border-white/[0.05] pb-4 md:pb-5">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
@@ -258,29 +294,30 @@ export default function Journal() {
                       ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-500/20'
                       : 'bg-red-500/10 text-red-700 dark:text-red-500 border-red-500/20'
                   )}>
-                    {isWinner ? 'WINNER' : 'LOSER'}
+                    {Number(selectedTrade.pnl) === 0 ? 'BREAK-EVEN' : isWinner ? 'WINNER' : 'LOSER'}
                   </span>
                 </div>
                 <div className="journal-actions flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
-                  <button aria-label="Refresh journal" className="touch-target inline-flex items-center justify-center h-11 w-11 shrink-0 border border-border dark:border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button onClick={refreshJournal} disabled={journalQuery.isFetching || checklistQuery.isFetching} aria-label="Refresh journal" className="touch-target inline-flex items-center justify-center h-11 w-11 shrink-0 border border-border dark:border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-border dark:border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button onClick={() => { const review = document.getElementById("journal-ai-review"); review?.scrollIntoView({ behavior: "smooth", block: "start" }); review?.focus({ preventScroll: true }); }} className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-border dark:border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <FileText className="w-3.5 h-3.5" /> <span>Report</span>
                   </button>
-                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-border dark:border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <Link to="/analysis" className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-border dark:border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> <span>Analytics</span>
-                  </button>
-                  <button onClick={handleSave} disabled={saveJournal.isPending}
+                  </Link>
+                  <button onClick={handleSave} disabled={saving || editorLoading}
                     className={cn(
                       "touch-target inline-flex items-center justify-center h-11 w-full sm:w-auto text-white font-bold px-6 py-2 rounded-[20px] text-xs leading-none transition-all disabled:opacity-50 shadow-sm min-h-[44px]",
                       isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                     )}>
-                    {saveJournal.isPending ? 'Saving...' : 'Save'}
+                    {saving ? 'Saving...' : 'Save'}
                   </button>
                 </div>
               </div>
 
+              <p role="status" className="text-xs text-muted-foreground">{dirty ? "Unsaved changes · Draft kept while you browse this tab" : "All changes saved"}</p>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground font-semibold mb-4 md:mb-6">
                 <span className={selectedTrade.direction === 'Long' ? 'text-blue-500' : 'text-red-700 dark:text-red-500'}>{selectedTrade.direction}</span>
                 <span>·</span>
@@ -297,7 +334,7 @@ export default function Journal() {
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
                   <FileText className={cn("w-3.5 h-3.5", iconColor)} /> Pre-Trade Analysis
                 </label>
-                <textarea value={journal.pre_trade_notes} onChange={e => setJournal(j => ({ ...j, pre_trade_notes: e.target.value }))}
+                <textarea aria-label="Pre-Trade Analysis" value={journal.pre_trade_notes} onChange={e => setJournal(j => ({ ...j, pre_trade_notes: e.target.value }))}
                   placeholder="What did you see? Plan, thesis, levels, risk..."
                   className={cn(
                     "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
@@ -310,7 +347,7 @@ export default function Journal() {
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
                   <CheckCircle2 className={cn("w-3.5 h-3.5", iconColor)} /> Post-Trade Review
                 </label>
-                <textarea value={journal.post_trade_notes} onChange={e => setJournal(j => ({ ...j, post_trade_notes: e.target.value }))}
+                <textarea aria-label="Post-Trade Review" value={journal.post_trade_notes} onChange={e => setJournal(j => ({ ...j, post_trade_notes: e.target.value }))}
                   placeholder="What happened? Execution, slippage, improvements..."
                   className={cn(
                     "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
@@ -328,7 +365,7 @@ export default function Journal() {
                 </span>
                 <div className="flex items-center gap-2">
                   <input
-                    value={journal.risk_reward.split(':')[0] ?? ''}
+                    aria-label="Risk" value={journal.risk_reward.split(':')[0] ?? ''}
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${e.target.value}:${j.risk_reward.split(':')[1] ?? ''}` }))}
                     placeholder="1"
                     className={cn(
@@ -337,7 +374,7 @@ export default function Journal() {
                     )} />
                   <span className="text-muted-foreground dark:text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
                   <input
-                    value={journal.risk_reward.split(':')[1] ?? ''}
+                    aria-label="Reward" value={journal.risk_reward.split(':')[1] ?? ''}
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${j.risk_reward.split(':')[0] ?? ''}:${e.target.value}` }))}
                     placeholder="2"
                     className={cn(
@@ -353,7 +390,7 @@ export default function Journal() {
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
                     <Smile className={cn("w-3.5 h-3.5", iconColor)} /> Emotions
                   </label>
-                  <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
+                  <textarea aria-label="Emotions" value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
                     className={cn(
                       "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
@@ -363,7 +400,7 @@ export default function Journal() {
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
                     <BookOpen className={cn("w-3.5 h-3.5", iconColor)} /> Lessons Learned
                   </label>
-                  <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
+                  <textarea aria-label="Lessons Learned" value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
                     className={cn(
                       "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
@@ -377,7 +414,7 @@ export default function Journal() {
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
                     <Tag className={cn("w-3.5 h-3.5", iconColor)} /> Tags
                   </label>
-                  <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
+                  <input aria-label="Tags" value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
                     className={cn(
                       "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
@@ -395,7 +432,7 @@ export default function Journal() {
                   </label>
                   <div className="relative mt-3 px-2">
                     <input
-                      type="range"
+                      aria-label="Trade rating" type="range"
                       min={1}
                       max={10}
                       value={journal.rating}
@@ -425,7 +462,7 @@ export default function Journal() {
                     { key: 'key_levels', label: 'Key levels identified' },
                     { key: 'news_checked', label: 'Economic calendar checked' },
                   ].map(item => (
-                    <button key={item.key} type="button"
+                    <button key={item.key} type="button" aria-pressed={checklist[item.key as keyof typeof checklist]}
                       onClick={() => setChecklist(c => ({ ...c, [item.key]: !c[item.key as keyof typeof c] }))}
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-[20px] border text-xs text-left transition-all duration-200",
@@ -457,7 +494,7 @@ export default function Journal() {
                           : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
                         : 'bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.08] text-muted-foreground hover:bg-secondary'
                     )}>
-                      <button type="button" onClick={() => toggleCustomChecklist(item.id)} className="flex items-center gap-2 text-left">
+                      <button type="button" aria-pressed={item.checked} onClick={() => toggleCustomChecklist(item.id)} className="flex items-center gap-2 text-left">
                         <div className={cn(
                           "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
                           item.checked
@@ -470,19 +507,19 @@ export default function Journal() {
                         </div>
                         {item.label}
                       </button>
-                      <button type="button" onClick={() => deleteCustomChecklist(item.id)} className="text-muted-foreground dark:text-zinc-500 hover:text-red-700 dark:hover:text-red-500 transition-colors ml-1">
+                      <button type="button" aria-label={`Remove ${item.label}`} onClick={() => deleteCustomChecklist(item.id)} className="text-muted-foreground dark:text-zinc-500 hover:text-red-700 dark:hover:text-red-500 transition-colors ml-1">
                         <X className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
                 </div>
                 <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 w-full max-w-xs">
-                  <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
+                  <input type="text" aria-label="Custom checklist item" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
                     className={cn(
                       "flex-1 bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
-                  <button type="submit" className={cn(
+                  <button type="submit" aria-label="Add checklist item" className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center text-white transition-colors",
                     isWinner ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                   )}>
@@ -502,13 +539,13 @@ export default function Journal() {
                       <img src={(s as { signed_url?: string }).signed_url || s.image_url} alt="Trade screenshot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   ))}
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
+                  <button type="button" disabled={uploadScreenshot.isPending} onClick={() => fileInputRef.current?.click()}
                     className={cn(
                       "w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] border border-dashed bg-card dark:bg-[#0B0B0B] flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
                       isWinner ? "border-border dark:border-white/[0.08] dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-border dark:border-white/[0.08] dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
                     )}>
                     <Plus className="w-5 h-5 mb-1 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Add Image</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{uploadScreenshot.isPending ? "Uploading…" : "Add Image"}</span>
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                 </div>
@@ -516,8 +553,9 @@ export default function Journal() {
 
               <StrategySetupCard value={strategySetup} onChange={setStrategySetup} />
 
-              <AITradeReviewPanel tradeId={selectedTrade.id} />
-            </div>
+              {screenshotsQuery.isError && <LoadError name="screenshots" retry={screenshotsQuery.refetch} />}
+              <div id="journal-ai-review" tabIndex={-1}><AITradeReviewPanel tradeId={selectedTrade.id} /></div>
+            </fieldset>
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground">
               <div className="text-center">

@@ -74,11 +74,11 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
     // Daily points keep flat stretches visible without changing cumulative P&L.
     const daily = new Map<string, number>();
     sorted.forEach((trade) => {
-      const key = trade.close_time.split("T")[0];
+      const key = new Date(trade.close_time).toISOString().slice(0, 10);
       daily.set(key, (daily.get(key) || 0) + Number(trade.pnl));
     });
-    const start = new Date(`${sorted[0].close_time.split("T")[0]}T12:00:00`);
-    const lastTradeDate = new Date(`${sorted[sorted.length - 1].close_time.split("T")[0]}T12:00:00`);
+    const start = new Date(`${new Date(sorted[0].close_time).toISOString().slice(0, 10)}T12:00:00`);
+    const lastTradeDate = new Date(`${new Date(sorted[sorted.length - 1].close_time).toISOString().slice(0, 10)}T12:00:00`);
     const last = asOfDate && asOfDate > lastTradeDate ? new Date(asOfDate) : lastTradeDate;
     const dayCount = Math.round((last.getTime() - start.getTime()) / 86400000);
     let cumulative = 0;
@@ -103,7 +103,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
   const calendarData = useMemo(() => {
     const daily: Record<string, { pnl: number; count: number }> = {};
     trades.forEach((t) => {
-      const day = t.close_time.split("T")[0];
+      const day = new Date(t.close_time).toISOString().slice(0, 10);
       daily[day] ??= { pnl: 0, count: 0 };
       daily[day].pnl += Number(t.pnl);
       daily[day].count++;
@@ -148,6 +148,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
   return (
     <div className="trading-dashboard">
       <div className="dashboard-toolbar">
+        <p className="mr-auto text-xs text-muted-foreground">{{ "1D": "Last 24 hours", "1W": "Last 7 days", "1M": "Last month", "3M": "Last 3 months", "ALL": "All time" }[timeframe]} · Closed trades</p>
         <Popover>
           <PopoverTrigger asChild><button className="customize-button"><LayoutDashboard size={17} />Customize</button></PopoverTrigger>
           <PopoverContent align="end" className="dashboard-customize">
@@ -216,7 +217,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
 
         {showCalendar && <section className="dashboard-panel calendar-panel" aria-label="Monthly profit and loss">
           <div className="calendar-heading">
-            <h2>Monthly P&L</h2>
+            <h2>Monthly P&L <span className="text-xs font-normal text-muted-foreground">UTC</span></h2>
             <div className="calendar-controls"><p className="calendar-total">Monthly: <strong className={pnlTone(monthlyPnl)}>{money(monthlyPnl)}</strong></p>
               <div className="calendar-navigation"><button aria-label="Previous month" onClick={() => { setCurrentDate(new Date(year, month - 1, 1)); setSelectedDay(null); }}><ChevronLeft size={17} /></button><span aria-live="polite">{monthLabel}</span><button aria-label="Next month" onClick={() => { setCurrentDate(new Date(year, month + 1, 1)); setSelectedDay(null); }}><ChevronRight size={17} /></button></div>
             </div>
@@ -263,7 +264,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
         </section>}
       </div>
       {!showCalendar && !showPerformance && <div className="dashboard-hidden-state">Your widgets are hidden. Select Customize to bring them back.</div>}
-      {selectedDay && <DayTradesPopup anchorRect={selectedDay.rect} dateStr={selectedDay.date} trades={trades.filter((trade) => trade.close_time.split("T")[0] === selectedDay.date)} onClose={() => setSelectedDay(null)} />}
+      {selectedDay && <DayTradesPopup anchorRect={selectedDay.rect} dateStr={selectedDay.date} trades={trades.filter((trade) => new Date(trade.close_time).toISOString().slice(0, 10) === selectedDay.date)} onClose={() => setSelectedDay(null)} />}
     </div>
   );
 }

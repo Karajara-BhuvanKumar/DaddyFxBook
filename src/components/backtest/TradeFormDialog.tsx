@@ -23,7 +23,6 @@ import {
 import {
   computeRR,
   computeRGained,
-  computePnL,
   EMOTIONS,
   MARKET_CONDITIONS,
   SESSIONS,
@@ -177,7 +176,7 @@ export default function TradeFormDialog({
       });
       setStrategy(parseSummary(initial.setup ?? ""));
     } else {
-      setForm({ ...empty, pair: defaultPair ?? "" });
+      setForm({ ...empty, trade_date: new Date().toLocaleDateString("en-CA"), pair: defaultPair ?? "" });
       setStrategy(emptyStrategy);
     }
     setStep(1);
@@ -187,6 +186,7 @@ export default function TradeFormDialog({
 
   const updateAndRecalc = (patch: Partial<typeof form>) => {
     const next = { ...form, ...patch };
+    if (!['entry_price', 'stop_loss', 'take_profit', 'exit_price', 'direction'].some(key => key in patch)) { setForm(next); return; }
     const e = parseFloat(next.entry_price);
     const s = parseFloat(next.stop_loss);
     const t = parseFloat(next.take_profit);
@@ -212,16 +212,15 @@ export default function TradeFormDialog({
       const risk = next.direction === "long" ? e - s : s - e;
       if (risk > 0) {
         r_gained = String(computeRGained(e, s, x, next.direction));
-        pnl = String(computePnL(e, x, next.direction));
-        const pnlNum = parseFloat(pnl);
+        const pnlNum = next.direction === "long" ? x - e : e - x;
         if (pnlNum > 0) outcome = "win";
         else if (pnlNum < 0) outcome = "loss";
         else outcome = "breakeven";
       } else {
-        r_gained = ""; pnl = ""; outcome = "breakeven";
+        r_gained = ""; outcome = "breakeven";
       }
     } else {
-      r_gained = ""; pnl = ""; outcome = "breakeven";
+      r_gained = ""; outcome = "breakeven";
     }
 
     setForm({ ...next, rr, r_gained, pnl, outcome });
@@ -269,6 +268,10 @@ export default function TradeFormDialog({
       setStep(1);
       return;
     }
+    const prices = [form.entry_price, form.stop_loss, form.take_profit, form.exit_price].filter(Boolean).map(Number);
+    if (prices.some(value => !Number.isFinite(value) || value <= 0)) { toast({ title: 'Prices must be greater than zero', variant: 'destructive' }); setStep(1); return; }
+    if (form.entry_price && form.stop_loss && (form.direction === 'long' ? Number(form.stop_loss) >= Number(form.entry_price) : Number(form.stop_loss) <= Number(form.entry_price))) { toast({ title: 'Stop loss must be below a long entry or above a short entry', variant: 'destructive' }); setStep(1); return; }
+    if (form.entry_price && form.take_profit && (form.direction === 'long' ? Number(form.take_profit) <= Number(form.entry_price) : Number(form.take_profit) >= Number(form.entry_price))) { toast({ title: 'Take profit must be above a long entry or below a short entry', variant: 'destructive' }); setStep(1); return; }
     setSaving(true);
     try {
       await onSave({
@@ -393,8 +396,9 @@ export default function TradeFormDialog({
                 {invalidRisk && <p className="text-xs text-red-700 dark:text-red-500 mt-1 font-bold">Invalid risk</p>}
               </div>
               <div>
-                <Label className="text-muted-foreground dark:text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">P&L</Label>
-                <Input className={cn("bg-input dark:bg-[#060606] border-border dark:border-zinc-900 font-mono h-11 rounded-[20px] font-bold", form.pnl ? (parseFloat(form.pnl) > 0 ? "text-blue-500" : "text-red-700 dark:text-red-500") : "text-muted-foreground dark:text-zinc-500")} type="number" step="any" readOnly value={form.pnl} />
+                <Label className="text-muted-foreground dark:text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Recorded P&L</Label>
+                <Input className={cn("bg-input dark:bg-[#060606] border-border dark:border-zinc-900 font-mono h-11 rounded-[20px] font-bold", form.pnl ? (parseFloat(form.pnl) > 0 ? "text-blue-500" : "text-red-700 dark:text-red-500") : "text-muted-foreground dark:text-zinc-500")} aria-label="Recorded P&L" type="number" step="any" placeholder="Optional" value={form.pnl} onChange={e => setForm(f => ({ ...f, pnl: e.target.value }))} />
+                <p className="text-xs text-muted-foreground mt-1">Enter the actual result in your account currency. Prices alone do not determine monetary P&L.</p>
               </div>
               <div>
                 <Label className="text-muted-foreground dark:text-zinc-400 font-bold text-xs uppercase tracking-wider mb-1.5 block">Outcome</Label>

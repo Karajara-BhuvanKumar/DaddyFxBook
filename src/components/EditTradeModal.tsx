@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
+import LoadError from '@/components/LoadError';
+import { StrategySetupCard } from '@/components/journal/StrategySetupCard';
+import { parseStrategySetup, serializeStrategySetup } from '@/lib/strategySetup';
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Trade, useJournal, useChecklist, useUpdateTrade } from "@/hooks/useTrades";
 import { ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { toLocalDateTime, toUtcTimestamp } from "@/lib/tradeTimestamps";
 
 interface EditTradeModalProps {
@@ -18,9 +22,10 @@ interface EditTradeModalProps {
 }
 
 export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModalProps) {
-  const { data: journal, isLoading: isJournalLoading } = useJournal(trade?.id ?? null);
-  const { data: checklist, isLoading: isChecklistLoading } = useChecklist(trade?.id ?? null);
+  const { data: journal, isLoading: isJournalLoading, isError: journalError, refetch: retryJournal } = useJournal(trade?.id ?? null);
+  const { data: checklist, isLoading: isChecklistLoading, isError: checklistError, refetch: retryChecklist } = useChecklist(trade?.id ?? null);
   const updateTrade = useUpdateTrade();
+  const hydratedTrade = useRef<string | null>(null);
 
   const [form, setForm] = useState({
     symbol: '',
@@ -48,11 +53,13 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
   });
 
   useEffect(() => {
-    if (trade && isOpen) {
+    if (!isOpen) { hydratedTrade.current = null; return; }
+    if (trade && !isJournalLoading && !isChecklistLoading && !journalError && !checklistError && hydratedTrade.current !== trade.id) {
+      hydratedTrade.current = trade.id;
       // Parse mistakes from lessons if stored together, or just use as is
       let parsedMistakes = '';
       let parsedLessons = journal?.lessons || '';
-      
+
       if (parsedLessons.includes('Mistakes:')) {
         const parts = parsedLessons.split('Mistakes:');
         parsedLessons = parts[0].replace('Lessons:', '').trim();
@@ -84,7 +91,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         news_checked: checklist?.news_checked || false,
       });
     }
-  }, [trade, journal, checklist, isOpen]);
+  }, [trade, journal, checklist, isOpen, isJournalLoading, isChecklistLoading, journalError, checklistError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +99,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
 
     try {
       const tradeData = {
-        symbol: form.symbol,
+        symbol: form.symbol.trim().toUpperCase(),
         direction: form.direction,
         entry_price: parseFloat(form.entryPrice) || 0,
         exit_price: parseFloat(form.exitPrice) || 0,
@@ -103,7 +110,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         close_time: toUtcTimestamp(form.closeDate, trade.close_time),
       };
 
-      const combinedLessons = form.mistakes 
+      const combinedLessons = form.mistakes
         ? `Lessons: ${form.lessons}\nMistakes: ${form.mistakes}`
         : form.lessons;
 
@@ -140,31 +147,32 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
   const isLoading = isJournalLoading || isChecklistLoading;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !updateTrade.isPending && onClose()}>
       <DialogContent className="max-w-2xl bg-card border-border text-card-foreground p-0 overflow-hidden flex flex-col max-h-[90vh]">
         <DialogHeader className="p-6 pb-2 border-b border-border">
           <DialogTitle className="text-xl font-bold">Edit Trade</DialogTitle>
+          <DialogDescription>Update trade details, notes, and execution checks.</DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {journalError || checklistError ? <LoadError name="trade details" retry={() => Promise.all([retryJournal(), retryChecklist()])} /> : isLoading ? (
           <div className="flex items-center justify-center p-12">
             <Activity className="w-6 h-6 animate-pulse text-muted-foreground" />
           </div>
         ) : (
-          <ScrollArea className="flex-1 p-6">
-            <form id="edit-trade-form" onSubmit={handleSubmit} className="space-y-6">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+            <form id="edit-trade-form" onSubmit={handleSubmit}><fieldset disabled={updateTrade.isPending} className="min-w-0 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Symbol</label>
-                  <input type="text" value={form.symbol} onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))}
+                  <input aria-label="Symbol" type="text" value={form.symbol} onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))}
                     className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" required />
                 </div>
-                
+
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Direction</label>
                   <div className="flex gap-2 h-[42px]">
                     {(['Long', 'Short'] as const).map(d => (
-                      <button key={d} type="button" onClick={() => setForm(f => ({ ...f, direction: d }))}
+                      <button key={d} type="button" aria-pressed={form.direction === d} onClick={() => setForm(f => ({ ...f, direction: d }))}
                         className={`flex-1 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${form.direction === d
                             ? (d === 'Long' ? 'bg-profit-tint text-profit' : 'bg-loss-tint text-loss')
                             : 'bg-secondary text-foreground border border-border hover:bg-muted'
@@ -182,53 +190,54 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                   { label: 'Lot Size', key: 'lotSize', type: 'number' },
                   { label: 'Stop Loss', key: 'stopLoss', type: 'number' },
                   { label: 'Take Profit', key: 'takeProfit', type: 'number' },
-                  { label: 'Commission', key: 'commission', type: 'number' },
-                  { label: 'Swap', key: 'swap', type: 'number' },
+
+
                 ].map(field => (
                   <div key={field.key}>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{field.label}</label>
-                    <input type={field.type} step="0.01" value={(form as any)[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
+                    <input aria-label={field.label} required={["entryPrice", "exitPrice", "lotSize"].includes(field.key)} min="0.01" type={field.type} step="0.01" value={(form as any)[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                       className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 ))}
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Open Date</label>
-                  <input type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
+                  <input aria-label="Open Date" required type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
                     className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Close Date</label>
-                  <input type="datetime-local" value={form.closeDate} onChange={e => setForm(f => ({ ...f, closeDate: e.target.value }))}
+                  <input aria-label="Close Date" required min={form.openDate} type="datetime-local" value={form.closeDate} onChange={e => setForm(f => ({ ...f, closeDate: e.target.value }))}
                     className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
 
               <div className="pt-4 border-t border-border space-y-4">
                 <h4 className="text-sm font-bold text-foreground">Journaling & Analysis</h4>
-                
+                <StrategySetupCard value={parseStrategySetup(form.strategySetup)} onChange={setup => setForm(f => ({ ...f, strategySetup: serializeStrategySetup(setup) }))} />
+
                 {[
                   { label: 'Tags (comma separated)', key: 'tags' },
-                  { label: 'Strategy Setup', key: 'strategySetup' },
+
                   { label: 'Emotions', key: 'emotions' },
                   { label: 'Mistakes', key: 'mistakes' },
                 ].map(field => (
                   <div key={field.key}>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{field.label}</label>
-                    <input type="text" value={(form as any)[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
+                    <input aria-label={field.label} type="text" value={(form as any)[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                       className="w-full bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 ))}
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Notes</label>
-                  <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3}
+                  <textarea aria-label="Notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3}
                     className="w-full bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Lessons Learned</label>
-                  <textarea value={form.lessons} onChange={e => setForm(f => ({ ...f, lessons: e.target.value }))} rows={3}
+                  <textarea aria-label="Lessons Learned" value={form.lessons} onChange={e => setForm(f => ({ ...f, lessons: e.target.value }))} rows={3}
                     className="w-full bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
@@ -245,7 +254,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                   ].map(item => (
                     <label key={item.key} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-muted rounded-lg transition-colors">
                       <div className="relative flex items-center justify-center">
-                        <input type="checkbox" checked={(form as any)[item.key]} onChange={e => setForm(f => ({ ...f, [item.key]: e.target.checked }))} 
+                        <input type="checkbox" checked={(form as any)[item.key]} onChange={e => setForm(f => ({ ...f, [item.key]: e.target.checked }))}
                           className="peer appearance-none w-5 h-5 border-2 border-border rounded bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer" />
                         <svg className="absolute w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-foreground dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -256,16 +265,16 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                   ))}
                 </div>
               </div>
-            </form>
-          </ScrollArea>
+            </fieldset></form>
+          </div>
         )}
 
         <div className="p-4 sm:p-6 border-t border-border flex flex-col sm:flex-row gap-3">
-          <button type="submit" form="edit-trade-form" disabled={updateTrade.isPending || isLoading} 
+          <button type="submit" form="edit-trade-form" disabled={updateTrade.isPending || isLoading}
             className="touch-target w-full sm:flex-1 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 min-h-[44px] rounded-xl font-bold text-sm transition-all disabled:opacity-50">
             {updateTrade.isPending ? 'Saving...' : 'Save Changes'}
           </button>
-          <button type="button" onClick={onClose} 
+          <button type="button" onClick={onClose}
             className="touch-target w-full sm:w-auto bg-transparent border border-border hover:bg-muted text-foreground px-6 py-3 min-h-[44px] rounded-xl font-semibold text-sm transition-all">
             Cancel
           </button>

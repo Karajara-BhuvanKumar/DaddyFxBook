@@ -20,9 +20,10 @@ export default function ShareTrade() {
   if (error || !data || !data.trade) {
     return (
       <div className="min-h-screen bg-input dark:bg-[#050505] flex flex-col items-center justify-center text-muted-foreground space-y-6">
-        <p className="text-xl font-bold text-foreground dark:text-white">Unable to load trade.</p>
+        <p className="text-xl font-bold text-foreground dark:text-white">This trade is unavailable or private.</p>
+        <p className="px-6 text-center text-sm">Sign in to your account, or ask the owner to share an image or PDF.</p>
         <Link to="/" className="text-primary hover:text-primary/80 transition-colors">
-          Return to Dashboard
+          Open your account
         </Link>
       </div>
     );

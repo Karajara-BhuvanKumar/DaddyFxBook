@@ -92,7 +92,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
-            Trades on {dateLabel}
+            Trades on {dateLabel} <span className="text-xs font-normal text-muted-foreground">UTC</span>
           </h3>
           <p style={{ fontSize: 14, color: "var(--popup-muted)", marginTop: 4 }}>
             {trades.length} {trades.length === 1 ? "trade" : "trades"}

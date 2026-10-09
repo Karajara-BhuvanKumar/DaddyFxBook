@@ -56,7 +56,7 @@ Shared from DaddyFXBook
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success("Trade link copied.");
+      toast.success("Trade link copied. Account access is still required.");
     } catch (err) {
       toast.error("Sharing failed. Please try again.");
     }
@@ -148,6 +148,7 @@ Shared from DaddyFXBook
             Share Trade
           </DialogTitle>
         </DialogHeader>
+        <p className="px-6 text-xs text-muted-foreground">Trade links retain account access restrictions. To share outside your account, download an image or PDF, or copy the summary.</p>
 
         <div className="p-6 space-y-6 overflow-y-auto">
           {/* Preview Card */}

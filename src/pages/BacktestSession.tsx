@@ -1,3 +1,4 @@
+import LoadError from '@/components/LoadError';
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -32,8 +33,8 @@ import { exportTradesCSV, exportTradesXLSX, exportAnalyticsDOCX, exportAnalytics
 
 export default function BacktestSession() {
   const { id } = useParams<{ id: string }>();
-  const { data: session, isLoading: ls } = useBacktestSession(id);
-  const { data: trades = [], isLoading: lt } = useBacktestTrades(id);
+  const { data: session, isLoading: ls, isError: sessionError, refetch: retrySession } = useBacktestSession(id);
+  const { data: trades = [], isLoading: lt, isError: tradesError, refetch: retryTrades } = useBacktestTrades(id);
   const create = useCreateTrade(id ?? "");
   const update = useUpdateTrade(id ?? "");
   const del = useDeleteTrade(id ?? "");
@@ -78,7 +79,8 @@ export default function BacktestSession() {
     [trades],
   );
 
-  if (ls) {
+  if (sessionError || tradesError) return <LoadError name="backtest session" retry={() => Promise.all([retrySession(), retryTrades()])} />;
+  if (ls || lt) {
     return <div className="p-6"><Skeleton className="h-12 w-64 mb-4" /><Skeleton className="h-96 w-full" /></div>;
   }
   if (!session) {
@@ -94,8 +96,8 @@ export default function BacktestSession() {
     <div className="space-y-6 md:space-y-8 overflow-guard">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <Link to="/backtesting">
-            <Button size="icon" variant="ghost" className="h-10 w-10 shrink-0 text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[20px]">
+          <Link to="/backtesting" aria-label="Back to backtesting">
+            <Button tabIndex={-1} size="icon" variant="ghost" className="h-10 w-10 shrink-0 text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[20px]">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
@@ -171,7 +173,7 @@ export default function BacktestSession() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search trades…"
+                aria-label="Search backtest trades" placeholder="Search trades…"
                 className="pl-11 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600 rounded-[20px] h-10"
               />
             </div>
@@ -263,20 +265,20 @@ export default function BacktestSession() {
                           <div className="flex items-center justify-end gap-1">
                             {t.screenshot_url && (
                               <a href={t.screenshot_url} target="_blank" rel="noreferrer">
-                                <Button size="icon" variant="ghost" className="h-7 w-7"><ExternalLink className="w-3.5 h-3.5" /></Button>
+                                <Button aria-label="Edit backtest trade" size="icon" variant="ghost" className="h-11 w-11"><ExternalLink className="w-3.5 h-3.5" /></Button>
                               </a>
                             )}
                             <Button
-                              size="icon" variant="ghost" className="h-7 w-7"
+                              aria-label="Edit backtest trade" size="icon" variant="ghost" className="h-11 w-11"
                               onClick={() => { setEditing(t); setFormOpen(true); }}
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
                             <Button
-                              size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                              aria-label="Delete backtest trade" disabled={del.isPending} size="icon" variant="ghost" className="h-11 w-11 text-destructive"
                               onClick={() => {
                                 if (confirm("Delete this trade?")) {
-                                  del.mutate(t.id, { onSuccess: () => toast({ title: "Trade deleted" }) });
+                                  del.mutate(t.id, { onSuccess: () => toast({ title: "Trade deleted" }), onError: () => toast({ title: "Could not delete trade. Please try again.", variant: "destructive" }) });
                                 }
                               }}
                             >

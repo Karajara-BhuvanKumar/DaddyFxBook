@@ -55,5 +55,5 @@ export interface AIProvider {
   readonly name: ProviderName;
   generateReport(request: AIRequest): Promise<AIResponse>;
   validateKey(apiKey: string, model?: string): Promise<boolean>;
-  getSupportedModels(): OpenRouterModelId[];
+  getSupportedModels(): string[];
 }

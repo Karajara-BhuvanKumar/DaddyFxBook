@@ -1,3 +1,5 @@
+import { toast } from 'sonner';
+import { journalDrafts } from '@/lib/journalDrafts';
 import { memo, useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -30,6 +32,7 @@ function SidebarContent({ collapsed = false, onNavigate }: { collapsed?: boolean
   const { pathname } = useLocation();
   const dashboardPath = pathname === "/preview" ? "/preview" : "/";
   const displayName = settings?.display_name || user?.email?.split("@")[0] || "Personal account";
+  const [signingOut, setSigningOut] = useState(false);
   const initial = (settings?.display_name || user?.email || "D").slice(0, 1);
 
   return (
@@ -71,7 +74,13 @@ function SidebarContent({ collapsed = false, onNavigate }: { collapsed?: boolean
       </nav>
 
       {user && <div className="app-sidebar-footer">
-        <button onClick={() => { onNavigate?.(); void signOut(); }} className="app-nav-item app-signout" title={collapsed ? "Sign out" : undefined} aria-label="Sign out">
+        <button disabled={signingOut} onClick={async () => {
+          if ([...journalDrafts.keys()].some(key => key.startsWith(`${user?.id}:`)) && !window.confirm('You have unsaved journal changes. Sign out and discard them?')) return;
+          setSigningOut(true);
+          try { await signOut(); onNavigate?.(); }
+          catch { toast.error('Could not sign out. Please try again.'); }
+          finally { setSigningOut(false); }
+        }} className="app-nav-item app-signout" title={collapsed ? "Sign out" : undefined} aria-label="Sign out">
           <LogOut aria-hidden="true" />{!collapsed && <span>Sign out</span>}
         </button>
       </div>}

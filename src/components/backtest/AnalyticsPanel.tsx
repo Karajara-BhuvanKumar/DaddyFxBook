@@ -73,14 +73,14 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
         <Metric label="Net R" value={`${a.netR >= 0 ? "+" : ""}${a.netR.toFixed(2)}`} tone={a.netR >= 0 ? "profit" : "loss"} />
         <Metric label="Total R+" value={a.totalRGained.toFixed(2)} tone="profit" />
         <Metric label="Total R−" value={a.totalRLost.toFixed(2)} tone="loss" />
-        <Metric label="Profit factor" value={a.profitFactor.toFixed(2)} />
+        <Metric label="Profit factor" value={(Number.isFinite(a.profitFactor) ? a.profitFactor.toFixed(2) : "∞")} />
         <Metric label="Expectancy" value={`${a.expectancy.toFixed(2)}R`} />
         <Metric label="Avg RR" value={a.avgRR.toFixed(2)} />
         <Metric label="Largest win" value={`${a.largestWinner.toFixed(2)}R`} tone="profit" />
         <Metric label="Largest loss" value={`${a.largestLoser.toFixed(2)}R`} tone="loss" />
         <Metric label="Max win streak" value={String(a.maxConsecutiveWins)} />
         <Metric label="Max loss streak" value={String(a.maxConsecutiveLosses)} />
-        <Metric label="P&L" value={a.totalPnl.toFixed(2)} tone={a.totalPnl >= 0 ? "profit" : "loss"} />
+        <Metric label="Recorded P&L" value={(a.recordedPnlCount ? a.totalPnl.toFixed(2) : "Not recorded")} tone={a.totalPnl >= 0 ? "profit" : "loss"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

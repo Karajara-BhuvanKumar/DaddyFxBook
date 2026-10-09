@@ -70,14 +70,14 @@ export default function AIReportPanel({ sessionId, hasTrades }: { sessionId: str
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[24px] border border-blue-500/20 bg-card dark:bg-[#0B0B0B] p-6 flex items-center justify-between gap-4">
+      <div className="rounded-[24px] border border-blue-500/20 bg-card dark:bg-[#0B0B0B] p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <Sparkles className="w-4 h-4 text-blue-500" />
             <h3 className="font-bold text-foreground dark:text-white text-[15px]">AI Strategy Report</h3>
           </div>
           <p className="text-sm text-muted-foreground dark:text-zinc-500 font-medium">
-            AI analyses every trade and identifies strengths, weaknesses, recurring patterns, and a strategy scorecard using your Gemini API key.
+            AI analyses every trade and identifies strengths, weaknesses, recurring patterns, and a strategy scorecard through your configured AI service. Reports are available for this browser session.
           </p>
         </div>
         <button

@@ -1,3 +1,6 @@
+import LoadError from '@/components/LoadError';
+import { useBacktestTrades } from '@/hooks/useBacktest';
+import { useMemo } from 'react';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FlaskConical, Plus, MoreVertical, Copy, Pencil, Trash2, Sparkles } from "lucide-react";
@@ -28,8 +31,8 @@ import {
   useDuplicateSession,
   useUpdateSession,
 } from "@/hooks/useBacktest";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+
+
 import type { BacktestSession, BacktestTrade } from "@/lib/backtest";
 import { computeAnalytics } from "@/lib/backtest";
 
@@ -41,17 +44,8 @@ function SessionCard({ s }: { s: BacktestSession }) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [name, setName] = useState(s.name);
 
-  const { data: stats } = useQuery({
-    queryKey: ["backtest-session-stats", s.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("backtest_trades")
-        .select("*")
-        .eq("session_id", s.id);
-      const a = computeAnalytics((data ?? []) as BacktestTrade[]);
-      return a;
-    },
-  });
+  const tradeQuery = useBacktestTrades(s.id);
+  const stats = useMemo(() => tradeQuery.data ? computeAnalytics(tradeQuery.data) : null, [tradeQuery.data]);
 
   return (
     <div 
@@ -76,7 +70,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-8 w-8">
+            <Button aria-label={`Actions for ${s.name}`} disabled={del.isPending || dup.isPending} size="icon" variant="ghost" className="h-8 w-8">
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -99,6 +93,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
                 if (confirm(`Delete "${s.name}"? This cannot be undone.`)) {
                   del.mutate(s.id, {
                     onSuccess: () => toast({ title: "Session deleted" }),
+                    onError: () => toast({ title: "Could not delete session. Please try again.", variant: "destructive" }),
                   });
                 }
               }}
@@ -110,6 +105,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
         </DropdownMenu>
       </div>
 
+      {tradeQuery.isError && <LoadError name="session statistics" retry={tradeQuery.refetch} />}
       <Link to={`/backtesting/${s.id}`} className="block mt-2">
         <div className="grid grid-cols-2 gap-2 mb-4">
           <Stat label="Trades" value={stats ? String(stats.total) : "—"} />
@@ -120,8 +116,8 @@ function SessionCard({ s }: { s: BacktestSession }) {
             tone={stats ? (stats.netR >= 0 ? "profit" : "loss") : undefined}
           />
           <Stat
-            label="P&L"
-            value={stats ? stats.totalPnl.toFixed(2) : "—"}
+            label="Recorded P&L"
+            value={stats?.recordedPnlCount ? stats.totalPnl.toFixed(2) : "—"}
             tone={stats ? (stats.totalPnl >= 0 ? "profit" : "loss") : undefined}
           />
         </div>
@@ -133,7 +129,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Rename session</DialogTitle></DialogHeader>
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input aria-label="Session name" value={name} onChange={(e) => setName(e.target.value)} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenameOpen(false)}>Cancel</Button>
             <Button
@@ -174,7 +170,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "pr
 }
 
 export default function Backtesting() {
-  const { data: sessions, isLoading } = useBacktestSessions();
+  const { data: sessions, isLoading, isError, refetch } = useBacktestSessions();
   const create = useCreateSession();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -189,7 +185,7 @@ export default function Backtesting() {
             <span className="text-[10px] bg-warning/15 text-warning font-bold px-2 py-0.5 rounded-md tracking-wider uppercase border border-warning/20">Elite</span>
           </h1>
           <p className="text-sm text-muted-foreground dark:text-zinc-500 mt-1.5 font-medium tracking-wide">
-            Manually backtest strategies. Each session is permanently saved with full analytics and AI strategy reports.
+            Manually backtest strategies. Sessions and trades are saved to your account. Generate an AI report to review a strategy.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -206,21 +202,21 @@ export default function Backtesting() {
                 <Input
                   className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600 w-full"
                   placeholder="e.g. XAUUSD London Breakout 2024"
-                  value={form.name}
+                  aria-label="Session name" value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-muted-foreground dark:text-zinc-400">Pair</Label>
-                  <Input className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
+                  <Input className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white" aria-label="Pair" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
                 </div>
                 <div>
                   <Label className="text-muted-foreground dark:text-zinc-400">Strategy</Label>
                   <Input
                     className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600"
                     placeholder="e.g. SMC, Trend Following"
-                    value={form.strategy}
+                    aria-label="Strategy" value={form.strategy}
                     onChange={(e) => setForm({ ...form, strategy: e.target.value })}
                   />
                 </div>
@@ -230,7 +226,7 @@ export default function Backtesting() {
                 <Textarea
                   className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600"
                   rows={3}
-                  value={form.description}
+                  aria-label="Description" value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                 />
               </div>
@@ -259,7 +255,7 @@ export default function Backtesting() {
         </Dialog>
       </div>
 
-      {isLoading ? (
+      {isError ? <LoadError name="backtest sessions" retry={refetch} /> : isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-44 rounded-[20px]" />

@@ -1,3 +1,5 @@
+import { journalDrafts } from '@/lib/journalDrafts';
+import { fetchAllAnalysisRows } from '@/lib/fetchAllAnalysisRows';
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Camera, Check, ChevronRight, Download, Globe2, Loader2, LogOut, Mail, Monitor, Moon, Palette, ShieldCheck, SlidersHorizontal, Sun, UserRound } from "lucide-react";
@@ -107,6 +109,7 @@ export default function Settings() {
   }
   async function signOut() {
     if (!signOutScope) return;
+    if ([...journalDrafts.keys()].some(key => key.startsWith(`${user?.id}:`)) && !window.confirm("You have unsaved journal changes. Sign out and discard them?")) return;
     setSigningOut(true);
     try {
       const { error } = await supabase.auth.signOut({ scope: signOutScope });
@@ -118,14 +121,11 @@ export default function Settings() {
     if (!user) return;
     setExporting(table);
     try {
-      // Paginate so exports include more than the API's default 1,000 rows.
-      const rows: Record<string, unknown>[] = [];
-      for (let start = 0; ; start += 1000) {
-        const { data, error } = await supabase.from(table).select("*").eq("user_id", user.id).order("id").range(start, start + 999);
-        if (error) throw error;
-        rows.push(...(data || []));
-        if (!data || data.length < 1000) break;
-      }
+      const rows = await fetchAllAnalysisRows<Record<string, unknown> & { id: string }>(after => {
+        let query = supabase.from(table).select('*').eq('user_id', user.id).order('id').limit(1000);
+        if (after) query = query.gt('id', after);
+        return query;
+      });
       if (!rows.length) { toast({ title: "Nothing to export yet" }); return; }
       const keys = Object.keys(rows[0]);
       const cell = (value: unknown) => {

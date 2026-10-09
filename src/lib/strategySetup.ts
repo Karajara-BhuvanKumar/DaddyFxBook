@@ -92,8 +92,14 @@ export function buildStrategySummary(s: StrategySetup): string {
 export function parseStrategySetup(raw: string | null | undefined): StrategySetup {
   if (!raw) return { ...emptyStrategySetup, confluences: [] };
   try {
-    const parsed = JSON.parse(raw) as Partial<StrategySetup>;
-    return { ...emptyStrategySetup, confluences: [], ...parsed };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ...emptyStrategySetup, confluences: [] };
+    const result = { ...emptyStrategySetup, ...parsed } as StrategySetup;
+    for (const key of Object.keys(emptyStrategySetup) as (keyof StrategySetup)[]) {
+      if (key !== 'confluences' && typeof result[key] !== 'string') result[key] = '';
+    }
+    result.confluences = Array.isArray(parsed.confluences) ? parsed.confluences.filter((value: unknown) => typeof value === 'string') : [];
+    return result;
   } catch {
     return { ...emptyStrategySetup, confluences: [] };
   }

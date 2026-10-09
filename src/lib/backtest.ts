@@ -52,6 +52,7 @@ export interface BacktestAnalytics {
   totalRLost: number;
   netR: number;
   totalPnl: number;
+  recordedPnlCount: number;
   profitFactor: number;
   expectancy: number;
   avgRR: number;
@@ -101,7 +102,7 @@ export function computeAnalytics(trades: BacktestTrade[]): BacktestAnalytics {
   const sorted = [...trades].sort((a, b) => {
     const ad = a.trade_date ?? a.created_at;
     const bd = b.trade_date ?? b.created_at;
-    return ad.localeCompare(bd);
+    return ad.localeCompare(bd) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
   });
 
   const wins = sorted.filter((t) => t.outcome === "win");
@@ -121,8 +122,9 @@ export function computeAnalytics(trades: BacktestTrade[]): BacktestAnalytics {
   const avgWin = wins.length ? totalRGained / wins.length : 0;
   const avgLoss = losses.length ? totalRLost / losses.length : 0;
   const expectancy = winRate * avgWin - lossRate * avgLoss;
-  const avgRR = sorted.length
-    ? sorted.reduce((s, t) => s + Number(t.rr ?? 0), 0) / sorted.length
+  const knownRR = sorted.filter(t => t.rr != null && Number.isFinite(Number(t.rr)));
+  const avgRR = knownRR.length
+    ? knownRR.reduce((s, t) => s + Number(t.rr), 0) / knownRR.length
     : 0;
 
   const rValues = sorted.map((t) => Number(t.r_gained ?? 0));
@@ -162,7 +164,8 @@ export function computeAnalytics(trades: BacktestTrade[]): BacktestAnalytics {
     totalRLost: Number(totalRLost.toFixed(2)),
     netR: Number(netR.toFixed(2)),
     totalPnl: Number(totalPnl.toFixed(2)),
-    profitFactor: Number.isFinite(profitFactor) ? Number(profitFactor.toFixed(2)) : 0,
+    recordedPnlCount: sorted.filter(t => t.pnl != null && Number.isFinite(Number(t.pnl))).length,
+    profitFactor: Number.isFinite(profitFactor) ? Number(profitFactor.toFixed(2)) : Infinity,
     expectancy: Number(expectancy.toFixed(2)),
     avgRR: Number(avgRR.toFixed(2)),
     largestWinner: Number(largestWinner.toFixed(2)),

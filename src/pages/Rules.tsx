@@ -1,3 +1,4 @@
+import LoadError from '@/components/LoadError';
 import { useState } from "react";
 import { Scale, Plus, Trash2, Zap, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,7 @@ function autoTypeBadge(ruleType: string, threshold: number | null): string | nul
 // ---------------------------------------------------------------------------
 
 export default function Rules() {
-  const { rules, isLoading, addRule, updateRule, deleteRule } = useRules();
+  const { rules, isLoading, error, refetch, addRule, updateRule, deleteRule } = useRules();
   const { outdated } = useRulesSchemaStatus();
 
   const [copied, setCopied] = useState(false);
@@ -76,8 +77,8 @@ export default function Rules() {
     const trimmed = text.trim();
     if (!trimmed) return toast({ title: "Rule text is required", variant: "destructive" });
     if (trimmed.length > 200) return toast({ title: "Rule text too long", description: "Max 200 characters", variant: "destructive" });
-    if (needsThreshold && (!threshold || Number(threshold) <= 0)) {
-      return toast({ title: "Threshold must be greater than 0", variant: "destructive" });
+    if (needsThreshold && (!threshold || !Number.isFinite(Number(threshold)) || Number(threshold) <= 0 || (ruleType !== "max_daily_loss" && !Number.isInteger(Number(threshold))))) {
+      return toast({ title: "Enter a positive threshold (whole numbers for trade counts)", variant: "destructive" });
     }
     addRule.mutate(
       { rule: trimmed, rule_type: ruleType, threshold: needsThreshold ? Number(threshold) : null },
@@ -102,10 +103,9 @@ export default function Rules() {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(migrationSql);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(migrationSql); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    catch { toast({ title: 'Could not copy. Check clipboard permissions.', variant: 'destructive' }); }
   };
 
   return (
@@ -236,7 +236,7 @@ export default function Rules() {
           </div>
           <p className="text-xs text-muted-foreground mb-5">Main Account</p>
 
-          {isLoading ? (
+          {error ? <LoadError name="your rules" retry={refetch} /> : isLoading ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm animate-pulse">
               Loading rules...
             </div>
@@ -258,7 +258,7 @@ export default function Rules() {
                     className="flex items-start gap-3 p-4 rounded-xl bg-muted/20 border border-border/50 hover:border-border transition-colors group"
                   >
                     <Switch
-                      checked={r.active}
+                      aria-label={`Enable rule: ${r.rule}`} disabled={updateRule.isPending} checked={r.active}
                       onCheckedChange={(v) => updateRule.mutate({ id: r.id, patch: { active: v } })}
                       className="data-[state=checked]:bg-primary mt-0.5 shrink-0"
                     />
@@ -280,7 +280,7 @@ export default function Rules() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 rounded-lg shrink-0"
+                          aria-label={`Delete rule: ${r.rule}`} className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 rounded-lg shrink-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

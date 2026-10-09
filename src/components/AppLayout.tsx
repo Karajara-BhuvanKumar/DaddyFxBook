@@ -1,3 +1,5 @@
+import { Suspense, useEffect } from 'react';
+import { journalDrafts } from '@/lib/journalDrafts';
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import TopHeader from "./TopHeader";
@@ -25,6 +27,17 @@ export default function AppLayout() {
   const { user } = useAuth();
   const { settings } = useUserSettings();
   const location = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    document.getElementById('main-content')?.scrollTo({ top: 0 });
+  }, [location.pathname]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if ([...journalDrafts.keys()].some(key => key.startsWith(`${user?.id}:`))) { event.preventDefault(); event.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [user?.id]);
   const meta = titleMap[location.pathname] ?? {
     title: location.pathname.startsWith("/backtesting/") ? "Backtesting" : "DaddyFXBook",
   };
@@ -38,7 +51,7 @@ export default function AppLayout() {
         <div className="app-workspace">
           <TopHeader title={meta.title} subtitle={meta.subtitle} />
           <main id="main-content" className="app-content" tabIndex={-1}>
-            <Outlet />
+            <Suspense fallback={<p role="status" className="p-6 text-sm text-muted-foreground">Loading page…</p>}><Outlet /></Suspense>
           </main>
         </div>
       </div>

@@ -3,8 +3,10 @@
 // Handles all communication with the Gemini REST API.
 // ============================================================
 
-import { AI_ERROR_MESSAGES, DEFAULT_GEMINI_MODEL, DEFAULT_MAX_OUTPUT_TOKENS, DEFAULT_TEMPERATURE } from "./constants";
-import type { GeminiModelId } from "./constants";
+import { DEFAULT_MAX_TOKENS, DEFAULT_TEMPERATURE, OPENROUTER_MODELS } from "./constants";
+// Retain compatibility for direct Gemini callers using the configured Gemini model.
+const DEFAULT_GEMINI_MODEL = OPENROUTER_MODELS['google/gemini-2.5-flash'].id.replace('google/', '');
+type GeminiModelId = string;
 
 export interface GeminiOptions {
   apiKey: string;
@@ -24,13 +26,13 @@ export interface GeminiResponse {
 function parseGeminiError(status: number, body: unknown): string {
   const message = (body as any)?.error?.message;
   if (message) return message;
-  return AI_ERROR_MESSAGES[status] ?? `Unexpected error (HTTP ${status}).`;
+  return `Gemini request failed (HTTP ${status}). Check your key, quota, and connection.`;
 }
 
 export async function generateGeminiResponse(opts: GeminiOptions): Promise<GeminiResponse> {
   const model = opts.model ?? DEFAULT_GEMINI_MODEL;
   const temperature = opts.temperature ?? DEFAULT_TEMPERATURE;
-  const maxOutputTokens = opts.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
+  const maxOutputTokens = opts.maxOutputTokens ?? DEFAULT_MAX_TOKENS;
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${opts.apiKey}`;
 

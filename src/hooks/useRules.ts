@@ -123,6 +123,7 @@ export function useRules() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["trading_rules", uid] });
       qc.invalidateQueries({ queryKey: ["rules_schema_status"] });
+      qc.invalidateQueries({ queryKey: ["performance-coach-data"] });
       toast({ title: "Rule added" });
     },
     onError: (e: Error) => toast({ title: "Failed to add rule", description: e.message, variant: "destructive" }),
@@ -133,7 +134,7 @@ export function useRules() {
       const { error } = await supabase.from("trading_rules").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["trading_rules", uid] }),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ["trading_rules", uid] }), qc.invalidateQueries({ queryKey: ["performance-coach-data"] })]),
     onError: (e: Error) => toast({ title: "Failed to update rule", description: e.message, variant: "destructive" }),
   });
 
@@ -145,12 +146,13 @@ export function useRules() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["trading_rules", uid] });
       qc.invalidateQueries({ queryKey: ["rule_violations", uid] });
+      qc.invalidateQueries({ queryKey: ["performance-coach-data"] });
       toast({ title: "Rule deleted" });
     },
     onError: (e: Error) => toast({ title: "Failed to delete rule", description: e.message, variant: "destructive" }),
   });
 
-  return { rules: query.data ?? [], isLoading: query.isLoading, error: query.error, addRule, updateRule, deleteRule };
+  return { rules: query.data ?? [], isLoading: query.isLoading, error: query.error, refetch: query.refetch, addRule, updateRule, deleteRule };
 }
 
 // ---------------------------------------------------------------------------
@@ -231,6 +233,7 @@ export function useToggleRuleViolation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["rule_violations", uid] });
+      qc.invalidateQueries({ queryKey: ["performance-coach-data"] });
     },
     onError: (e: Error) => toast({ title: "Failed to toggle violation", description: e.message, variant: "destructive" }),
   });

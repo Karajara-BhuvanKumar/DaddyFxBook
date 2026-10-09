@@ -82,7 +82,7 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
   }
   const actions = (t: Trade) => <div className="th-row-actions"><button aria-label="Edit Trade" onClick={() => onEdit(t)}><Pencil size={16} /></button><button aria-label="Share Trade" onClick={() => onShare(t)}><Share2 size={16} /></button><button aria-label="Delete Trade" className="th-loss" onClick={() => onDelete(t.id)}><Trash2 size={16} /></button></div>;
   return <section className={`surface-card p-4 sm:p-6 th-history th-height-${height.toLowerCase()}`} aria-label="Trade History">
-    <div className="th-toolbar"><div className="th-title"><h3 className="text-base sm:text-[18px] font-bold text-foreground tracking-tight">Trade History</h3><span aria-live="polite" data-testid="history-count">{pageTrades.length} of {trades.length} trades</span></div>
+    <div className="th-toolbar"><div className="th-title"><h3 className="text-base sm:text-[18px] font-bold text-foreground tracking-tight">Trade History <span className="text-xs font-normal text-muted-foreground">Local time</span></h3><span aria-live="polite" data-testid="history-count">{pageTrades.length} of {trades.length} trades</span></div>
       <div className="th-toolbar-buttons">
         <button className="th-button" data-active={showFilters || active} aria-expanded={showFilters} aria-controls="trade-history-filters" onClick={() => setShowFilters(!showFilters)}><Filter size={18} />Filters{active && <i className="th-dot" />}</button>
         <Popover><PopoverTrigger asChild><button className="th-button"><SlidersHorizontal size={18} />View</button></PopoverTrigger>

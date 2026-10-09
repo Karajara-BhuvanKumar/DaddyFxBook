@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchAllAnalysisRows } from "@/lib/fetchAllAnalysisRows";
 import type { ExportData } from "@/lib/journalExport";
+import { invalidateTradingData } from '@/lib/invalidateTradingData';
+import { validateTrade } from '@/lib/tradeValidation';
 
 export interface Trade {
   id: string;
@@ -59,14 +61,13 @@ export function useTrades() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['trades', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('close_time', { ascending: false });
-      if (error) throw error;
-      return data as Trade[];
+    queryFn: async ({ signal }) => {
+      const rows = await fetchAllAnalysisRows<Trade>(after => {
+        let query = supabase.from('trades').select('*').eq('user_id', user!.id).order('id').limit(1000);
+        if (after) query = query.gt('id', after);
+        return query.abortSignal(signal);
+      });
+      return rows.sort((a, b) => Date.parse(b.close_time) - Date.parse(a.close_time));
     },
     enabled: !!user,
   });
@@ -77,6 +78,8 @@ export function useAddTrade() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (trade: { symbol: string; direction: string; entry_price: number; exit_price: number; lot_size: number; open_time: string; close_time: string; session?: string }) => {
+      if (!user) throw new Error('Not authenticated');
+      validateTrade(trade);
       const pnl = calculatePnl(trade.direction, trade.entry_price, trade.exit_price, trade.lot_size);
       const { data, error } = await supabase
         .from('trades')
@@ -86,7 +89,7 @@ export function useAddTrade() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trades'] }),
+    onSuccess: () => invalidateTradingData(qc),
   });
 }
 
@@ -108,8 +111,16 @@ export function useUpdateTrade() {
       if (!user) throw new Error("Not authenticated");
 
       if (Object.keys(tradeData).length > 0) {
-        if (tradeData.direction && tradeData.entry_price && tradeData.exit_price && tradeData.lot_size) {
-           tradeData.pnl = calculatePnl(tradeData.direction, tradeData.entry_price, tradeData.exit_price, tradeData.lot_size);
+        if (tradeData.direction && tradeData.entry_price !== undefined && tradeData.exit_price !== undefined && tradeData.lot_size !== undefined && tradeData.open_time && tradeData.close_time) {
+          validateTrade(tradeData as Trade);
+          // Editing notes must not overwrite imported net P&L with gross XAUUSD P&L.
+          const { data: original, error } = await supabase.from('trades').select('*').eq('id', id).eq('user_id', user.id).single();
+          if (error) throw error;
+          const pricesChanged = ['symbol', 'direction', 'entry_price', 'exit_price', 'lot_size'].some(key => tradeData[key as keyof Trade] !== undefined && tradeData[key as keyof Trade] !== original[key as keyof Trade]);
+          if (pricesChanged) {
+            if (tradeData.symbol !== 'XAUUSD') throw new Error('Automatic P&L calculation is available for XAUUSD only. You can still edit this trade’s journal.');
+            tradeData.pnl = calculatePnl(tradeData.direction, tradeData.entry_price, tradeData.exit_price, tradeData.lot_size);
+          }
         }
         const { error: tradeError } = await supabase
           .from('trades')
@@ -120,7 +131,8 @@ export function useUpdateTrade() {
       }
 
       if (journalData && Object.keys(journalData).length > 0) {
-        const { data: existingJournal } = await supabase.from('journals').select('id').eq('trade_id', id).maybeSingle();
+        const { data: existingJournal, error: lookupError } = await supabase.from('journals').select('id').eq('trade_id', id).eq('user_id', user.id).maybeSingle();
+        if (lookupError) throw lookupError;
         if (existingJournal) {
           const { error } = await supabase.from('journals').update(journalData).eq('id', existingJournal.id);
           if (error) throw error;
@@ -128,10 +140,17 @@ export function useUpdateTrade() {
           const { error } = await supabase.from('journals').insert({ ...journalData, trade_id: id, user_id: user.id });
           if (error) throw error;
         }
+        let setup: { market_session?: string } | null = null;
+        try { setup = JSON.parse(journalData.strategy_setup || 'null'); } catch { /* Legacy free text. */ }
+        if (setup && typeof setup.market_session === 'string') {
+          const { error } = await supabase.from('trades').update({ session: setup.market_session || null }).eq('id', id).eq('user_id', user.id);
+          if (error) throw new Error('Journal saved, but the market session could not be updated. Please save again.');
+        }
       }
 
       if (checklistData && Object.keys(checklistData).length > 0) {
-        const { data: existingChecklist } = await supabase.from('checklists').select('id').eq('trade_id', id).maybeSingle();
+        const { data: existingChecklist, error: lookupError } = await supabase.from('checklists').select('id').eq('trade_id', id).eq('user_id', user.id).maybeSingle();
+        if (lookupError) throw lookupError;
         if (existingChecklist) {
           const { error } = await supabase.from('checklists').update(checklistData).eq('id', existingChecklist.id);
           if (error) throw error;
@@ -141,30 +160,42 @@ export function useUpdateTrade() {
         }
       }
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['trades'] });
-      qc.invalidateQueries({ queryKey: ['journal'] });
-      qc.invalidateQueries({ queryKey: ['journals-all'] });
-      qc.invalidateQueries({ queryKey: ['checklist'] });
-    },
+    onSettled: () => invalidateTradingData(qc),
   });
 }
 
 export function useDeleteTrade() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('trades').delete().eq('id', id);
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase.from('trades').delete().eq('id', id).eq('user_id', user.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trades'] }),
+    onSuccess: () => invalidateTradingData(qc),
+  });
+}
+
+export function useDeleteTrades() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!user) throw new Error('Not authenticated');
+      for (let offset = 0; offset < ids.length; offset += 100) {
+        const { error } = await supabase.from('trades').delete().eq('user_id', user.id).in('id', ids.slice(offset, offset + 100));
+        if (error) throw error;
+      }
+    },
+    onSettled: () => invalidateTradingData(qc),
   });
 }
 
 export function useJournal(tradeId: string | null) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['journal', tradeId],
+    queryKey: ['journal', user?.id, tradeId],
     queryFn: async () => {
       if (!tradeId) return null;
       const { data, error } = await supabase
@@ -207,29 +238,22 @@ export function useSaveJournal() {
         }
       }
 
-      // Sync market_session from strategy_setup → trades.session
-      if (journal.strategy_setup) {
-        try {
-          const parsed = JSON.parse(journal.strategy_setup);
-          const marketSession: string | undefined = parsed.market_session;
-          if (marketSession) {
-            await supabase.from('trades').update({ session: marketSession }).eq('id', trade_id);
-          }
-        } catch { /* strategy_setup not valid JSON — skip sync */ }
+      // A session-sync failure must remain visible; the user can retry the save.
+      let setup: { market_session?: string } | null = null;
+      try { setup = JSON.parse(journal.strategy_setup); } catch { /* Legacy free text. */ }
+      if (setup && typeof setup.market_session === 'string') {
+        const { error } = await supabase.from('trades').update({ session: setup.market_session || null }).eq('id', trade_id).eq('user_id', user.id);
+        if (error) throw new Error('Journal saved, but the market session could not be updated. Please save again.');
       }
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['journal'] });
-      qc.invalidateQueries({ queryKey: ['journals-all'] });
-      qc.invalidateQueries({ queryKey: ['trades'] });
-    },
+    onSettled: () => invalidateTradingData(qc),
   });
 }
 
 export function useChecklist(tradeId: string | null) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['checklist', tradeId],
+    queryKey: ['checklist', user?.id, tradeId],
     queryFn: async () => {
       if (!tradeId) return null;
       const { data, error } = await supabase
@@ -249,7 +273,9 @@ export function useSaveChecklist() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (checklist: { trade_id: string; checked_higher_tf: boolean; risk_within_limits: boolean; fits_plan: boolean; key_levels: boolean; news_checked: boolean }) => {
-      const existing = await supabase.from('checklists').select('id').eq('trade_id', checklist.trade_id).maybeSingle();
+      if (!user) throw new Error('Not authenticated');
+      const existing = await supabase.from('checklists').select('id').eq('trade_id', checklist.trade_id).eq('user_id', user.id).maybeSingle();
+      if (existing.error) throw existing.error;
       if (existing.data) {
         const { error } = await supabase.from('checklists').update(checklist).eq('id', existing.data.id);
         if (error) throw error;
@@ -258,14 +284,14 @@ export function useSaveChecklist() {
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['checklist'] }),
+    onSuccess: () => invalidateTradingData(qc),
   });
 }
 
 export function useScreenshots(tradeId: string | null) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['screenshots', tradeId],
+    queryKey: ['screenshots', user?.id, tradeId],
     queryFn: async () => {
       if (!tradeId) return [];
       const { data, error } = await supabase
@@ -401,14 +427,11 @@ export function useAllJournals() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['journals-all', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('journals')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Journal[];
-    },
+    queryFn: ({ signal }) => fetchAllAnalysisRows<Journal>(after => {
+      let query = supabase.from('journals').select('*').eq('user_id', user!.id).order('id').limit(1000);
+      if (after) query = query.gt('id', after);
+      return query.abortSignal(signal);
+    }),
     enabled: !!user,
   });
 }
