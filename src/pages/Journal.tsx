@@ -41,7 +41,7 @@ export default function Journal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedTrade = trades.find(t => t.id === selectedId);
   const isWinner = selectedTrade ? Number(selectedTrade.pnl) >= 0 : true;
-  const iconColor = isWinner ? "text-blue-500" : "text-red-500";
+  const iconColor = isWinner ? "text-blue-500" : "text-red-700 dark:text-red-500";
 
   const [journal, setJournal] = useState({ pre_trade_notes: '', post_trade_notes: '', emotions: '', lessons: '', tags: '', rating: 5, risk_reward: '' });
   const [strategySetup, setStrategySetup] = useState<StrategySetup>(emptyStrategySetup);
@@ -138,11 +138,11 @@ export default function Journal() {
 
       <div className={cn('journal-workspace', mobileEditor && 'journal-show-editor')}>
         {/* Trade list */}
-        <div className="journal-list rounded-[20px] border border-white/[0.08] bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm">
-          <div className="p-4 border-b border-white/[0.05] flex items-center justify-between">
+        <div className="journal-list rounded-[20px] border border-border dark:border-white/[0.08] bg-card dark:bg-[#0B0B0B] overflow-hidden flex flex-col shadow-sm">
+          <div className="p-4 border-b border-border dark:border-white/[0.05] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-bold text-foreground">Trade Journal</h3>
-              <button className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/[0.08] text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
+              <button className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-border dark:border-white/[0.08] text-[10px] font-semibold text-muted-foreground bg-secondary hover:text-foreground transition-all">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" /> Live
               </button>
             </div>
@@ -151,13 +151,13 @@ export default function Journal() {
             </span>
           </div>
 
-          <div className="journal-tabs p-2 border-b border-white/[0.05] flex items-center gap-1.5 overflow-x-auto select-none">
+          <div className="journal-tabs p-2 border-b border-border dark:border-white/[0.05] flex items-center gap-1.5 overflow-x-auto select-none">
             <button 
               onClick={() => setActiveTab('ALL')}
               className={cn(
                 "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-200",
                 activeTab === 'ALL'
-                  ? "bg-secondary text-foreground border border-white/[0.08]"
+                  ? "bg-secondary text-foreground border border-border dark:border-white/[0.08]"
                   : "bg-transparent text-muted-foreground hover:text-foreground border border-transparent"
               )}>
               ALL {trades.length}
@@ -167,7 +167,7 @@ export default function Journal() {
               className={cn(
                 "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-200",
                 activeTab === 'JOURNALED'
-                  ? "bg-secondary text-foreground border border-white/[0.08]"
+                  ? "bg-secondary text-foreground border border-border dark:border-white/[0.08]"
                   : "bg-transparent text-muted-foreground hover:text-foreground border border-transparent"
               )}>
               JOURNALED {journaledTrades.length}
@@ -177,24 +177,24 @@ export default function Journal() {
               className={cn(
                 "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-200",
                 activeTab === 'PENDING'
-                  ? "bg-secondary text-foreground border border-white/[0.08]"
+                  ? "bg-secondary text-foreground border border-border dark:border-white/[0.08]"
                   : "bg-transparent text-muted-foreground hover:text-foreground border border-transparent"
               )}>
               PENDING {pendingTrades.length}
             </button>
           </div>
 
-          <div className="space-y-2 border-b border-white/5 p-3">
-            <label className="flex h-11 items-center gap-2 rounded-xl border border-white/[0.08] bg-secondary px-3"><Search className="h-4 w-4 shrink-0 text-muted-foreground" /><input aria-label="Search journal symbol" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search symbol…" className="min-w-0 w-full bg-transparent text-sm outline-none" /></label>
+          <div className="space-y-2 border-b border-border dark:border-white/5 p-3">
+            <label className="flex h-11 items-center gap-2 rounded-xl border border-border dark:border-white/[0.08] bg-secondary px-3"><Search className="h-4 w-4 shrink-0 text-muted-foreground" /><input aria-label="Search journal symbol" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search symbol…" className="min-w-0 w-full bg-transparent text-sm outline-none" /></label>
             <div className="grid grid-cols-2 gap-2">
-              <select aria-label="Journal date range" value={days} onChange={e => setDays(e.target.value)} className="min-w-0 h-11 rounded-xl border border-white/[0.08] bg-secondary px-2 text-xs"><option value="all">All time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="custom">Custom dates</option></select>
-              <select aria-label="Sort journals" value={sort} onChange={e => setSort(e.target.value)} className="min-w-0 h-11 rounded-xl border border-white/[0.08] bg-secondary px-2 text-xs"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="pnl">Highest P&L</option></select>
+              <select aria-label="Journal date range" value={days} onChange={e => setDays(e.target.value)} className="min-w-0 h-11 rounded-xl border border-border dark:border-white/[0.08] bg-secondary px-2 text-xs"><option value="all">All time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="custom">Custom dates</option></select>
+              <select aria-label="Sort journals" value={sort} onChange={e => setSort(e.target.value)} className="min-w-0 h-11 rounded-xl border border-border dark:border-white/[0.08] bg-secondary px-2 text-xs"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="pnl">Highest P&L</option></select>
             </div>
-            {days === 'custom' && <div className="space-y-2"><div className="grid grid-cols-2 gap-2"><label className="min-w-0 text-xs text-muted-foreground">From<input aria-label="Journal start date" type="date" value={start} onChange={e => setStart(e.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/10 bg-secondary px-1 text-xs" /></label><label className="min-w-0 text-xs text-muted-foreground">Through<input aria-label="Journal end date" type="date" min={start || undefined} value={end} onChange={e => setEnd(e.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/10 bg-secondary px-1 text-xs" /></label></div>{start && end && end < start && <p className="text-xs text-amber-400">End date must be on or after start date.</p>}</div>}
+            {days === 'custom' && <div className="space-y-2"><div className="grid grid-cols-2 gap-2"><label className="min-w-0 text-xs text-muted-foreground">From<input aria-label="Journal start date" type="date" value={start} onChange={e => setStart(e.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-border dark:border-white/10 bg-secondary px-1 text-xs" /></label><label className="min-w-0 text-xs text-muted-foreground">Through<input aria-label="Journal end date" type="date" min={start || undefined} value={end} onChange={e => setEnd(e.target.value)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-border dark:border-white/10 bg-secondary px-1 text-xs" /></label></div>{start && end && end < start && <p className="text-xs text-amber-700 dark:text-amber-400">End date must be on or after start date.</p>}</div>}
           </div>
           <div className="min-h-0 flex-1 overflow-auto p-3 space-y-2">
             {displayedTrades.length === 0 ? (
-              <p className="text-center text-zinc-500 py-12 text-xs font-semibold">
+              <p className="text-center text-muted-foreground dark:text-zinc-500 py-12 text-xs font-semibold">
                 {trades.length === 0 ? "Add trades first" : "No trades found"}
               </p>
             ) : (
@@ -204,7 +204,7 @@ export default function Journal() {
                     "w-full text-left p-4 rounded-[20px] border transition-all duration-200 flex flex-col",
                     selectedId === t.id
                       ? 'bg-blue-600/[0.08] border-blue-600/[0.35]'
-                      : 'bg-[#0B0B0B] border-white/[0.06] hover:bg-white/[0.02]'
+                      : 'bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] hover:bg-foreground/[0.02] dark:hover:bg-white/[0.02]'
                   )}>
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function Journal() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs mt-2 font-semibold">
-                    <span className={t.direction === 'Long' ? 'text-blue-500' : 'text-red-500'}>{t.direction}</span>
+                    <span className={t.direction === 'Long' ? 'text-blue-500' : 'text-red-700 dark:text-red-500'}>{t.direction}</span>
                     <span className="text-muted-foreground">${Number(t.entry_price).toFixed(2)}</span>
                     <span className={Number(t.pnl) >= 0 ? 'text-profit' : 'text-loss'}>
                       {Number(t.pnl) >= 0 ? '+' : '-'}${Math.abs(Number(t.pnl)).toFixed(2)}
@@ -239,14 +239,14 @@ export default function Journal() {
           tabIndex={-1}
           aria-label="Selected trade journal"
           className={cn(
-            "journal-editor flex-1 min-w-0 rounded-3xl border p-4 sm:p-6 overflow-auto shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
-            "bg-[#0B0B0B] border-white/[0.06]",
+            "journal-editor flex-1 min-w-0 rounded-3xl border p-4 sm:p-6 overflow-auto shadow-[0_4px_20px_rgba(15,23,42,0.06)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.35)] relative",
+            "bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06]",
           )}
         >
           {selectedTrade ? (
             <div className="space-y-5 md:space-y-6 animate-fade-up">
-              <button onClick={() => { setMobileEditor(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.journal-list [aria-current="true"]')?.focus({ preventScroll: true })); }} className="journal-back min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-secondary px-3 text-sm font-semibold"><ArrowLeft className="h-4 w-4" />Trade Journal</button>
-              <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-4 border-b border-white/[0.05] pb-4 md:pb-5">
+              <button onClick={() => { setMobileEditor(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.journal-list [aria-current="true"]')?.focus({ preventScroll: true })); }} className="journal-back min-h-11 items-center gap-2 rounded-xl border border-border dark:border-white/10 bg-secondary px-3 text-sm font-semibold"><ArrowLeft className="h-4 w-4" />Trade Journal</button>
+              <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-4 border-b border-border dark:border-white/[0.05] pb-4 md:pb-5">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-sm shrink-0">
                     <DollarSign className="w-4 h-4 text-black stroke-[3]" />
@@ -256,19 +256,19 @@ export default function Journal() {
                     "text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0",
                     isWinner
                       ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-500/20'
-                      : 'bg-red-500/10 text-red-600 dark:text-red-500 border-red-500/20'
+                      : 'bg-red-500/10 text-red-700 dark:text-red-500 border-red-500/20'
                   )}>
                     {isWinner ? 'WINNER' : 'LOSER'}
                   </span>
                 </div>
                 <div className="journal-actions flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
-                  <button aria-label="Refresh journal" className="touch-target inline-flex items-center justify-center h-11 w-11 shrink-0 border border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button aria-label="Refresh journal" className="touch-target inline-flex items-center justify-center h-11 w-11 shrink-0 border border-border dark:border-white/[0.08] p-2 rounded-[20px] text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-border dark:border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <FileText className="w-3.5 h-3.5" /> <span>Report</span>
                   </button>
-                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
+                  <button className="touch-target inline-flex items-center justify-center h-11 gap-1.5 border border-border dark:border-white/[0.08] px-3 sm:px-4 py-2 rounded-[20px] text-xs leading-none font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-muted transition-all">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> <span>Analytics</span>
                   </button>
                   <button onClick={handleSave} disabled={saveJournal.isPending}
@@ -282,7 +282,7 @@ export default function Journal() {
               </div>
 
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground font-semibold mb-4 md:mb-6">
-                <span className={selectedTrade.direction === 'Long' ? 'text-blue-500' : 'text-red-500'}>{selectedTrade.direction}</span>
+                <span className={selectedTrade.direction === 'Long' ? 'text-blue-500' : 'text-red-700 dark:text-red-500'}>{selectedTrade.direction}</span>
                 <span>·</span>
                 <span>Entry ${Number(selectedTrade.entry_price).toFixed(2)}</span>
                 <span>·</span>
@@ -300,7 +300,7 @@ export default function Journal() {
                 <textarea value={journal.pre_trade_notes} onChange={e => setJournal(j => ({ ...j, pre_trade_notes: e.target.value }))}
                   placeholder="What did you see? Plan, thesis, levels, risk..."
                   className={cn(
-                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
+                    "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                     "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                   )} />
               </div>
@@ -313,7 +313,7 @@ export default function Journal() {
                 <textarea value={journal.post_trade_notes} onChange={e => setJournal(j => ({ ...j, post_trade_notes: e.target.value }))}
                   placeholder="What happened? Execution, slippage, improvements..."
                   className={cn(
-                    "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
+                    "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                     "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                   )} />
               </div>
@@ -321,7 +321,7 @@ export default function Journal() {
               </div>
               {/* Risk Reward */}
               <div className={cn(
-                "rounded-[20px] p-4 flex items-center justify-between transition-all duration-300 bg-[#0B0B0B] border border-white/[0.06]"
+                "rounded-[20px] p-4 flex items-center justify-between transition-all duration-300 bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06]"
               )}>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" /> Risk : Reward
@@ -332,16 +332,16 @@ export default function Journal() {
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${e.target.value}:${j.risk_reward.split(':')[1] ?? ''}` }))}
                     placeholder="1"
                     className={cn(
-                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
+                      "w-12 h-8 bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
-                  <span className="text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
+                  <span className="text-muted-foreground dark:text-zinc-400 dark:text-zinc-600 font-bold text-sm">:</span>
                   <input
                     value={journal.risk_reward.split(':')[1] ?? ''}
                     onChange={e => setJournal(j => ({ ...j, risk_reward: `${j.risk_reward.split(':')[0] ?? ''}:${e.target.value}` }))}
                     placeholder="2"
                     className={cn(
-                      "w-12 h-8 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
+                      "w-12 h-8 bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-lg px-2 text-xs text-center font-bold focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/45 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
@@ -355,7 +355,7 @@ export default function Journal() {
                   </label>
                   <textarea value={journal.emotions} onChange={e => setJournal(j => ({ ...j, emotions: e.target.value }))} placeholder="Calm, anxious, FOMO, confident..."
                     className={cn(
-                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
+                      "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
@@ -365,7 +365,7 @@ export default function Journal() {
                   </label>
                   <textarea value={journal.lessons} onChange={e => setJournal(j => ({ ...j, lessons: e.target.value }))} placeholder="Key takeaways to repeat or avoid..."
                     className={cn(
-                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
+                      "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3.5 text-sm leading-relaxed focus:outline-none min-h-[80px] resize-y transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
@@ -379,7 +379,7 @@ export default function Journal() {
                   </label>
                   <input value={journal.tags} onChange={e => setJournal(j => ({ ...j, tags: e.target.value }))} placeholder="breakout, trend, news (comma separated)"
                     className={cn(
-                      "w-full bg-[#050505] text-foreground border border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
+                      "w-full bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-[20px] px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                 </div>
@@ -390,7 +390,7 @@ export default function Journal() {
                       "text-xs font-extrabold px-2.5 py-0.5 rounded border",
                       isWinner
                         ? "text-blue-500 bg-blue-500/10 border-blue-500/10"
-                        : "text-red-500 bg-red-500/10 border-red-500/10"
+                        : "text-red-700 dark:text-red-500 bg-red-500/10 border-red-500/10"
                     )}>{journal.rating}/10</span>
                   </label>
                   <div className="relative mt-3 px-2">
@@ -415,7 +415,7 @@ export default function Journal() {
               <div>
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-1.5"><CheckCircle2 className={cn("w-3.5 h-3.5", iconColor)} /> Execution Checklist</span>
-                  <span className={cn("font-bold text-xs", isWinner ? "text-blue-500" : "text-red-500")}>{checkCount}/{totalCheckCount}</span>
+                  <span className={cn("font-bold text-xs", isWinner ? "text-blue-500" : "text-red-700 dark:text-red-500")}>{checkCount}/{totalCheckCount}</span>
                 </label>
                 <div className="flex flex-wrap gap-2.5">
                   {[
@@ -433,7 +433,7 @@ export default function Journal() {
                           ? isWinner
                             ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-white'
                             : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
-                          : 'bg-[#0B0B0B] border-white/[0.08] text-muted-foreground hover:bg-secondary'
+                          : 'bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.08] text-muted-foreground hover:bg-secondary'
                       )}>
                       <div className={cn(
                         "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
@@ -441,9 +441,9 @@ export default function Journal() {
                           ? isWinner
                             ? 'bg-blue-500 border-blue-500'
                             : 'bg-red-500 border-red-500'
-                          : 'border-white/[0.08] dark:border-zinc-700'
+                          : 'border-muted-foreground/60 dark:border-zinc-700'
                       )}>
-                        {checklist[item.key as keyof typeof checklist] && <Check className="w-2.5 h-2.5 text-black stroke-[3]" />}
+                        {checklist[item.key as keyof typeof checklist] && <Check className="w-2.5 h-2.5 text-primary-foreground dark:text-black stroke-[3]" />}
                       </div>
                       {item.label}
                     </button>
@@ -455,7 +455,7 @@ export default function Journal() {
                         ? isWinner
                           ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-white'
                           : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-white'
-                        : 'bg-[#0B0B0B] border-white/[0.08] text-muted-foreground hover:bg-secondary'
+                        : 'bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.08] text-muted-foreground hover:bg-secondary'
                     )}>
                       <button type="button" onClick={() => toggleCustomChecklist(item.id)} className="flex items-center gap-2 text-left">
                         <div className={cn(
@@ -464,13 +464,13 @@ export default function Journal() {
                             ? isWinner
                               ? 'bg-blue-500 border-blue-500'
                               : 'bg-red-500 border-red-500'
-                            : 'border-white/[0.08] dark:border-zinc-700'
+                            : 'border-muted-foreground/60 dark:border-zinc-700'
                         )}>
-                          {item.checked && <Check className="w-2.5 h-2.5 text-black stroke-[3]" />}
+                          {item.checked && <Check className="w-2.5 h-2.5 text-primary-foreground dark:text-black stroke-[3]" />}
                         </div>
                         {item.label}
                       </button>
-                      <button type="button" onClick={() => deleteCustomChecklist(item.id)} className="text-zinc-500 hover:text-red-500 transition-colors ml-1">
+                      <button type="button" onClick={() => deleteCustomChecklist(item.id)} className="text-muted-foreground dark:text-zinc-500 hover:text-red-700 dark:hover:text-red-500 transition-colors ml-1">
                         <X className="w-3 h-3" />
                       </button>
                     </div>
@@ -479,7 +479,7 @@ export default function Journal() {
                 <form onSubmit={handleAddCustomChecklist} className="flex items-center gap-2 mt-3 w-full max-w-xs">
                   <input type="text" value={newCustomLabel} onChange={e => setNewCustomLabel(e.target.value)} placeholder="Add custom item..."
                     className={cn(
-                      "flex-1 bg-[#050505] text-foreground border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
+                      "flex-1 bg-input dark:bg-[#050505] text-foreground border border-border dark:border-white/[0.08] rounded-lg px-2.5 py-1 text-xs focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/60 dark:placeholder:text-zinc-500",
                       "focus:border-blue-600/[0.6] focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                     )} />
                   <button type="submit" className={cn(
@@ -498,14 +498,14 @@ export default function Journal() {
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {screenshots.map(s => (
-                    <div key={s.id} className="w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] overflow-hidden border border-white/[0.08] hover:border-blue-500/30 transition-all duration-200 group relative">
+                    <div key={s.id} className="w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] overflow-hidden border border-border dark:border-white/[0.08] hover:border-blue-500/30 transition-all duration-200 group relative">
                       <img src={(s as { signed_url?: string }).signed_url || s.image_url} alt="Trade screenshot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   ))}
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] border border-dashed bg-[#0B0B0B] flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
-                      isWinner ? "border-white/[0.08] dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-white/[0.08] dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
+                      "w-full max-w-[144px] sm:w-36 h-24 rounded-[20px] border border-dashed bg-card dark:bg-[#0B0B0B] flex flex-col items-center justify-center text-muted-foreground transition-all duration-200 group",
+                      isWinner ? "border-border dark:border-white/[0.08] dark:border-zinc-800 hover:border-blue-500/30 hover:text-foreground" : "border-border dark:border-white/[0.08] dark:border-zinc-800 hover:border-red-500/30 hover:text-foreground"
                     )}>
                     <Plus className="w-5 h-5 mb-1 text-muted-foreground group-hover:text-foreground transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wider">Add Image</span>

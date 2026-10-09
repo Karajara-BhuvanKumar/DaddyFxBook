@@ -97,7 +97,7 @@ export default function Trades() {
           <h1 className="page-title text-foreground hidden lg:block">Trades</h1>
           <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
             <span className="w-2 h-2 rounded-full bg-zinc-600" />
-            <span className="text-[13px] text-zinc-500 font-semibold tracking-wide">Not connected</span>
+            <span className="text-[13px] text-muted-foreground dark:text-zinc-500 font-semibold tracking-wide">Not connected</span>
           </div>
         </div>
         <div className="trades-page-actions flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
@@ -140,7 +140,7 @@ export default function Trades() {
               <div key={field.key}>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{field.label}</label>
                 <input type="number" step="0.01" value={form[field.key as keyof typeof form]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
-                  placeholder={field.placeholder} className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground/50" required />
+                  placeholder={field.placeholder} className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/50" required />
               </div>
             ))}
             <div>

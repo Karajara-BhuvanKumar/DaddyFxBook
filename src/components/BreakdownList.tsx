@@ -25,7 +25,7 @@ export function BreakdownList({ rows }: BreakdownListProps) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   if (rows.length === 0) {
-    return <p className="text-xs text-zinc-500 font-medium">No data</p>;
+    return <p className="text-xs text-muted-foreground dark:text-zinc-500 font-medium">No data</p>;
   }
 
   const toggleExpand = (key: string) => {
@@ -46,33 +46,33 @@ export function BreakdownList({ rows }: BreakdownListProps) {
         <div 
           className={cn(
             "flex items-center justify-between text-xs gap-3",
-            hasChildren ? "cursor-pointer hover:bg-white/[0.02] p-1 -mx-1 rounded transition-colors" : "",
+            hasChildren ? "cursor-pointer hover:bg-foreground/[0.02] dark:hover:bg-white/[0.02] p-1 -mx-1 rounded transition-colors" : "",
             isChild ? "pl-6" : ""
           )}
           onClick={hasChildren ? () => toggleExpand(r.key) : undefined}
         >
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {hasChildren && (
-              <div className="text-zinc-500 shrink-0">
+              <div className="text-muted-foreground dark:text-zinc-500 shrink-0">
                 {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
               </div>
             )}
             {!hasChildren && !isChild && <div className="w-3.5 h-3.5 shrink-0" />}
-            <span className={cn("text-white truncate", isChild ? "font-semibold text-zinc-300" : "font-bold")}>{r.key}</span>
+            <span className={cn("text-foreground dark:text-white truncate", isChild ? "font-semibold text-muted-foreground dark:text-zinc-300" : "font-bold")}>{r.key}</span>
           </div>
           
-          <span className="text-zinc-500 font-medium tabular-nums shrink-0 flex items-center gap-1">
+          <span className="text-muted-foreground dark:text-zinc-500 font-medium tabular-nums shrink-0 flex items-center gap-1">
             {r.trades}t
             {r.trades <= 2 && (
-              <span className="text-[9px] text-zinc-600 font-semibold">(n={r.trades})</span>
+              <span className="text-[9px] text-muted-foreground dark:text-zinc-600 font-semibold">(n={r.trades})</span>
             )}
           </span>
-          <span className="text-zinc-500 font-medium tabular-nums w-12 text-right shrink-0">
+          <span className="text-muted-foreground dark:text-zinc-500 font-medium tabular-nums w-12 text-right shrink-0">
             {(r.winRate * 100).toFixed(0)}%
           </span>
           <span
             className={`font-mono font-bold tabular-nums w-20 text-right shrink-0 ${
-              r.netValue >= 0 ? "text-blue-500" : "text-red-500"
+              r.netValue >= 0 ? "text-blue-500" : "text-red-700 dark:text-red-500"
             }`}
           >
             {r.unit === "R"
@@ -82,7 +82,7 @@ export function BreakdownList({ rows }: BreakdownListProps) {
         </div>
 
         {hasChildren && isExpanded && (
-          <div className="flex flex-col gap-2 mt-1 mb-2 border-l border-white/[0.05] ml-1.5">
+          <div className="flex flex-col gap-2 mt-1 mb-2 border-l border-border dark:border-white/[0.05] ml-1.5">
             {r.children!.map((child) => renderRow(child, true))}
           </div>
         )}

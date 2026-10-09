@@ -26,11 +26,14 @@ export function resolvePreferences(settings?: Partial<WorkspacePreferences> | nu
   return result;
 }
 
-export function applyWorkspaceAppearance(preferences: WorkspacePreferences) {
+export function applyWorkspaceAppearance(preferences: WorkspacePreferences, resolvedTheme = "dark") {
   const root = document.documentElement;
   const accent = ACCENT_COLORS.find(color => color.id === preferences.accent_color) ?? ACCENT_COLORS[0];
-  for (const property of ["--primary", "--profit", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.setProperty(property, accent.hsl);
-  root.style.setProperty("--profit-color", `hsl(${accent.hsl})`);
+  // Light surfaces need deeper accents for readable small text and white button labels.
+  const lightAccents: Record<string, string> = { blue: "221 83% 48%", purple: "262 72% 47%", green: "152 76% 28%", gold: "38 92% 29%" };
+  const hsl = resolvedTheme === "light" ? lightAccents[accent.id] : accent.hsl;
+  for (const property of ["--primary", "--profit", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.setProperty(property, hsl);
+  root.style.setProperty("--profit-color", `hsl(${hsl})`);
   root.dataset.accent = accent.id;
   root.dataset.compact = String(preferences.compact_mode);
   // next-themes owns theme classes and OS theme changes. CSS owns density.

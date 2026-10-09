@@ -64,28 +64,28 @@ export default function AIPeriodReportPage({ period, title, description }: Props
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
-      <div className="p-6 bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
+      <div className="p-6 bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[24px]">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-[20px] bg-blue-500/10 flex items-center justify-center">
               <Calendar className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-white flex items-center gap-2">
+              <h1 className="text-xl font-black text-foreground dark:text-white flex items-center gap-2">
                 {title}
                 <span className="text-[10px] font-extrabold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">PRO</span>
               </h1>
-              <p className="text-[13px] text-zinc-500 font-medium mt-0.5">{description}</p>
+              <p className="text-[13px] text-muted-foreground dark:text-zinc-500 font-medium mt-0.5">{description}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => shiftPeriod(-1)} className="w-9 h-9 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+            <button onClick={() => shiftPeriod(-1)} className="w-9 h-9 rounded-xl bg-secondary dark:bg-[#121212] hover:bg-foreground/5 dark:hover:bg-white/5 border border-border dark:border-white/[0.08] flex items-center justify-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="px-4 h-9 rounded-xl bg-[#121212] border border-white/[0.08] flex items-center text-sm font-bold text-white min-w-[200px] justify-center">
+            <div className="px-4 h-9 rounded-xl bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] flex items-center text-sm font-bold text-foreground dark:text-white min-w-[200px] justify-center">
               {range.label}
             </div>
-            <button onClick={() => shiftPeriod(1)} className="w-9 h-9 rounded-xl bg-[#121212] hover:bg-white/5 border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+            <button onClick={() => shiftPeriod(1)} className="w-9 h-9 rounded-xl bg-secondary dark:bg-[#121212] hover:bg-foreground/5 dark:hover:bg-white/5 border border-border dark:border-white/[0.08] flex items-center justify-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white transition-colors">
               <ChevronRight className="w-4 h-4" />
             </button>
             <button 
@@ -100,10 +100,10 @@ export default function AIPeriodReportPage({ period, title, description }: Props
       </div>
 
       {periodTrades.length === 0 ? (
-        <div className="p-10 text-center bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
-          <Activity className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-white mb-1">No trades in this period</h3>
-          <p className="text-sm text-zinc-500 font-medium">More trading history is required to generate meaningful AI reports.</p>
+        <div className="p-10 text-center bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[24px]">
+          <Activity className="w-10 h-10 text-muted-foreground dark:text-zinc-600 mx-auto mb-3" />
+          <h3 className="font-semibold text-foreground dark:text-white mb-1">No trades in this period</h3>
+          <p className="text-sm text-muted-foreground dark:text-zinc-500 font-medium">More trading history is required to generate meaningful AI reports.</p>
         </div>
       ) : (
         <>
@@ -112,10 +112,10 @@ export default function AIPeriodReportPage({ period, title, description }: Props
           {reportLoading || generate.isPending ? (
             <div className="space-y-3"><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>
           ) : !report ? (
-            <div className="p-10 text-center bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
-              <Sparkles className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-white mb-1">Ready when you are</h3>
-              <p className="text-sm text-zinc-500 font-medium">Click <span className="text-white font-bold">Generate</span> to add the AI narrative.</p>
+            <div className="p-10 text-center bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[24px]">
+              <Sparkles className="w-10 h-10 text-muted-foreground dark:text-zinc-600 mx-auto mb-3" />
+              <h3 className="font-semibold text-foreground dark:text-white mb-1">Ready when you are</h3>
+              <p className="text-sm text-muted-foreground dark:text-zinc-500 font-medium">Click <span className="text-foreground dark:text-white font-bold">Generate</span> to add the AI narrative.</p>
             </div>
           ) : (
             <ReportContent report={report} period={period} />
@@ -139,31 +139,31 @@ function StatsGrid({ stats }: { stats: ReturnType<typeof buildPeriodStats> }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
       {items.map((it) => (
-        <Card key={it.label} className="p-4 bg-[#0B0B0B] border-white/[0.06] rounded-[20px]">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">{it.label}</p>
+        <Card key={it.label} className="p-4 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[20px]">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-1">{it.label}</p>
           <p className={`text-xl font-extrabold font-mono ${
-            it.tone === "profit" ? "text-blue-500" : it.tone === "loss" ? "text-red-500" : it.tone === "primary" ? "text-blue-500" : "text-white"
+            it.tone === "profit" ? "text-blue-500" : it.tone === "loss" ? "text-red-700 dark:text-red-500" : it.tone === "primary" ? "text-blue-500" : "text-foreground dark:text-white"
           }`}>{String(it.value)}</p>
         </Card>
       ))}
-      <Card className="p-4 bg-[#0B0B0B] border-white/[0.06] rounded-[20px] col-span-2 sm:col-span-2 lg:col-span-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Best / Worst</p>
+      <Card className="p-4 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[20px] col-span-2 sm:col-span-2 lg:col-span-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-1">Best / Worst</p>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-blue-500 font-mono font-bold">
             {stats.best_trade ? `+$${stats.best_trade.pnl.toFixed(2)} · ${stats.best_trade.symbol}` : "—"}
           </span>
-          <span className="text-zinc-600">/</span>
-          <span className="text-red-500 font-mono font-bold">
+          <span className="text-muted-foreground dark:text-zinc-600">/</span>
+          <span className="text-red-700 dark:text-red-500 font-mono font-bold">
             {stats.worst_trade ? `$${stats.worst_trade.pnl.toFixed(2)} · ${stats.worst_trade.symbol}` : "—"}
           </span>
         </div>
       </Card>
-      <Card className="p-4 bg-[#0B0B0B] border-white/[0.06] rounded-[20px] col-span-2 sm:col-span-2 lg:col-span-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">By session</p>
+      <Card className="p-4 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[20px] col-span-2 sm:col-span-2 lg:col-span-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-2">By session</p>
         <div className="flex gap-3 flex-wrap">
           {Object.entries(stats.by_session).map(([s, v]) => (
-            <span key={s} className="text-xs px-2.5 py-1 rounded-lg bg-[#121212] border border-white/[0.05] text-white">
-              {s}: <span className="font-mono font-bold">{v.count}t</span> · <span className={`font-mono ${v.pnl >= 0 ? "text-blue-500" : "text-red-500"}`}>{v.pnl >= 0 ? "+" : ""}${v.pnl.toFixed(2)}</span>
+            <span key={s} className="text-xs px-2.5 py-1 rounded-lg bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.05] text-foreground dark:text-white">
+              {s}: <span className="font-mono font-bold">{v.count}t</span> · <span className={`font-mono ${v.pnl >= 0 ? "text-blue-500" : "text-red-700 dark:text-red-500"}`}>{v.pnl >= 0 ? "+" : ""}${v.pnl.toFixed(2)}</span>
             </span>
           ))}
         </div>
@@ -183,7 +183,7 @@ function ReportContent({ report, period }: { report: Record<string, unknown>; pe
   return (
     <div className="space-y-4">
       {headline && (
-        <Card className="p-5 bg-gradient-to-r from-blue-900/20 to-[#0B0B0B] border border-blue-500/20 rounded-[20px]">
+        <Card className="p-5 bg-gradient-to-r from-blue-900/20 to-card dark:to-[#0B0B0B] border border-blue-500/20 rounded-[20px]">
           <p className="text-[15px] text-blue-100 font-medium leading-relaxed">{headline}</p>
         </Card>
       )}
@@ -230,14 +230,14 @@ function ReportContent({ report, period }: { report: Record<string, unknown>; pe
 }
 
 function InsightCard({ tone, icon, title, text }: { tone: "profit" | "loss"; icon: React.ReactNode; title: string; text?: string }) {
-  const toneCls = tone === "profit" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500";
+  const toneCls = tone === "profit" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-500" : "bg-red-500/10 text-red-700 dark:text-red-500";
   return (
-    <Card className="p-5 bg-[#0B0B0B] border-white/[0.06] rounded-[20px]">
+    <Card className="p-5 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[20px]">
       <div className="flex items-start gap-4">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${toneCls}`}>{icon}</div>
         <div>
-          <h3 className="font-bold text-white text-sm mb-1.5">{title}</h3>
-          <p className="text-sm text-zinc-400 font-medium leading-relaxed">{text || "—"}</p>
+          <h3 className="font-bold text-foreground dark:text-white text-sm mb-1.5">{title}</h3>
+          <p className="text-sm text-muted-foreground dark:text-zinc-400 font-medium leading-relaxed">{text || "—"}</p>
         </div>
       </div>
     </Card>
@@ -245,29 +245,29 @@ function InsightCard({ tone, icon, title, text }: { tone: "profit" | "loss"; ico
 }
 
 function MiniCard({ label, value, tone }: { label: string; value?: string; tone: "profit" | "loss" | "primary" }) {
-  const toneCls = tone === "profit" ? "text-emerald-500" : tone === "loss" ? "text-red-500" : "text-blue-500";
+  const toneCls = tone === "profit" ? "text-emerald-700 dark:text-emerald-500" : tone === "loss" ? "text-red-700 dark:text-red-500" : "text-blue-500";
   return (
-    <Card className="p-5 bg-[#0B0B0B] border-white/[0.06] rounded-[20px]">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-2">{label}</p>
+    <Card className="p-5 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[20px]">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-2">{label}</p>
       <p className={`text-[15px] font-bold ${toneCls}`}>{value || "—"}</p>
     </Card>
   );
 }
 
 function ListCard({ title, items, tone, icon }: { title: string; items: string[]; tone: "profit" | "loss" | "primary"; icon?: React.ReactNode }) {
-  const toneCls = tone === "profit" ? "text-emerald-500" : tone === "loss" ? "text-red-500" : "text-blue-500";
+  const toneCls = tone === "profit" ? "text-emerald-700 dark:text-emerald-500" : tone === "loss" ? "text-red-700 dark:text-red-500" : "text-blue-500";
   return (
-    <Card className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[20px]">
+    <Card className="p-6 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[20px]">
       <h3 className={`text-[12px] font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${toneCls}`}>
         {icon}{title}
       </h3>
       {items.length === 0 ? (
-        <p className="text-[13px] text-zinc-500 italic font-medium">None noted.</p>
+        <p className="text-[13px] text-muted-foreground dark:text-zinc-500 italic font-medium">None noted.</p>
       ) : (
         <ul className="space-y-3">
           {items.map((it, i) => (
-            <li key={i} className="text-sm text-zinc-300 font-medium leading-relaxed flex gap-3">
-              <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${toneCls.replace("text-", "bg-")}`} />
+            <li key={i} className="text-sm text-muted-foreground dark:text-zinc-300 font-medium leading-relaxed flex gap-3">
+              <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 bg-current ${toneCls}`} />
               <span>{it}</span>
             </li>
           ))}

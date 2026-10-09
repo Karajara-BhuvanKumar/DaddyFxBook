@@ -94,14 +94,14 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
           <h3 style={{ fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
             Trades on {dateLabel}
           </h3>
-          <p style={{ fontSize: 14, color: "#94A3B8", marginTop: 4 }}>
+          <p style={{ fontSize: 14, color: "var(--popup-muted)", marginTop: 4 }}>
             {trades.length} {trades.length === 1 ? "trade" : "trades"}
           </p>
         </div>
         <button
           onClick={handleClose}
-          className="rounded-full p-1.5 hover:bg-white/[0.02] transition"
-          style={{ color: "#94A3B8" }}
+          className="rounded-full p-1.5 hover:bg-foreground/[0.02] dark:hover:bg-white/[0.02] transition"
+          style={{ color: "var(--popup-muted)" }}
           aria-label="Close"
         >
           <X className="w-4 h-4" />
@@ -109,7 +109,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
       </div>
 
       {trades.length === 0 ? (
-        <div style={{ padding: "28px 0", textAlign: "center", fontSize: 16, color: "#64748B" }}>
+        <div style={{ padding: "28px 0", textAlign: "center", fontSize: 16, color: "hsl(var(--muted-foreground))" }}>
           No trades recorded
         </div>
       ) : (
@@ -124,7 +124,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
                 style={{
                   height: 64,
                   padding: "0 4px",
-                  borderBottom: "1px solid rgba(255,255,255,.04)",
+                  borderBottom: "1px solid var(--popup-divider)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -145,7 +145,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
                   <span
                     style={{
                       background: isLong ? "hsl(var(--primary)/.15)" : "rgba(239,68,68,.15)",
-                      color: isLong ? "hsl(var(--primary))" : "#EF4444",
+                      color: isLong ? "hsl(var(--primary))" : "var(--popup-loss)",
                       borderRadius: 999,
                       padding: "4px 10px",
                       fontSize: 11,
@@ -160,7 +160,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
                 <span
                   className="text-num"
                   style={{
-                    color: positive ? "hsl(var(--primary))" : "#EF4444",
+                    color: positive ? "hsl(var(--primary))" : "var(--popup-loss)",
                     fontWeight: 700,
                     fontSize: 15,
                   }}
@@ -182,8 +182,8 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
           marginTop: 12,
           width: "100%",
           height: 52,
-          background: "rgba(255,255,255,.05)",
-          border: "1px solid rgba(255,255,255,.06)",
+          background: "var(--popup-button)",
+          border: "1px solid var(--popup-border)",
           borderRadius: 16,
           color: "hsl(var(--foreground))",
           fontSize: 14,
@@ -194,8 +194,8 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
           gap: 8,
           transition: "background 160ms ease",
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.08)")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,.05)")}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--popup-hover)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--popup-button)")}
       >
         View All Trades <ArrowRight className="w-4 h-4" />
       </button>

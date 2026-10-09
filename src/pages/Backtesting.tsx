@@ -56,7 +56,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
   return (
     <div 
       className="rounded-[20px] flex flex-col group transition-all duration-200" 
-      style={{ background: "#080808", border: "1px solid rgba(255,255,255,0.05)", padding: 24 }}
+      style={{ background: "var(--session-card)", border: "1px solid var(--session-card-border)", padding: 24 }}
     >
       <div className="flex items-start justify-between gap-2 mb-4">
         <Link to={`/backtesting/${s.id}`} className="flex-1 min-w-0 block">
@@ -65,10 +65,10 @@ function SessionCard({ s }: { s: BacktestSession }) {
               <FlaskConical className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-white text-base truncate group-hover:text-blue-400 transition-colors">
+              <h3 className="font-bold text-foreground dark:text-white text-base truncate group-hover:text-blue-400 transition-colors">
                 {s.name}
               </h3>
-              <p className="text-xs text-zinc-500 font-semibold truncate">
+              <p className="text-xs text-muted-foreground dark:text-zinc-500 font-semibold truncate">
                 {s.pair ?? "—"} <span className="mx-1.5 opacity-50">•</span> {s.strategy ?? "No strategy"}
               </p>
             </div>
@@ -125,7 +125,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
             tone={stats ? (stats.totalPnl >= 0 ? "profit" : "loss") : undefined}
           />
         </div>
-        <p className="text-[11px] font-semibold text-zinc-600">
+        <p className="text-[11px] font-semibold text-muted-foreground dark:text-zinc-600">
           Created {new Date(s.created_at).toLocaleDateString()}
         </p>
       </Link>
@@ -160,11 +160,11 @@ function SessionCard({ s }: { s: BacktestSession }) {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
   return (
-    <div className="rounded-[20px] border border-zinc-900 bg-[#0b0b0b] px-3.5 py-3 transition-colors group-hover:border-blue-600/[0.35]">
-      <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mb-1.5">{label}</div>
+    <div className="rounded-[20px] border border-border dark:border-zinc-900 bg-card dark:bg-[#0b0b0b] px-3.5 py-3 transition-colors group-hover:border-blue-600/[0.35]">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-zinc-500 font-bold mb-1.5">{label}</div>
       <div
         className={`font-black text-[15px] ${
-          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-500" : "text-white"
+          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-700 dark:text-red-500" : "text-foreground dark:text-white"
         }`}
       >
         {value}
@@ -188,7 +188,7 @@ export default function Backtesting() {
             Strategy Lab
             <span className="text-[10px] bg-warning/15 text-warning font-bold px-2 py-0.5 rounded-md tracking-wider uppercase border border-warning/20">Elite</span>
           </h1>
-          <p className="text-sm text-zinc-500 mt-1.5 font-medium tracking-wide">
+          <p className="text-sm text-muted-foreground dark:text-zinc-500 mt-1.5 font-medium tracking-wide">
             Manually backtest strategies. Each session is permanently saved with full analytics and AI strategy reports.
           </p>
         </div>
@@ -198,13 +198,13 @@ export default function Backtesting() {
               <Plus className="w-4 h-4" /> New session
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[#0B0B0B] border-zinc-900">
-            <DialogHeader><DialogTitle className="text-white">Create backtest session</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card dark:bg-[#0B0B0B] border-border dark:border-zinc-900">
+            <DialogHeader><DialogTitle className="text-foreground dark:text-white">Create backtest session</DialogTitle></DialogHeader>
             <div className="space-y-4 py-2">
               <div>
-                <Label className="text-zinc-400">Session name</Label>
+                <Label className="text-muted-foreground dark:text-zinc-400">Session name</Label>
                 <Input
-                  className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600 w-full"
+                  className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600 w-full"
                   placeholder="e.g. XAUUSD London Breakout 2024"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -212,13 +212,13 @@ export default function Backtesting() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-zinc-400">Pair</Label>
-                  <Input className="bg-[#060606] border-zinc-800 text-white" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
+                  <Label className="text-muted-foreground dark:text-zinc-400">Pair</Label>
+                  <Input className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} />
                 </div>
                 <div>
-                  <Label className="text-zinc-400">Strategy</Label>
+                  <Label className="text-muted-foreground dark:text-zinc-400">Strategy</Label>
                   <Input
-                    className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600"
+                    className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600"
                     placeholder="e.g. SMC, Trend Following"
                     value={form.strategy}
                     onChange={(e) => setForm({ ...form, strategy: e.target.value })}
@@ -226,9 +226,9 @@ export default function Backtesting() {
                 </div>
               </div>
               <div>
-                <Label className="text-zinc-400">Description</Label>
+                <Label className="text-muted-foreground dark:text-zinc-400">Description</Label>
                 <Textarea
-                  className="bg-[#060606] border-zinc-800 text-white placeholder:text-zinc-600"
+                  className="bg-input dark:bg-[#060606] border-border dark:border-zinc-800 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-zinc-600"
                   rows={3}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -236,7 +236,7 @@ export default function Backtesting() {
               </div>
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="ghost" className="w-full sm:w-auto text-zinc-400 hover:text-white" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button variant="ghost" className="w-full sm:w-auto text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white" onClick={() => setOpen(false)}>Cancel</Button>
               <Button
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
                 disabled={!form.name.trim() || create.isPending}
@@ -266,10 +266,10 @@ export default function Backtesting() {
           ))}
         </div>
       ) : !sessions || sessions.length === 0 ? (
-        <div className="rounded-3xl border border-zinc-900 border-dashed bg-[#040404] p-8 sm:p-16 text-center">
-          <Sparkles className="w-10 h-10 text-zinc-600 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-white mb-1.5">No backtest sessions yet</h3>
-          <p className="text-sm text-zinc-500 mb-6 font-medium max-w-md mx-auto">
+        <div className="rounded-3xl border border-border dark:border-zinc-900 border-dashed bg-input dark:bg-[#040404] p-8 sm:p-16 text-center">
+          <Sparkles className="w-10 h-10 text-muted-foreground dark:text-zinc-600 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-foreground dark:text-white mb-1.5">No backtest sessions yet</h3>
+          <p className="text-sm text-muted-foreground dark:text-zinc-500 mb-6 font-medium max-w-md mx-auto">
             Create your first session to start journaling backtests from TradingView.
           </p>
           <Button onClick={() => setOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-[20px] h-10 px-6 font-bold">

@@ -17,8 +17,8 @@ import { BreakdownList, type BreakdownItem } from "@/components/BreakdownList";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[24px] border border-white/[0.06] bg-[#0B0B0B] p-5">
-      <h3 className="text-sm font-bold text-white mb-4">{title}</h3>
+    <div className="rounded-[24px] border border-border dark:border-white/[0.06] bg-card dark:bg-[#0B0B0B] p-5">
+      <h3 className="text-sm font-bold text-foreground dark:text-white mb-4">{title}</h3>
       {children}
     </div>
   );
@@ -26,11 +26,11 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
   return (
-    <div className="rounded-[20px] bg-[#0B0B0B] border border-white/[0.06] px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{label}</div>
+    <div className="rounded-[20px] bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] px-4 py-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-1">{label}</div>
       <div
         className={`font-mono text-base font-extrabold ${
-          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-500" : "text-white"
+          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-700 dark:text-red-500" : "text-foreground dark:text-white"
         }`}
       >
         {value}
@@ -54,7 +54,7 @@ function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
 export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
   if (a.total === 0) {
     return (
-      <div className="rounded-[24px] border border-white/[0.06] bg-[#0B0B0B] p-10 text-center text-sm text-zinc-500 font-medium">
+      <div className="rounded-[24px] border border-border dark:border-white/[0.06] bg-card dark:bg-[#0B0B0B] p-10 text-center text-sm text-muted-foreground dark:text-zinc-500 font-medium">
         Add trades to unlock analytics.
       </div>
     );
@@ -93,18 +93,18 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
                   <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
-              <XAxis dataKey="idx" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
+              <XAxis dataKey="idx" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "#121212",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--chart-tooltip)",
+                  border: "1px solid var(--chart-tooltip-border)",
                   borderRadius: 12,
                   fontSize: 12,
-                  color: "#fff"
+                  color: "var(--chart-tooltip-text)"
                 }}
-                itemStyle={{ color: "#fff" }}
+                itemStyle={{ color: "var(--chart-tooltip-text)" }}
               />
               <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" fill="url(#eqg)" strokeWidth={3} />
             </AreaChart>
@@ -119,18 +119,18 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
                   <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
-              <XAxis dataKey="idx" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
+              <XAxis dataKey="idx" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "#121212",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--chart-tooltip)",
+                  border: "1px solid var(--chart-tooltip-border)",
                   borderRadius: 12,
                   fontSize: 12,
-                  color: "#fff"
+                  color: "var(--chart-tooltip-text)"
                 }}
-                itemStyle={{ color: "#fff" }}
+                itemStyle={{ color: "var(--chart-tooltip-text)" }}
               />
               <Area type="monotone" dataKey="drawdown" stroke="#EF4444" fill="url(#ddg)" strokeWidth={3} />
             </AreaChart>
@@ -139,19 +139,19 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
         <Card title="Win / Loss distribution">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={a.distribution}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
-              <XAxis dataKey="name" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
+              <XAxis dataKey="name" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "#121212",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--chart-tooltip)",
+                  border: "1px solid var(--chart-tooltip-border)",
                   borderRadius: 12,
                   fontSize: 12,
-                  color: "#fff"
+                  color: "var(--chart-tooltip-text)"
                 }}
-                itemStyle={{ color: "#fff" }}
-                cursor={{ fill: "rgba(255,255,255,0.02)" }}
+                itemStyle={{ color: "var(--chart-tooltip-text)" }}
+                cursor={{ fill: "var(--chart-cursor)" }}
               />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {a.distribution.map((_, i) => <Cell key={i} fill={distColors[i % distColors.length]} />)}
@@ -162,18 +162,18 @@ export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
         <Card title="Per-trade R">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={a.equityCurve}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
-              <XAxis dataKey="idx" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
+              <XAxis dataKey="idx" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: "#121212",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--chart-tooltip)",
+                  border: "1px solid var(--chart-tooltip-border)",
                   borderRadius: 12,
                   fontSize: 12,
-                  color: "#fff"
+                  color: "var(--chart-tooltip-text)"
                 }}
-                itemStyle={{ color: "#fff" }}
+                itemStyle={{ color: "var(--chart-tooltip-text)" }}
               />
               <Line type="monotone" dataKey="r" stroke="hsl(var(--primary))" dot={false} strokeWidth={3} />
             </LineChart>

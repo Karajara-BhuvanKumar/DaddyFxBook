@@ -4,7 +4,7 @@
   --shell-surface: #fff;
   --shell-border: #e5e7eb;
   --shell-text: #17191d;
-  --shell-muted: #737780;
+  --shell-muted: #5d6675;
   --shell-hover: #f0f3f8;
   --shell-active: hsl(var(--primary) / .1);
   --shell-blue: hsl(var(--primary));

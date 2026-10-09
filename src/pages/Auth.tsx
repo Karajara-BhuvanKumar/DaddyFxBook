@@ -48,7 +48,7 @@ export default function AuthPage() {
         </div>
 
         {/* Auth card — subtle dark scrim for contrast over bright glow */}
-        <div className="glass-card rounded-[20px] p-8 backdrop-blur-sm bg-card/80 border border-white/[0.06]">
+        <div className="glass-card rounded-[20px] p-8 backdrop-blur-sm bg-card/80 border border-border dark:border-white/[0.06]">
           <h2 className="text-xl font-semibold text-foreground mb-6">
             {isLogin ? "Welcome back" : "Create account"}
           </h2>
@@ -59,7 +59,7 @@ export default function AuthPage() {
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="trader@example.com"
-                  className="w-full bg-secondary/60 text-foreground border border-white/[0.08] rounded-[20px] pl-11 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground/50" required />
+                  className="w-full bg-secondary/60 text-foreground border border-border dark:border-white/[0.08] rounded-[20px] pl-11 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/50" required />
               </div>
             </div>
 
@@ -68,7 +68,7 @@ export default function AuthPage() {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-                  className="w-full bg-secondary/60 text-foreground border border-white/[0.08] rounded-[20px] pl-11 pr-11 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground/50" required minLength={6} />
+                  className="w-full bg-secondary/60 text-foreground border border-border dark:border-white/[0.08] rounded-[20px] pl-11 pr-11 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/50" required minLength={6} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

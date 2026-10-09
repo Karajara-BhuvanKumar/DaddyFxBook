@@ -1,5 +1,5 @@
 .analysis-page { --an-surface: #101010; --an-text: #f6f6f7; --an-muted: #85858b; --an-line: #232323; --an-control: #1b1b1b; --an-blue: hsl(var(--primary)); --an-red: #f2444b; display: flex; flex-direction: column; gap: 16px; min-width: 0; color: var(--an-text); font-size: 13px; }
-.light .analysis-page { --an-surface: #fff; --an-text: #17191d; --an-muted: #68707b; --an-line: #e5e7eb; --an-control: #f1f3f6; --an-blue: hsl(var(--primary)); --an-red: #d12f3c; }
+.light .analysis-page { --an-surface: #fff; --an-text: #17191d; --an-muted: #5d6675; --an-line: #e5e7eb; --an-control: #f1f3f6; --an-blue: hsl(var(--primary)); --an-red: #bc2432; }
 .analysis-page * { min-width: 0; letter-spacing: 0; }
 .analysis-page .an-profit { color: var(--an-blue); }
 .analysis-page .an-loss { color: var(--an-red); }

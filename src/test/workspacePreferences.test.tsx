@@ -144,8 +144,10 @@ describe("Workspace preferences", () => {
     saved.theme = "system";
     const { panel, hide } = await openSettings();
     expect(document.documentElement).toHaveClass("light");
+    expect(document.documentElement.style.getPropertyValue("--primary")).toBe("221 83% 48%");
     act(() => { systemDark = true; systemListeners.forEach(callback => callback({ matches: true })); });
     expect(document.documentElement).toHaveClass("dark");
+    expect(document.documentElement.style.getPropertyValue("--primary")).toBe("217 91% 60%");
     fireEvent.click(panel.getByRole("button", { name: "Light" }));
     await waitFor(() => expect(saved.theme).toBe("light"));
     hide();
@@ -158,5 +160,9 @@ describe("Workspace preferences", () => {
     await waitFor(() => expect(saved.theme).toBe("light"));
     expect(document.documentElement).toHaveClass("light");
     expect(panel.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
+    expect(document.documentElement.style.getPropertyValue("--profit")).toBe("221 83% 48%");
+    fireEvent.click(screen.getByRole("button", { name: "Switch to dark theme" }));
+    await waitFor(() => expect(saved.theme).toBe("dark"));
+    expect(document.documentElement.style.getPropertyValue("--profit")).toBe("217 91% 60%");
   });
 });

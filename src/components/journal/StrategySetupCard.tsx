@@ -32,7 +32,7 @@ type Props = {
   onChange: (value: StrategySetup) => void;
 };
 
-const selectTriggerClass = "bg-[#060606] hover:bg-[#0B0B0B] border-zinc-900 hover:border-blue-600/[0.35] text-white h-11 rounded-[20px] transition-colors font-medium text-sm w-full";
+const selectTriggerClass = "bg-input dark:bg-[#060606] hover:bg-card dark:hover:bg-[#0B0B0B] border-border dark:border-zinc-900 hover:border-blue-600/[0.35] text-foreground dark:text-white h-11 rounded-[20px] transition-colors font-medium text-sm w-full";
 
 function FieldSelect({
   label,
@@ -49,14 +49,14 @@ function FieldSelect({
 }) {
   return (
     <div>
-      <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">{label}</Label>
+      <Label className="text-muted-foreground dark:text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">{label}</Label>
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className={selectTriggerClass}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="bg-[#0b0b0b] border-zinc-800 text-white">
+        <SelectContent className="bg-card dark:bg-[#0b0b0b] border-border dark:border-zinc-800 text-foreground dark:text-white">
           {options.map((opt) => (
-            <SelectItem key={opt} value={opt} className="focus:bg-zinc-800 focus:text-white cursor-pointer">{opt}</SelectItem>
+            <SelectItem key={opt} value={opt} className="focus:bg-secondary dark:focus:bg-zinc-800 focus:text-foreground dark:focus:text-white cursor-pointer">{opt}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -86,7 +86,7 @@ function ChipGroup({
               "px-3.5 py-2 rounded-[20px] text-xs font-bold border transition-all duration-200 tracking-wide uppercase flex items-center gap-1.5",
               active
                 ? "bg-blue-600/10 text-blue-500 border-blue-500/30"
-                : "bg-[#060606] text-zinc-500 border-zinc-900 hover:text-zinc-300 hover:border-blue-600/[0.35]"
+                : "bg-input dark:bg-[#060606] text-muted-foreground dark:text-zinc-500 border-border dark:border-zinc-900 hover:text-muted-foreground dark:hover:text-zinc-300 hover:border-blue-600/[0.35]"
             )}
           >
             {active && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
@@ -112,7 +112,7 @@ function SegmentedControl({
       type="single"
       value={value}
       onValueChange={(v) => v && onChange(v)}
-      className="grid grid-cols-2 bg-[#060606] p-1 rounded-[20px] border border-zinc-900 w-full gap-1"
+      className="grid grid-cols-2 bg-input dark:bg-[#060606] p-1 rounded-[20px] border border-border dark:border-zinc-900 w-full gap-1"
     >
       {options.map((opt) => (
         <ToggleGroupItem
@@ -122,7 +122,7 @@ function SegmentedControl({
             "py-2 rounded-lg text-xs font-bold tracking-wide uppercase transition-all duration-200 h-9",
             value === opt
               ? "bg-blue-600 text-white shadow-sm"
-              : "text-zinc-500 hover:text-zinc-300 bg-transparent"
+              : "text-muted-foreground dark:text-zinc-500 hover:text-muted-foreground dark:hover:text-zinc-300 bg-transparent"
           )}
         >
           {opt}
@@ -156,13 +156,13 @@ export function StrategySetupCard({ value, onChange }: Props) {
   };
 
   return (
-    <div className="rounded-3xl border border-white/[0.08] bg-[#0B0B0B]/80 backdrop-blur-xl shadow-2xl p-6 space-y-6">
-      <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
+    <div className="rounded-3xl border border-border dark:border-white/[0.08] bg-card/80 dark:bg-[#0B0B0B]/80 backdrop-blur-xl shadow-sm dark:shadow-2xl p-6 space-y-6">
+      <div className="flex items-center justify-between border-b border-border dark:border-white/[0.05] pb-4">
         <div className="flex items-center gap-2">
           <Layers className="w-5 h-5 text-blue-500" />
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight">Strategy Setup</h3>
-            <p className="text-xs text-zinc-500">Structured data collection for trade analysis.</p>
+            <h3 className="text-base font-bold text-foreground dark:text-white tracking-tight">Strategy Setup</h3>
+            <p className="text-xs text-muted-foreground dark:text-zinc-500">Structured data collection for trade analysis.</p>
           </div>
         </div>
       </div>
@@ -170,13 +170,13 @@ export function StrategySetupCard({ value, onChange }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Market Structure */}
         <div className="space-y-4">
-          <div className="rounded-[20px] border border-white/[0.08] bg-[#0b0b0b] p-5 space-y-5">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 border-b border-white/[0.05] pb-2">Market Structure</h4>
+          <div className="rounded-[20px] border border-border dark:border-white/[0.08] bg-card dark:bg-[#0b0b0b] p-5 space-y-5">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground dark:text-zinc-400 border-b border-border dark:border-white/[0.05] pb-2">Market Structure</h4>
             
             <div className="space-y-4">
               {/* HTF Structure */}
               <div>
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">HTF Structure</div>
+                <div className="text-[10px] font-bold text-muted-foreground dark:text-zinc-500 uppercase tracking-wider mb-2">HTF Structure</div>
                 <div className="grid grid-cols-2 gap-3">
                   <FieldSelect label="Timeframe" value={value.htf_tf} options={HTF_TIMEFRAMES} onValueChange={(v) => update({ htf_tf: v })} />
                   <FieldSelect label="Level Type" value={value.htf_level} options={LEVEL_TYPES} onValueChange={(v) => update({ htf_level: v })} />
@@ -185,7 +185,7 @@ export function StrategySetupCard({ value, onChange }: Props) {
 
               {/* LTF Structure */}
               <div>
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">LTF Structure</div>
+                <div className="text-[10px] font-bold text-muted-foreground dark:text-zinc-500 uppercase tracking-wider mb-2">LTF Structure</div>
                 <div className="grid grid-cols-2 gap-3">
                   <FieldSelect label="Timeframe" value={value.ltf_tf} options={LTF_TIMEFRAMES} onValueChange={(v) => update({ ltf_tf: v })} />
                   <FieldSelect label="Level Type" value={value.ltf_level} options={LEVEL_TYPES} onValueChange={(v) => update({ ltf_level: v })} />
@@ -194,7 +194,7 @@ export function StrategySetupCard({ value, onChange }: Props) {
 
               {/* Confirmation */}
               <div>
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Confirmation</div>
+                <div className="text-[10px] font-bold text-muted-foreground dark:text-zinc-500 uppercase tracking-wider mb-2">Confirmation</div>
                 <div className="grid grid-cols-2 gap-3">
                   <FieldSelect label="Timeframe" value={value.conf_tf} options={CONFIRM_TIMEFRAMES} onValueChange={(v) => update({ conf_tf: v })} />
                   <FieldSelect label="Type" value={value.conf_type} options={CONFIRM_TYPES} onValueChange={(v) => update({ conf_type: v })} />
@@ -206,12 +206,12 @@ export function StrategySetupCard({ value, onChange }: Props) {
 
         {/* Right Column: Parameters & Confluences */}
         <div className="space-y-4 flex flex-col justify-between">
-          <div className="rounded-[20px] border border-white/[0.08] bg-[#0b0b0b] p-5 space-y-5">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 border-b border-white/[0.05] pb-2">Parameters & Confluences</h4>
+          <div className="rounded-[20px] border border-border dark:border-white/[0.08] bg-card dark:bg-[#0b0b0b] p-5 space-y-5">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground dark:text-zinc-400 border-b border-border dark:border-white/[0.05] pb-2">Parameters & Confluences</h4>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Bias</Label>
+                <Label className="text-muted-foreground dark:text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Bias</Label>
                 <SegmentedControl
                   value={value.bias}
                   options={["Bullish", "Bearish"]}
@@ -229,7 +229,7 @@ export function StrategySetupCard({ value, onChange }: Props) {
             </div>
 
             <div>
-              <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Execution Type</Label>
+              <Label className="text-muted-foreground dark:text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Execution Type</Label>
               <SegmentedControl
                 value={value.execution_type}
                 options={EXECUTION_TYPES}
@@ -238,7 +238,7 @@ export function StrategySetupCard({ value, onChange }: Props) {
             </div>
 
             <div>
-              <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Demand / Supply</Label>
+              <Label className="text-muted-foreground dark:text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">Demand / Supply</Label>
               <FieldSelect
                 label="Type"
                 value={dsType}
@@ -270,7 +270,7 @@ export function StrategySetupCard({ value, onChange }: Props) {
             </div>
 
             <div>
-              <Label className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-2 block">Confluences</Label>
+              <Label className="text-muted-foreground dark:text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-2 block">Confluences</Label>
               <ChipGroup options={CONFLUENCES} selected={value.confluences} onToggle={toggleConfluence} />
               
               <AnimatePresence>
@@ -300,9 +300,9 @@ export function StrategySetupCard({ value, onChange }: Props) {
           <div className="rounded-[20px] border border-blue-500/15 bg-blue-950/10 p-5 mt-auto">
             <div className="text-[10px] uppercase font-bold tracking-wider text-blue-400 mb-2.5">Setup Summary</div>
             {summary ? (
-              <pre className="text-xs text-zinc-300 font-mono leading-relaxed whitespace-pre-wrap">{summary}</pre>
+              <pre className="text-xs text-muted-foreground dark:text-zinc-300 font-mono leading-relaxed whitespace-pre-wrap">{summary}</pre>
             ) : (
-              <p className="text-xs text-zinc-500">No active parameters selected.</p>
+              <p className="text-xs text-muted-foreground dark:text-zinc-500">No active parameters selected.</p>
             )}
           </div>
         </div>

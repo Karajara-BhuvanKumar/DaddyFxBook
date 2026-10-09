@@ -25,15 +25,15 @@ const CATEGORIES: Array<{ key: CategoryKey; label: string; icon: React.Component
 function classColor(c: string) {
   if (c === "Elite") return "text-blue-500 border-blue-500/40 bg-blue-500/15";
   if (c === "Advanced") return "text-blue-400 border-blue-400/40 bg-blue-400/15";
-  if (c === "Developing") return "text-amber-500 border-amber-500/40 bg-amber-500/15";
-  return "text-zinc-500 border-white/[0.08] bg-[#121212]";
+  if (c === "Developing") return "text-amber-700 dark:text-amber-500 border-amber-500/40 bg-amber-500/15";
+  return "text-muted-foreground dark:text-zinc-500 border-border dark:border-white/[0.08] bg-secondary dark:bg-[#121212]";
 }
 
 function scoreColor(score: number) {
   if (score >= 85) return "hsl(var(--primary))"; // blue-500
   if (score >= 70) return "hsl(var(--primary))"; // blue-400
-  if (score >= 50) return "#F59E0B"; // amber-500
-  return "#EF4444"; // red-500
+  if (score >= 50) return "var(--score-amber)";
+  return "var(--score-red)";
 }
 
 export function ScorecardTab() {
@@ -113,18 +113,18 @@ export function ScorecardTab() {
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
-      <div className="p-6 bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
+      <div className="p-6 bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[24px]">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-[20px] bg-blue-500/10 flex items-center justify-center">
               <Award className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-white flex items-center gap-2">
+              <h1 className="text-xl font-black text-foreground dark:text-white flex items-center gap-2">
                 AI Trader Scorecard
                 <span className="text-[10px] font-extrabold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded uppercase tracking-wider">PRO</span>
               </h1>
-              <p className="text-[13px] text-zinc-500 font-medium mt-0.5">
+              <p className="text-[13px] text-muted-foreground dark:text-zinc-500 font-medium mt-0.5">
                 {latest ? `Last snapshot ${new Date(latest.created_at).toLocaleString()}` : "Live preview from current trades"}
               </p>
             </div>
@@ -140,29 +140,29 @@ export function ScorecardTab() {
       </div>
 
       {trades.length === 0 ? (
-        <div className="p-10 text-center bg-[#0B0B0B] border border-white/[0.06] rounded-[24px]">
-          <Award className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-white mb-1">No trades yet</h3>
-          <p className="text-sm text-zinc-500 font-medium">More trading history is required to generate meaningful AI reports.</p>
+        <div className="p-10 text-center bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] rounded-[24px]">
+          <Award className="w-10 h-10 text-muted-foreground dark:text-zinc-600 mx-auto mb-3" />
+          <h3 className="font-semibold text-foreground dark:text-white mb-1">No trades yet</h3>
+          <p className="text-sm text-muted-foreground dark:text-zinc-500 font-medium">More trading history is required to generate meaningful AI reports.</p>
         </div>
       ) : (
         <>
           {/* Overall */}
-          <Card className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+          <Card className="p-6 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[24px]">
             <div className="flex items-center gap-6 flex-wrap">
               <Gauge value={display.overall} size={140} label="Overall" />
               <div className="flex-1 min-w-[200px]">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Trader classification</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-2">Trader classification</p>
                 <div className="flex items-center gap-3 mb-3">
                   <span className={`text-2xl font-extrabold px-4 py-1.5 rounded-xl border ${classColor(display.classification)}`}>
                     {display.classification}
                   </span>
-                  <span className="text-sm text-zinc-500 font-medium">Based on {display.trade_count} trades</span>
+                  <span className="text-sm text-muted-foreground dark:text-zinc-500 font-medium">Based on {display.trade_count} trades</span>
                 </div>
                 {insights?.overall_summary ? (
-                  <p className="text-sm text-zinc-300 font-medium leading-relaxed mt-2">{insights.overall_summary}</p>
+                  <p className="text-sm text-muted-foreground dark:text-zinc-300 font-medium leading-relaxed mt-2">{insights.overall_summary}</p>
                 ) : (
-                  <p className="text-sm text-zinc-500 italic font-medium mt-2">Run AI scoring to get a personalized narrative.</p>
+                  <p className="text-sm text-muted-foreground dark:text-zinc-500 italic font-medium mt-2">Run AI scoring to get a personalized narrative.</p>
                 )}
               </div>
             </div>
@@ -173,12 +173,12 @@ export function ScorecardTab() {
             {CATEGORIES.map((cat) => {
               const r = display[cat.key] as ScoreResult;
               return (
-                <Card key={cat.key} className="p-5 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+                <Card key={cat.key} className="p-5 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[24px]">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
                       <cat.icon className="w-4 h-4" />
                     </div>
-                    <h3 className="font-bold text-white text-sm">{cat.label}</h3>
+                    <h3 className="font-bold text-foreground dark:text-white text-sm">{cat.label}</h3>
                   </div>
                   <Gauge value={r.score} size={110} label="" />
                 </Card>
@@ -195,11 +195,11 @@ export function ScorecardTab() {
               const r = display[cat.key] as ScoreResult;
               const aiCat = insights?.categories?.[cat.key];
               return (
-                <Card key={cat.key} className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
+                <Card key={cat.key} className="p-6 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[24px]">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2.5">
                       <cat.icon className="w-4 h-4 text-blue-500" />
-                      <h3 className="font-bold text-white text-sm">{cat.label}</h3>
+                      <h3 className="font-bold text-foreground dark:text-white text-sm">{cat.label}</h3>
                     </div>
                     <span className="text-xl font-extrabold font-mono" style={{ color: scoreColor(r.score) }}>
                       {r.score.toFixed(0)}
@@ -210,24 +210,24 @@ export function ScorecardTab() {
                     {r.factors.map((f) => (
                       <div key={f.label}>
                         <div className="flex items-center justify-between text-[12px] mb-1.5">
-                          <span className="text-zinc-300 font-bold">{f.label}</span>
-                          <span className="text-zinc-400 font-mono">{Math.round(f.value * 100)}</span>
+                          <span className="text-muted-foreground dark:text-zinc-300 font-bold">{f.label}</span>
+                          <span className="text-muted-foreground dark:text-zinc-400 font-mono">{Math.round(f.value * 100)}</span>
                         </div>
-                        <div className="h-1.5 bg-[#121212] rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-secondary dark:bg-[#121212] rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${f.value * 100}%`, background: scoreColor(f.value * 100) }} />
                         </div>
-                        <p className="text-[11px] text-zinc-500 font-medium mt-1">{f.detail}</p>
+                        <p className="text-[11px] text-muted-foreground dark:text-zinc-500 font-medium mt-1">{f.detail}</p>
                       </div>
                     ))}
                   </div>
 
                   {aiCat ? (
-                    <div className="border-t border-white/[0.05] pt-4 space-y-3">
-                      <p className="text-[13px] text-zinc-300 font-medium leading-relaxed">{aiCat.explanation}</p>
+                    <div className="border-t border-border dark:border-white/[0.05] pt-4 space-y-3">
+                      <p className="text-[13px] text-muted-foreground dark:text-zinc-300 font-medium leading-relaxed">{aiCat.explanation}</p>
                       {aiCat.recommendations.length > 0 && (
                         <ul className="space-y-2">
                           {aiCat.recommendations.map((rec, i) => (
-                            <li key={i} className="text-[12.5px] text-zinc-400 font-medium flex gap-2.5 leading-relaxed">
+                            <li key={i} className="text-[12.5px] text-muted-foreground dark:text-zinc-400 font-medium flex gap-2.5 leading-relaxed">
                               <span className="text-blue-500 font-bold mt-0.5">→</span>
                               <span>{rec}</span>
                             </li>
@@ -236,7 +236,7 @@ export function ScorecardTab() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-[12px] text-zinc-500 font-medium italic border-t border-white/[0.05] pt-4">
+                    <p className="text-[12px] text-muted-foreground dark:text-zinc-500 font-medium italic border-t border-border dark:border-white/[0.05] pt-4">
                       Run AI scoring for personalized improvement recommendations.
                     </p>
                   )}
@@ -263,7 +263,7 @@ function Gauge({ value, size, label }: { value: number; size: number; label: str
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#121212" strokeWidth={8} fill="none" opacity={1} />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--chart-track)" strokeWidth={8} fill="none" opacity={1} />
         <circle
           cx={size / 2} cy={size / 2} r={r}
           stroke={color} strokeWidth={8} fill="none" strokeLinecap="round"
@@ -272,10 +272,10 @@ function Gauge({ value, size, label }: { value: number; size: number; label: str
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-extrabold font-mono text-white" style={{ fontSize: size * 0.22 }}>
+        <span className="font-extrabold font-mono text-foreground dark:text-white" style={{ fontSize: size * 0.22 }}>
           {value.toFixed(0)}
         </span>
-        {label && <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mt-0.5">{label}</span>}
+        {label && <span className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-zinc-500 font-bold mt-0.5">{label}</span>}
       </div>
     </div>
   );
@@ -292,15 +292,15 @@ function HistoryChart({ history }: { history: ScorecardRecord[] }) {
     Consistency: Number(h.consistency_score),
   }));
   return (
-    <Card className="p-6 bg-[#0B0B0B] border-white/[0.06] rounded-[24px]">
-      <h3 className="font-bold text-white text-sm mb-5">Historical Scores</h3>
+    <Card className="p-6 bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] rounded-[24px]">
+      <h3 className="font-bold text-foreground dark:text-white text-sm mb-5">Historical Scores</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
-            <XAxis dataKey="date" stroke="#A1A1AA" fontSize={11} tickLine={false} axisLine={false} />
-            <YAxis domain={[0, 100]} stroke="#A1A1AA" fontSize={11} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={{ background: "#121212", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff" }} itemStyle={{ color: "#fff" }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
+            <XAxis dataKey="date" stroke="var(--chart-axis-soft)" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis domain={[0, 100]} stroke="var(--chart-axis-soft)" fontSize={11} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={{ background: "var(--chart-tooltip)", border: "1px solid var(--chart-tooltip-border-strong)", borderRadius: 12, color: "var(--chart-tooltip-text)" }} itemStyle={{ color: "var(--chart-tooltip-text)" }} />
             <Line type="monotone" dataKey="Overall" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} />
             <Line type="monotone" dataKey="Discipline" stroke="#10B981" strokeWidth={1.5} dot={false} opacity={0.5} />
             <Line type="monotone" dataKey="Risk" stroke="#F59E0B" strokeWidth={1.5} dot={false} opacity={0.5} />

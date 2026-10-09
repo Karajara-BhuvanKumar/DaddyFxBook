@@ -104,7 +104,7 @@
 .dashboard-loading { min-height: 60vh; display: flex; align-items: center; justify-content: center; gap: 12px; color: hsl(var(--muted-foreground)); }
 .dashboard-hidden-state { padding: 50px 20px; color: hsl(var(--muted-foreground)); text-align: center; }
 .trading-dashboard button:focus-visible, .trading-dashboard a:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
-.light .trading-dashboard { --dashboard-surface: #fff; --dashboard-muted: #6b7079; --chart-grid: #eef0f4; --dashboard-line: #d8dde5; --dashboard-cell: #f6f7fa; }
+.light .trading-dashboard { --dashboard-surface: #fff; --dashboard-muted: #5d6675; --chart-grid: #eef0f4; --dashboard-line: #d8dde5; --dashboard-cell: #f6f7fa; }
 .light .dashboard-stat-icon { background: hsl(var(--primary) / .1); }
 .light .dashboard-stat-icon.is-warning { background: #fff7d7; color: #b48200; }
 .light .performance-timeframes { background: #f4f5f8; border-color: #e5e7eb; }

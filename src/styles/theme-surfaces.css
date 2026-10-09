@@ -1,0 +1,63 @@
+/* Shared non-Tailwind surfaces, including portals mounted outside the page shell. */
+:root {
+  color-scheme: light;
+  --chart-axis-soft: #64748b;
+  --chart-tooltip-border-strong: #d9e1eb;
+  --hero-fade: hsl(var(--input));
+  --hero-fade-translucent: hsl(var(--input) / .55);
+  --popup-muted: hsl(var(--muted-foreground));
+  --popup-divider: hsl(var(--border));
+  --popup-button: hsl(var(--secondary));
+  --popup-border: hsl(var(--border));
+  --popup-hover: hsl(var(--accent));
+  --popup-loss: hsl(var(--loss));
+  --score-amber: #986000;
+  --score-red: #b91c1c;
+}
+.dark {
+  color-scheme: dark;
+  --chart-axis-soft: #a1a1aa;
+  --chart-tooltip-border-strong: rgba(255,255,255,.1);
+  --hero-fade: #050505;
+  --hero-fade-translucent: rgba(5,5,5,.55);
+  --popup-muted: #94a3b8;
+  --popup-divider: rgba(255,255,255,.04);
+  --popup-button: rgba(255,255,255,.05);
+  --popup-border: rgba(255,255,255,.06);
+  --popup-hover: rgba(255,255,255,.08);
+  --popup-loss: #ef4444;
+  --score-amber: #f59e0b;
+  --score-red: #ef4444;
+}
+.light select option, .light select optgroup {
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+}
+.light input, .light textarea, .light select { accent-color: hsl(var(--primary)); }
+.light input::placeholder, .light textarea::placeholder { opacity: 1; }
+.light .text-label { opacity: 1; }
+.light .hover-lift:hover { border-color: hsl(var(--primary) / .25); }
+.light .report-content pre { background: hsl(var(--secondary)); border-color: hsl(var(--border)); color: hsl(var(--foreground)); }
+
+/* Supplement the page palettes where individual details still used dark constants. */
+.light .app-theme-toggle { color: #7440c8; }
+.light .app-theme-toggle:hover { color: #5c2ba6; }
+.light .app-account-avatar > span, .light .app-header-avatar > span { background: #886b60; }
+.light[data-accent] .app-nav-badge { background: hsl(var(--primary) / .04); }
+.light .customize-button, .light .performance-summary h2, .light .performance-summary h2 svg,
+.light .performance-timeframes button, .light .calendar-navigation button,
+.light .pnl-day-number, .light .pnl-week-total, .light .pnl-day.flat-day { color: hsl(var(--muted-foreground)); }
+.light .performance-change.is-loss { background: hsl(var(--loss) / .07); border-color: hsl(var(--loss) / .25); }
+.light .trading-dashboard .is-loss, .light .pnl-day.loss-day, .light .pnl-week-total.loss-day { color: hsl(var(--loss)); }
+.light .pnl-week-total > small { opacity: 1; }
+.light .an-market-sydney { --market-color: #7040bd; }
+.light .an-market-tokyo { --market-color: #805500; }
+.light .an-market-london { --market-color: #2563eb; }
+.light .an-market-new-york { --market-color: #087b70; }
+.light .an-session-name > span { color: #936200; background: #fff5d6; }
+.light .an-session-1 > span { color: var(--an-blue); background: hsl(var(--primary) / .09); }
+.light .an-session-2 > span { color: #087b70; background: #e6f5f1; }
+.light .pc-page, .light .pc-dialog { --pc-green: #147d5e; --pc-amber: #8a5b0e; --pc-red: #bb3636; }
+.light .th-loss { color: hsl(var(--loss)); }
+.light .th-source { color: #7040bd; }
+.light .th-popover { box-shadow: 0 12px 40px #0f172a1a; }

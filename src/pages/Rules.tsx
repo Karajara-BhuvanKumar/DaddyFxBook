@@ -111,16 +111,16 @@ export default function Rules() {
   return (
     <div className="overflow-guard space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 md:pb-12">
       {outdated && (
-        <Alert className="bg-amber-500/10 text-amber-500 border-amber-500/20 relative">
+        <Alert className="bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-500/20 relative">
           <AlertTriangle className="h-4 w-4 stroke-amber-500" />
-          <AlertTitle className="text-amber-500 font-semibold">Database update required</AlertTitle>
-          <AlertDescription className="mt-2 text-sm leading-relaxed text-amber-500/90 pr-24">
+          <AlertTitle className="text-amber-700 dark:text-amber-500 font-semibold">Database update required</AlertTitle>
+          <AlertDescription className="mt-2 text-sm leading-relaxed text-amber-700/90 dark:text-amber-500/90 pr-24">
             Your database is missing the latest Rules migration. Run <code>supabase/migrations/20260920_rules_page.sql</code> in the Supabase SQL Editor, then refresh this page.
           </AlertDescription>
           <Button 
             variant="outline" 
             size="sm" 
-            className="absolute top-4 right-4 h-8 bg-background/50 border-amber-500/30 text-amber-500 hover:bg-amber-500/20"
+            className="absolute top-4 right-4 h-8 bg-background/50 border-amber-500/30 text-amber-700 dark:text-amber-500 hover:bg-amber-500/20"
             onClick={handleCopy}
           >
             {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
@@ -242,7 +242,7 @@ export default function Rules() {
             </div>
           ) : rules.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-              <ShieldCheck className="w-12 h-12 text-muted-foreground/30 mb-3" />
+              <ShieldCheck className="w-12 h-12 text-muted-foreground dark:text-muted-foreground/30 mb-3" />
               <h3 className="font-medium text-foreground">No rules defined</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-xs">
                 Add your first trading rule to start tracking discipline and improving consistency.

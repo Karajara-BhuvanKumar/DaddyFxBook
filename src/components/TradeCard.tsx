@@ -100,7 +100,7 @@ function Field({ label, value, muted }: { label: string; value: string; muted?: 
   return (
     <div className="min-w-0">
       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
-      <p className={cn("font-bold text-sm truncate", muted ? "text-purple-400" : "text-foreground")}>{value}</p>
+      <p className={cn("font-bold text-sm truncate", muted ? "text-purple-700 dark:text-purple-400" : "text-foreground")}>{value}</p>
     </div>
   );
 }

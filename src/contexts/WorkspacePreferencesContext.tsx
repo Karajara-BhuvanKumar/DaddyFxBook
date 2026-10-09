@@ -10,9 +10,9 @@ const WorkspacePreferencesContext = createContext({
 
 export function WorkspacePreferencesProvider({ saved, children }: { saved?: Partial<WorkspacePreferences>; children: ReactNode }) {
   const [preview, previewPreferences] = useState<Partial<WorkspacePreferences> | null>(null);
-  const { setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const preferences = useMemo(() => resolvePreferences({ ...saved, ...preview }), [saved, preview]);
-  useEffect(() => { applyWorkspaceAppearance(preferences); }, [preferences]);
+  useEffect(() => { applyWorkspaceAppearance(preferences, resolvedTheme); }, [preferences, resolvedTheme]);
   useEffect(() => {
     if (saved?.theme || preview?.theme) setTheme(preferences.theme);
   }, [saved?.theme, preview?.theme, preferences.theme, setTheme]);

@@ -216,20 +216,20 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                   <div key={field.key}>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{field.label}</label>
                     <input type="text" value={(form as any)[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
-                      className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                      className="w-full bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 ))}
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Notes</label>
                   <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3}
-                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    className="w-full bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Lessons Learned</label>
                   <textarea value={form.lessons} onChange={e => setForm(f => ({ ...f, lessons: e.target.value }))} rows={3}
-                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    className="w-full bg-secondary dark:bg-[#121212] border border-border dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
 
@@ -247,7 +247,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                       <div className="relative flex items-center justify-center">
                         <input type="checkbox" checked={(form as any)[item.key]} onChange={e => setForm(f => ({ ...f, [item.key]: e.target.checked }))} 
                           className="peer appearance-none w-5 h-5 border-2 border-border rounded bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer" />
-                        <svg className="absolute w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg className="absolute w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-foreground dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>

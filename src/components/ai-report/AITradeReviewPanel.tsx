@@ -22,7 +22,7 @@ export function AITradeReviewPanel({ tradeId }: { tradeId: string }) {
   }
 
   return (
-    <div className="rounded-[20px] border border-white/[0.08]/60 bg-[#0B0B0B]/40 p-5">
+    <div className="rounded-[20px] border border-border dark:border-white/[0.08]/60 bg-card/40 dark:bg-[#0B0B0B]/40 p-5">
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
@@ -91,12 +91,12 @@ function Bullets({
         {icon}{title}
       </h4>
       {items.length === 0 ? (
-        <p className="text-[12px] text-muted-foreground/70 italic">None noted.</p>
+        <p className="text-[12px] text-muted-foreground dark:text-muted-foreground/70 italic">None noted.</p>
       ) : (
         <ul className="space-y-1.5">
           {items.map((it, i) => (
             <li key={i} className="text-[12.5px] text-foreground/90 leading-relaxed flex gap-2">
-              <span className={`mt-1.5 w-1 h-1 rounded-full shrink-0 ${toneCls.replace("text-", "bg-")}`} />
+              <span className={`mt-1.5 w-1 h-1 rounded-full shrink-0 bg-current ${toneCls}`} />
               <span>{it}</span>
             </li>
           ))}

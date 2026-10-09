@@ -17,7 +17,7 @@ const HERO_CONFIG = {
   containerHeight: "55vh",
   containerMaxWidth: "min(100%, 720px)",
   blur: "blur(90px)",
-  fade: "linear-gradient(to bottom, transparent 0%, transparent 22%, rgba(5,5,5,0.55) 40%, #050505 62%)",
+  fade: "linear-gradient(to bottom, transparent 0%, transparent 22%, var(--hero-fade-translucent) 40%, var(--hero-fade) 62%)",
   animationClass: "glow-backdrop-enter",
   circles: [
     { w: "clamp(260px, 65vw, 400px)", h: "clamp(260px, 65vw, 400px)", top: "-15%", left: "-8%",  right: undefined, bg: "hsl(var(--primary))", opacity: 0.6  },
