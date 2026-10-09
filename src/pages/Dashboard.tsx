@@ -230,7 +230,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
                   const { day, key, data } = entry;
                   const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                   return <button key={column} className={cn("pnl-day", data && (data.pnl < 0 ? "loss-day" : data.pnl > 0 ? "profit-day" : "flat-day"), today && "today")} aria-label={`${monthLabel} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}`} aria-current={today ? "date" : undefined} onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
-                    <span className="pnl-day-number">{day}</span>{data && <CalendarPnlValue title={money(data.pnl)} formatted={compactMoney(data.pnl)} />}
+                    <span className="pnl-day-heading"><span className="pnl-day-number">{day}</span>{data && <span className="pnl-day-count" aria-hidden="true">{data.count}</span>}</span>{data && <CalendarPnlValue title={money(data.pnl)} formatted={compactMoney(data.pnl)} />}
                   </button>;
                 })}
                 {showWeekly && <div className={cn("pnl-week-total", week.count > 0 && (week.pnl < 0 ? "loss-day" : week.pnl > 0 ? "profit-day" : "flat-day"))} title={`Week ${weekIndex + 1}: ${money(week.pnl)}, ${week.count} trades`}><span>Weekly</span><CalendarPnlValue formatted={compactMoney(week.pnl)} /><small>{week.count} trade{week.count !== 1 ? "s" : ""}</small></div>}
@@ -250,7 +250,8 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
                   const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
                   return <button key={key} type="button" className="mobile-pnl-day" aria-label={`${monthLabel} ${day}, ${data.count} ${data.count === 1 ? "trade" : "trades"}, ${money(data.pnl)}`} aria-current={today ? "date" : undefined} aria-haspopup="dialog" onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
                     <span className="mobile-pnl-date" aria-hidden="true">{day}</span>
-                    <span className="mobile-pnl-day-label"><span>{weekday}{today && <span className="mobile-pnl-today">Today</span>}</span><small>{data.count} trade{data.count !== 1 ? "s" : ""}</small></span>
+                    <span className="mobile-pnl-day-label"><span>{weekday}{today && <span className="mobile-pnl-today">Today</span>}</span></span>
+                    <span className="pnl-day-count" aria-hidden="true">{data.count}</span>
                     <strong className={pnlTone(data.pnl)}>{data.pnl === 0 ? "$0.00" : money(data.pnl)}</strong>
                     <ChevronRight size={16} aria-hidden="true" />
                   </button>;

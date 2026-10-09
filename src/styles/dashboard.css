@@ -77,12 +77,14 @@
 .pnl-day, .pnl-week-total { min-width: 0; min-height: 58px; border: 1px solid #1d1d1e; border-radius: 13px; background: var(--dashboard-cell); }
 .pnl-day { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 6px 8px 7px; text-align: left; position: relative; transition: border-color .15s, background .15s; }
 .pnl-day:hover { border-color: #46464c; background: #18181a; }
-.pnl-day-number { font-size: 12px; line-height: 16px; color: #707075; }
+.pnl-day-heading { display: flex; align-items: center; justify-content: space-between; gap: 3px; width: 100%; }
+.pnl-day-number { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; line-height: 16px; color: #707075; }
+.pnl-day-count { flex-shrink: 0; color: var(--dashboard-muted); font-size: 10px; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums; }
 .pnl-day strong { align-self: center; font-size: clamp(10px, .8vw, 14px); font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: clip; }
 .calendar-pnl-value { position: relative; }
 .calendar-pnl-measure { position: absolute; visibility: hidden; pointer-events: none; width: max-content; white-space: nowrap; }
 .pnl-day.today .pnl-day-number { color: hsl(var(--primary)); }
-.pnl-day.today::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: hsl(var(--primary)); position: absolute; top: 10px; right: 7px; }
+.pnl-day.today .pnl-day-number::after { content: ""; flex-shrink: 0; width: 4px; height: 4px; border-radius: 50%; background: hsl(var(--primary)); }
 .pnl-day.profit-day, .pnl-week-total.profit-day { background: hsl(var(--primary) / .07); border-color: hsl(var(--primary) / .25); color: hsl(var(--primary)); }
 .pnl-day.loss-day, .pnl-week-total.loss-day { background: #1d1010; border-color: #4b2224; color: #f2444b; }
 .pnl-day.profit-day:hover { background: hsl(var(--primary) / .13); border-color: hsl(var(--primary) / .45); }
@@ -223,7 +225,7 @@
   .pnl-day { padding: 4px 3px 6px; }
   .pnl-day-number { font-size: 10px; line-height: 12px; }
   .pnl-day strong { font-size: clamp(8px, 2.3vw, 11px); }
-  .pnl-day.today::after { top: 7px; right: 4px; width: 3px; height: 3px; }
+  .pnl-day.today .pnl-day-number::after { width: 3px; height: 3px; }
   .pnl-week-total { padding: 1px; }
   .pnl-week-total > span { font-size: 6px; letter-spacing: 0; line-height: 9px; }
   .pnl-week-total > strong { font-size: clamp(8px, 2.3vw, 11px); line-height: 13px; }
@@ -252,6 +254,8 @@
   .mobile-pnl-week-summary { min-width: 0; text-align: right; }
   .mobile-pnl-week-summary strong { font-size: 14px; line-height: 20px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .mobile-pnl-day { display: grid; grid-template-columns: 32px minmax(52px, 1fr) minmax(0, 1.7fr) 16px; width: 100%; min-height: 60px; align-items: center; gap: 8px; padding: 10px 4px; border-bottom: 1px solid hsl(var(--border)); text-align: left; border-radius: 0; transition: background-color .15s ease, transform .15s ease; touch-action: manipulation; }
+  .mobile-pnl-day { position: relative; }
+  .mobile-pnl-day > .pnl-day-count { position: absolute; top: 3px; right: 4px; }
   .mobile-pnl-day:last-child { border-bottom: 0; }
   .mobile-pnl-day:hover { background: hsl(var(--muted)); }
   .mobile-pnl-day:active { background: hsl(var(--accent)); transform: translateY(1px); }
@@ -319,7 +323,8 @@
   .trading-dashboard .pnl-day { padding: 4.75px 5.7px 5.7px; }
   .trading-dashboard .pnl-day-number { font-size: 9.5px; line-height: 12.35px; }
   .trading-dashboard .pnl-day strong { font-size: 10.45px; }
-  .trading-dashboard .pnl-day.today::after { width: 2.85px; height: 2.85px; top: 7.6px; right: 5.7px; }
+  .trading-dashboard .pnl-day-count { font-size: 8px; }
+  .trading-dashboard .pnl-day.today .pnl-day-number::after { width: 2.85px; height: 2.85px; }
   .trading-dashboard .pnl-week-total { padding: 1.9px; }
   .trading-dashboard .pnl-week-total > span { font-size: 6.65px; line-height: 9.5px; letter-spacing: 0; }
   .trading-dashboard .pnl-week-total > strong { font-size: 9.5px; line-height: 12.35px; }
