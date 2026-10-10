@@ -1,3 +1,5 @@
+import TradeDateTimePicker from '@/components/TradeDateTimePicker';
+import { holdingDuration, formatHoldingDuration, localTimeZone } from '@/lib/holdingTime';
 import LoadError from '@/components/LoadError';
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -154,16 +156,9 @@ export default function Trades() {
               <input id="new-risk-pct" type="number" min="0" max="100" step="any" value={form.riskPct} onChange={e => setForm(f => ({ ...f, riskPct: e.target.value }))} placeholder="Not recorded" className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm" />
               <p className="text-xs text-muted-foreground mt-1">Account equity risked at entry. Leave blank if unknown.</p>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Open Date</label>
-              <input aria-label="Open Date" required type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
-                className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Close Date</label>
-              <input aria-label="Close Date" required min={form.openDate} type="datetime-local" value={form.closeDate} onChange={e => setForm(f => ({ ...f, closeDate: e.target.value }))}
-                className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200" />
-            </div>
+            <TradeDateTimePicker label="Open Date & Time" value={form.openDate} onChange={openDate => setForm(f => ({ ...f, openDate }))} />
+                <TradeDateTimePicker label="Close Date & Time" value={form.closeDate} onChange={closeDate => setForm(f => ({ ...f, closeDate }))} />
+                <div className="sm:col-span-2 text-xs text-muted-foreground" aria-live="polite">Holding duration: <strong className="text-foreground">{formatHoldingDuration(holdingDuration({ open_time: form.openDate, close_time: form.closeDate }))}</strong><span className="block mt-1">Local time · {localTimeZone()}. Close must be on or after open.</span></div>
             <div className="flex items-end">
               {previewPnl !== null && (
                 <div className={`text-2xl font-extrabold font-mono-num ${previewPnl >= 0 ? 'text-profit' : 'text-loss'}`}>

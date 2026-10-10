@@ -1,3 +1,5 @@
+import HoldingTimeAnalysis from '@/components/HoldingTimeAnalysis';
+import { formatHoldingDuration } from '@/lib/holdingTime';
 import { useState, useMemo, useEffect } from "react";
 import { useRules } from '@/hooks/useRules';
 import { evaluateRules, getDayKey, type RuleRow } from '@/lib/ruleChecks';
@@ -85,19 +87,7 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
     const abs = Math.abs(val);
     return `${val < 0 ? '-' : ''}$${abs >= 1000 ? (abs / 1000).toFixed(1) + 'k' : abs.toFixed(2)}`;
   };
-  const formatDuration = (ms: number) => {
-    if (ms <= 0 || isNaN(ms)) return "0h 0m";
-    const secs = ms / 1000;
-    const mins = secs / 60;
-    const hours = mins / 60;
-    const days = Math.floor(hours / 24);
-    const remainingHours = Math.floor(hours % 24);
-    const remainingMins = Math.floor(mins % 60);
-    if (days > 0) {
-      return `${days}d ${remainingHours}h`;
-    }
-    return `${remainingHours}h ${remainingMins}m`;
-  };
+  const formatDuration = formatHoldingDuration;
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -230,6 +220,8 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
         </div>
         <div className="an-distribution-totals">{[{ label: "Gross Profit", value: grossProfit }, { label: "Gross Loss", value: grossLoss }, { label: "Realized Result", value: totalPnl }].map(item => <div key={item.label}><span className="an-label">{item.label}</span><strong className={tone(item.value)}>{formatCompactVal(item.value)}</strong></div>)}</div>
       </section>
+
+      <HoldingTimeAnalysis data={analysis.holding} />
 
       <section className="an-surface an-comparisons" aria-label="Trade breakdowns">
         <div><div className="an-section-heading"><div><h2><ArrowLeftRight />Long vs Short</h2><p>Performance by trade direction</p></div></div>

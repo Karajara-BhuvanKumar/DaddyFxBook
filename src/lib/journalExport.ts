@@ -1,5 +1,6 @@
 import type { Trade, Journal, Checklist } from '@/hooks/useTrades';
 import { buildStrategySummary, parseStrategySetup } from './strategySetup';
+import { tradeTimeParts, localTimeZone, holdingDuration, formatHoldingDuration } from './holdingTime';
 
 export interface JournalScreenshot { id: string; trade_id: string; image_url: string; signed_url?: string }
 export interface ExportData { trades: Trade[]; journals: Journal[]; checklists: Checklist[]; screenshots: JournalScreenshot[] }
@@ -56,6 +57,9 @@ export function journalExportSections(trade: Trade, data: ExportData, options: E
       ['Trade ID', trade.id], ['Journal status', j ? 'Journaled' : 'Pending'], ['Symbol', trade.symbol], ['Direction', trade.direction],
       ['Entry', number(trade.entry_price)], ['Exit', number(trade.exit_price)], ['Size', number(trade.lot_size)], ['P&L', number(trade.pnl)],
       ['Trade date/time (UTC)', date(trade.open_time)], ['Close date/time (UTC)', date(trade.close_time)],
+      ['Opening date', tradeTimeParts(trade.open_time).date], ['Opening time', tradeTimeParts(trade.open_time).time],
+      ['Closing date', tradeTimeParts(trade.close_time).date], ['Closing time', tradeTimeParts(trade.close_time).time],
+      ['Display timezone', localTimeZone()], ['Holding duration', formatHoldingDuration(holdingDuration(trade))],
       ['Stop loss', number(trade.stop_loss)], ['Take profit', number(trade.take_profit)], ['Trade session', trade.session],
     ] },
     { id: 'notes', title: 'Analysis & reflections', fields: [

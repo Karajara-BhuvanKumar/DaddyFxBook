@@ -1,0 +1,42 @@
+.trade-time-field { min-width:0; }
+.trade-time-trigger { display:flex; align-items:center; gap:10px; width:100%; min-height:46px; border:1px solid hsl(var(--border)); border-radius:16px; background:hsl(var(--input)); padding:11px 14px; font-size:13px; text-align:left; }
+.trade-time-trigger svg { flex-shrink:0; color:hsl(var(--muted-foreground)); }
+.trade-time-trigger:focus-visible { outline:2px solid hsl(var(--primary)); outline-offset:2px; }
+.trade-time-picker { --picker-accent:#006aff; --picker-muted:hsl(var(--muted-foreground)); --picker-control:hsl(var(--secondary)); width:350px; max-width:calc(100vw - 24px); max-height:var(--radix-popover-content-available-height); overflow-y:auto; padding:12px; border:1px solid hsl(var(--border)); border-radius:18px; background:hsl(var(--card)); color:hsl(var(--foreground)); box-shadow:0 16px 50px #0004,0 0 0 1px hsl(var(--border) / .25); }
+.dark .trade-time-picker { --picker-muted:#858585; --picker-control:#1b1b1b; background:#101010; border-color:#232323; }
+.trade-time-picker button { transition:background .15s,color .15s; }
+.trade-time-picker button:focus-visible { outline:2px solid var(--picker-accent); outline-offset:2px; }
+.trade-time-shortcuts { display:flex; gap:5px; padding-bottom:10px; border-bottom:1px solid hsl(var(--border)); }
+.trade-time-shortcuts button { flex:1; min-height:38px; padding:8px 4px; border-radius:11px; background:var(--picker-control); color:var(--picker-muted); font-size:14px; font-weight:650; }
+.trade-time-shortcuts button:hover { color:hsl(var(--foreground)); background:hsl(var(--muted)); }
+.trade-time-picker .rdp { padding:0; margin:0; }
+.trade-calendar-caption { height:56px; position:relative; display:flex; align-items:center; justify-content:center; }
+.trade-calendar-title { font-size:16px; font-weight:750; }
+.trade-calendar-nav-button { display:grid; place-items:center; position:absolute; top:8px; width:38px; height:40px; color:var(--picker-muted); border-radius:10px; }
+.trade-calendar-previous { left:0; }
+.trade-calendar-next { right:0; }
+.trade-calendar-nav-button:hover { background:var(--picker-control); }
+.trade-calendar-grid { width:100%; border-collapse:collapse; table-layout:fixed; }
+.trade-calendar-weekday { height:30px; color:var(--picker-muted); font-size:11px; font-weight:700; text-align:center; }
+.trade-calendar-cell { height:46px; padding:0; text-align:center; }
+.trade-time-picker .trade-calendar-day { display:flex; align-items:center; justify-content:center; width:100%; max-width:44px; height:44px; margin:1px auto; padding:0; border-radius:12px; color:var(--picker-muted); font-size:14px; font-weight:650; }
+.trade-time-picker .trade-calendar-day:hover { background:var(--picker-control); color:hsl(var(--foreground)); }
+.trade-time-picker .trade-calendar-outside { opacity:.25; }
+.trade-time-picker .trade-calendar-selected,.trade-time-picker .trade-calendar-selected:hover { color:#fff; background:var(--picker-accent); box-shadow:0 3px 8px #006aff30; opacity:1; font-weight:800; }
+.trade-time-picker[data-stage="time"] { padding:16px 14px 14px; border-radius:22px; }
+.trade-time-heading { display:flex; gap:10px; align-items:center; padding:2px 2px 12px; border-bottom:1px solid hsl(var(--border)); font-size:15px; }
+.trade-time-heading strong { font-weight:750; }
+.trade-time-heading button { display:flex; gap:5px; align-items:center; justify-content:center; height:32px; min-width:56px; padding:6px 9px; color:var(--picker-muted); background:var(--picker-control); border:1px solid hsl(var(--border) / .5); border-radius:10px; }
+.trade-time-caption { display:flex; gap:8px; align-items:center; justify-content:center; color:var(--picker-muted); font-size:14px; font-weight:500; margin:21px 0 18px; }
+.trade-time-clock { display:flex; gap:24px; align-items:center; justify-content:center; padding:0 0 20px; }
+.trade-time-unit { display:flex; flex-direction:column; align-items:center; gap:4px; width:56px; position:relative; }
+.trade-time-unit:first-child::after { content:':'; position:absolute; top:36px; right:-18px; font-size:32px; font-weight:700; color:var(--picker-muted); }
+.trade-time-unit button { width:54px; height:35px; display:grid; place-items:center; border-radius:11px; background:var(--picker-control); color:var(--picker-muted); }
+.trade-time-unit input { width:64px; height:42px; padding:0; border:0; border-radius:6px; text-align:center; font-size:36px; line-height:42px; font-weight:800; font-variant-numeric:tabular-nums; background:transparent; color:hsl(var(--foreground)); appearance:textfield; }
+.trade-time-unit input:focus-visible { outline:2px solid var(--picker-accent); }
+.trade-time-unit input::-webkit-inner-spin-button { appearance:none; }
+.trade-time-period { min-width:66px; height:48px; background:var(--picker-control); color:var(--picker-muted); border:1px solid hsl(var(--border) / .5); border-radius:14px; padding:10px 14px; font-size:16px; font-weight:750; }
+.trade-time-footer { padding-top:10px; border-top:1px solid hsl(var(--border)); }
+.trade-time-done { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:46px; padding:10px; border-radius:14px; font-weight:750; font-size:16px; background:var(--picker-accent); color:#fff; }
+.trade-time-done:hover { background:#005ee6; }
+@media(max-width:359px) { .trade-time-picker { padding:10px; } .trade-calendar-cell { height:42px; } .trade-time-picker .trade-calendar-day { height:40px; } .trade-time-heading { font-size:13px; } .trade-time-clock { gap:20px; } }

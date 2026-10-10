@@ -1,5 +1,6 @@
 /** datetime-local controls display wall time; the database stores absolute instants. */
-export function toLocalDateTime(value: string): string {
+export function toLocalDateTime(value: string | null | undefined): string {
+  if (!value) return '';
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return '';
   const pad = (n: number) => String(n).padStart(2, '0');

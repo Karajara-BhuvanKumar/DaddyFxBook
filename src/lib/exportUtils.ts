@@ -19,7 +19,7 @@ export function buildJournalWorkbook(data: ExportData, options: ExportOptions) {
     ['Wins', wins], ['Losses', data.trades.filter(t => Number(t.pnl) < 0).length],
     ['Win rate', data.trades.length ? wins / data.trades.length : 0],
     ['Net P&L', data.trades.reduce((sum, t) => sum + Number(t.pnl), 0)],
-    ['Date/time convention', 'UTC'], ['Screenshots', 'Original storage references; PDF embeds available images.'],
+    ['Date/time convention', 'Opening/closing fields use the recorded display timezone; original UTC timestamps are also included.'], ['Screenshots', 'Original storage references; PDF embeds available images.'],
   ]);
   summary.B6.z = '0.00%'; summary.B7.z = '#,##0.00;[Red]-#,##0.00';
   summary['!cols'] = [{ wch: 26 }, { wch: 64 }];
@@ -194,7 +194,7 @@ export async function buildJournalPDF(data: ExportData, options: ExportOptions) 
     }
   }
   for (let p = 1; p <= doc.getNumberOfPages(); p++) {
-    doc.setPage(p); text(`TradeFXBook  |  Dates in UTC  |  ${p} / ${doc.getNumberOfPages()}`, margin, height - 18, 8, '#71717a');
+    doc.setPage(p); text(`TradeFXBook  |  Timezone labeled in trade details  |  ${p} / ${doc.getNumberOfPages()}`, margin, height - 18, 8, '#71717a');
   }
   return { doc, missingImages };
 }

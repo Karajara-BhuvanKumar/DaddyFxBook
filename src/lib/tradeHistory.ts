@@ -1,14 +1,15 @@
 import type { Trade } from '@/hooks/useTrades';
+import { holdingDuration, formatHoldingDuration, formatTradeDateTime, timestampMs } from './holdingTime';
 
 export type HistoryTrade = Trade & { notes?: string; commission?: number | null; swap?: number | null; net_pnl?: number | null };
 export const COLUMNS = [
   ['openClose', 'Open / Close'], ['symbol', 'Symbol'], ['direction', 'Type'], ['entry_price', 'Entry'],
   ['exit_price', 'Exit'], ['lot_size', 'Size'], ['pnl', 'P&L'], ['source', 'Source'],
-  ['open_time', 'Open time'], ['close_time', 'Close time'], ['duration', 'Duration'], ['net_pnl', 'Net P&L'],
+  ['open_time', 'Open time'], ['close_time', 'Close time'], ['duration', 'Holding time'], ['net_pnl', 'Net P&L'],
   ['commission', 'Commission'], ['swap', 'Swap'], ['day', 'Day'], ['notes', 'Notes'],
 ] as const;
 export type ColumnId = typeof COLUMNS[number][0];
-export const DEFAULT_COLUMNS: ColumnId[] = COLUMNS.slice(0, 8).map(([id]) => id);
+export const DEFAULT_COLUMNS: ColumnId[] = [...COLUMNS.slice(0, 8).map(([id]) => id), 'duration'];
 export const PERIODS = ['All Time', 'Today', 'This Week', 'Last 30 Days', 'This Month', 'Last Month', 'Last 3 Months', 'Custom'] as const;
 export type Condition = { id: string; field: ColumnId; operator: 'contains' | 'eq' | 'neq' | 'gt' | 'lt'; value: string };
 export type ConditionGroup = { id: string; match: 'all' | 'any'; rules: Condition[] };
@@ -22,9 +23,9 @@ export const DEFAULT_SORT: Sort[] = [{ column: 'close_time', direction: 'desc' }
 export const isFiltersActive = (f: HistoryFilters) => f.pnl !== 'All' || f.direction !== 'All' || f.period !== 'All Time' || f.rules.some(r => r.value.trim()) || f.groups.some(g => g.rules.some(r => r.value.trim()));
 export function columnValue(t: HistoryTrade, id: ColumnId): string | number | null {
   switch (id) {
-    case 'openClose': case 'close_time': return new Date(t.close_time).getTime();
-    case 'open_time': return new Date(t.open_time).getTime();
-    case 'duration': return Math.max(0, (new Date(t.close_time).getTime() - new Date(t.open_time).getTime()) / 60000);
+    case 'openClose': case 'close_time': return timestampMs(t.close_time);
+    case 'open_time': return timestampMs(t.open_time);
+    case 'duration': { const ms = holdingDuration(t); return ms === null ? null : ms / 60000; }
     case 'day': return new Date(t.close_time).toLocaleDateString('en-US', { weekday: 'long' });
     // Stored realized P&L is used when no separately recorded net figure exists.
     case 'net_pnl': return t.net_pnl ?? Number(t.pnl);
@@ -36,18 +37,14 @@ export function columnValue(t: HistoryTrade, id: ColumnId): string | number | nu
   }
 }
 export function formatHistoryDate(value: string) {
-  const date = new Date(value);
-  return `${date.getDate()} ${date.toLocaleDateString('en-US', { month: 'short' })} ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  return formatTradeDateTime(value);
 }
 export function columnText(t: HistoryTrade, id: ColumnId): string {
+  if (id === 'duration') return formatHoldingDuration(holdingDuration(t));
   if (id === 'openClose') return `Open: ${formatHistoryDate(t.open_time)}; Close: ${formatHistoryDate(t.close_time)}`;
   if (id === 'open_time' || id === 'close_time') return formatHistoryDate(t[id]);
   const value = columnValue(t, id);
   if (value === null) return 'Not recorded';
-  if (id === 'duration') {
-    const minutes = Math.floor(Number(value));
-    return `${Math.floor(minutes / 1440) ? `${Math.floor(minutes / 1440)}d ` : ''}${Math.floor(minutes / 60) % 24}h ${minutes % 60}m`;
-  }
   return String(value);
 }
 export function dateBounds(f: HistoryFilters, now: Date): [number, number] {
@@ -91,10 +88,10 @@ function matches(t: HistoryTrade, rule: Condition) {
 export function filterHistory(trades: HistoryTrade[], f: HistoryFilters, columns: Partial<Record<ColumnId, string>>, now = new Date()) {
   const [start, end] = dateBounds(f, now);
   return trades.filter(t => {
-    const time = new Date(t.close_time).getTime();
+    const time = timestampMs(t.close_time) ?? timestampMs(t.open_time);
     return (f.pnl === 'All' || (f.pnl === 'Profitable' ? Number(t.pnl) > 0 : Number(t.pnl) < 0))
       && (f.direction === 'All' || t.direction === f.direction)
-      && time >= start && time < end
+      && (f.period === 'All Time' || (time !== null && time >= start && time < end))
       && f.rules.every(r => matches(t, r))
       && f.groups.every(g => { const rules = g.rules.filter(r => r.value.trim()); return !rules.length || (g.match === 'all' ? rules.every(r => matches(t, r)) : rules.some(r => matches(t, r))); })
       && Object.entries(columns).every(([id, value]) => !value || columnText(t, id as ColumnId).toLowerCase().includes(value.trim().toLowerCase()));
