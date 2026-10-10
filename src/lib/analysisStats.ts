@@ -1,6 +1,35 @@
 import type { Trade, Journal } from "@/hooks/useTrades";
 import type { BreakdownItem } from "@/components/BreakdownList";
 import { parseStrategySetup, buildSetupKey, buildBroadSetupKey } from "@/lib/strategySetup";
+import { holdingDuration } from './holdingTime';
+
+export const HOLDING_RANGES = [
+  { label: 'Under 15 minutes', short: '<15m', min: 0, max: 15 * 60000 },
+  { label: '15–60 minutes', short: '15–60m', min: 15 * 60000, max: 60 * 60000 },
+  { label: '1–4 hours', short: '1–4h', min: 60 * 60000, max: 4 * 3600000 },
+  { label: '4–24 hours', short: '4–24h', min: 4 * 3600000, max: 24 * 3600000 },
+  { label: '24 hours or more', short: '24h+', min: 24 * 3600000, max: Infinity },
+];
+
+/** Receives the same validated, filtered records used by the rest of Analysis. */
+export function analyzeHoldingTime(trades: Trade[]) {
+  const records = trades.flatMap(trade => { const duration = holdingDuration(trade); return duration === null ? [] : [{ trade, duration }]; }).sort((a, b) => a.duration - b.duration);
+  const average = (rows: typeof records) => rows.length ? sum(rows.map(r => r.duration)) / rows.length : null;
+  const wins = records.filter(r => r.trade.pnl > 0), losses = records.filter(r => r.trade.pnl < 0);
+  const middle = Math.floor(records.length / 2);
+  return {
+    count: records.length, average: average(records), total: records.length ? sum(records.map(r => r.duration)) : null,
+    median: records.length ? records.length % 2 ? records[middle].duration : (records[middle - 1].duration + records[middle].duration) / 2 : null,
+    shortest: records[0] ?? null, longest: records[records.length - 1] ?? null,
+    winningAverage: average(wins), losingAverage: average(losses), wins: wins.length, losses: losses.length,
+    ranges: HOLDING_RANGES.map(range => {
+      const rows = records.filter(r => r.duration >= range.min && r.duration < range.max);
+      const winners = rows.filter(r => r.trade.pnl > 0).length, losers = rows.filter(r => r.trade.pnl < 0).length;
+      const pnl = sum(rows.map(r => r.trade.pnl));
+      return { ...range, count: rows.length, pnl, averagePnl: rows.length ? pnl / rows.length : null, winRate: winners + losers ? winners / (winners + losers) * 100 : null, breakEven: rows.length - winners - losers };
+    }),
+  };
+}
 
 export type AnalysisPeriod = 'Today' | '7 Days' | '30 Days' | '3 Months' | '1 Year' | 'All Time';
 export type AnalysisOutcome = 'All Trades' | 'Winners' | 'Losers';
@@ -113,7 +142,7 @@ function journalSession(journal?: Journal): 'Asian' | 'London' | 'New York' | nu
 export function analyzeTrades(trades: Trade[], journals: Journal[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
   const { includedClosedTrades, rejected } = includedTrades(trades, period, outcome, now);
   const core = metrics(includedClosedTrades);
-  const hold = (rows: Trade[]) => rows.length ? sum(rows.map(t => Date.parse(t.close_time) - Date.parse(t.open_time))) / rows.length : 0;
+  const holding = analyzeHoldingTime(includedClosedTrades);
   const longTrades = includedClosedTrades.filter(t => t.direction === 'Long'), shortTrades = includedClosedTrades.filter(t => t.direction === 'Short');
   const long = metrics(longTrades), short = metrics(shortTrades);
   const calendarData: Record<string, { pnl: number; count: number }> = {};
@@ -169,7 +198,7 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
   };
   const setupRows = Array.from(setupMap, ([key, group]) => ({ ...row(key, group.trades), children: Array.from(group.children, ([k, ts]) => row(k, ts)).sort((a, b) => b.netValue - a.netValue) })).sort((a, b) => b.netValue - a.netValue);
   return { ...core, ...streaks(includedClosedTrades.map(t => t.pnl)), includedClosedTrades, rejected,
-    avgHoldAll: hold(includedClosedTrades), avgHoldWinners: hold(core.winners), avgHoldLosers: hold(core.losers),
+    holding, avgHoldAll: holding.average, avgHoldWinners: holding.winningAverage, avgHoldLosers: holding.losingAverage,
     longTrades, shortTrades, longPnl: long.totalPnl, shortPnl: short.totalPnl, longWinRate: long.winRate, shortWinRate: short.winRate,
     calendarData, dailyPnl, dayPerf, sessionPerf, unassignedSession, chartData, setupRows,
     symbols: Object.entries(symbolGroups).sort(([, a], [, b]) => b.pnl - a.pnl).slice(0, 3),

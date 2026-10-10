@@ -13,6 +13,7 @@ import { emptyStrategySetup, parseStrategySetup, type StrategySetup } from "@/li
 import { cn } from "@/lib/utils";
 import { filterJournalTrades } from '@/lib/journalExport';
 import '@/styles/journal.css';
+import { formatTradeDateTime, formatHoldingDuration, holdingDuration, localTimeZone } from '@/lib/holdingTime';
 
 export default function Journal() {
   const { user } = useAuth();
@@ -325,8 +326,15 @@ export default function Journal() {
                 <span>·</span>
                 <span>Size {selectedTrade.lot_size}</span>
                 <span>·</span>
-                <span>{formatJournalDate(selectedTrade.open_time)}</span>
+                <span>Held {formatHoldingDuration(holdingDuration(selectedTrade))}</span>
               </div>
+
+              <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-2xl border border-border bg-secondary/40 p-4 text-xs">
+                <div><dt className="text-muted-foreground mb-1">Open date & time</dt><dd className="font-semibold">{formatTradeDateTime(selectedTrade.open_time)}</dd></div>
+                <div><dt className="text-muted-foreground mb-1">Close date & time</dt><dd className="font-semibold">{formatTradeDateTime(selectedTrade.close_time)}</dd></div>
+                <div><dt className="text-muted-foreground mb-1">Holding duration</dt><dd className="font-semibold">{formatHoldingDuration(holdingDuration(selectedTrade))}</dd></div>
+                <div className="sm:col-span-3 text-muted-foreground">Local time · {localTimeZone()}</div>
+              </dl>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Pre-Trade Analysis */}
