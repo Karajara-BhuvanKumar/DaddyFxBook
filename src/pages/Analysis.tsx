@@ -1,4 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
+import { useRules } from '@/hooks/useRules';
+import { evaluateRules, getDayKey, type RuleRow } from '@/lib/ruleChecks';
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
+import { CalendarRuleViolations } from '@/components/CalendarRuleViolations';
 import { cn } from "@/lib/utils";
 import { type Trade, type Journal } from "@/hooks/useTrades";
 import { analyzeTrades, sum } from "@/lib/analysisStats";
@@ -7,7 +11,7 @@ import { AnalysisSessionTimeline } from "@/components/AnalysisSessionTimeline";
 import { type BreakdownItem } from "@/components/BreakdownList";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { 
-  Activity, TrendingUp, TrendingDown, Calendar, Globe, CheckCircle2, Trophy,
+  AlertTriangle, Activity, TrendingUp, TrendingDown, Calendar, Globe, CheckCircle2, Trophy,
   Sunrise, Landmark, Building2, ChevronLeft, ChevronRight, ClipboardList, X, Layers, ArrowLeftRight, Flame
 } from "lucide-react";
 import "@/styles/analysis.css";
@@ -20,18 +24,26 @@ interface AnalysisViewProps {
   allJournals: Journal[];
   isLoading?: boolean;
   initialDate?: Date;
+  rules?: RuleRow[];
+  rulesLoading?: boolean;
+  rulesError?: boolean;
+  retryRules?: () => void;
 }
 
 export default function Analysis() {
   const { trades, journals } = useAnalysisData();
+  const ruleQuery = useRules();
   if (trades.isError || journals.isError) return <div className="analysis-page an-loading" role="alert">Analysis could not load all records. Please retry.<button onClick={() => { void trades.refetch(); void journals.refetch(); }}>Retry</button></div>;
-  return <AnalysisView trades={trades.data ?? []} allJournals={journals.data ?? []} isLoading={trades.isLoading || journals.isLoading} />;
+  return <AnalysisView trades={trades.data ?? []} allJournals={journals.data ?? []} isLoading={trades.isLoading || journals.isLoading} rules={ruleQuery.rules} rulesLoading={ruleQuery.isLoading} rulesError={!!ruleQuery.error} retryRules={() => { void ruleQuery.refetch(); }} />;
 }
 
-export function AnalysisView({ trades, allJournals, isLoading = false, initialDate }: AnalysisViewProps) {
+const NO_RULES: RuleRow[] = [];
+export function AnalysisView({ trades, allJournals, isLoading = false, initialDate, rules = NO_RULES, rulesLoading = false, rulesError = false, retryRules }: AnalysisViewProps) {
+  const { preferences } = useWorkspacePreferences();
+  const timeZone = preferences.timezone;
   const [currentDate, setCurrentDate] = useState(() => {
-    const date = new Date();
-    return initialDate ?? new Date(date.getUTCFullYear(), date.getUTCMonth(), 1);
+    const [y, m] = getDayKey(new Date().toISOString(), timeZone).split('-').map(Number);
+    return initialDate ?? new Date(y, m - 1, 1);
   });
   const [chartMode, setChartMode] = useState<'Equity' | 'Drawdown'>('Equity');
   // Refresh the rolling date scope each minute and on foregrounding, not each clock tick.
@@ -51,12 +63,24 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
     winRate, profitFactor, expectancy, avgWin, avgLoss, bestTrade, worstTrade, winStreak, lossStreak,
     avgHoldAll, avgHoldWinners, avgHoldLosers, longTrades, shortTrades, longPnl, shortPnl, longWinRate, shortWinRate,
     dailyPnl, winningDays, losingDays, avgDailyPnl, avgDailyVolume, largestProfitableDay, largestLosingDay, avgWinningDayPnl,
-    avgLosingDayPnl, winDayStreak, lossDayStreak, maxDD, dayPerf, sessionPerf, unassignedSession, calendarData,
+    avgLosingDayPnl, winDayStreak, lossDayStreak, maxDD, dayPerf, sessionPerf, unassignedSession,
     bestMonthStr, worstMonthStr, avgMonthPnl, chartData, setupRows, symbols } = analysis;
   const winCount = winners.length, lossCount = losers.length, totalCount = winCount + lossCount;
   const breakEvenCount = filteredTrades.length - totalCount;
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(null);
-  const selectedDayTrades = useMemo(() => filteredTrades.filter(t => t.close_time.slice(0, 10) === selectedCalendarDay), [filteredTrades, selectedCalendarDay]);
+  // Discipline always uses complete data: outcome/period filters must not hide breaches.
+  const violations = useMemo(() => rulesLoading || rulesError ? {} : evaluateRules(rules, trades, [], { timeZone, now: scopeTime }), [rules, trades, timeZone, scopeTime, rulesLoading, rulesError]);
+  const calendarData = useMemo(() => {
+    const days: Record<string, { pnl: number; count: number }> = {};
+    for (const trade of filteredTrades) {
+      const day = getDayKey(trade.close_time, timeZone);
+      const bucket = days[day] ??= { pnl: 0, count: 0 };
+      bucket.pnl = sum([bucket.pnl, trade.pnl]); bucket.count++;
+    }
+    return days;
+  }, [filteredTrades, timeZone]);
+  const todayKey = getDayKey(now.toISOString(), timeZone);
+  const selectedDayTrades = useMemo(() => filteredTrades.filter(t => getDayKey(t.close_time, timeZone) === selectedCalendarDay), [filteredTrades, selectedCalendarDay, timeZone]);
   const formatCompactVal = (val: number) => {
     const abs = Math.abs(val);
     return `${val < 0 ? '-' : ''}$${abs >= 1000 ? (abs / 1000).toFixed(1) + 'k' : abs.toFixed(2)}`;
@@ -245,7 +269,7 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
       </section>
 
       <section className="an-surface an-calendar-section" aria-label="Trading Calendar">
-        <div className="an-section-heading"><div><h2><Calendar />Trading Calendar</h2><p>Daily P&amp;L</p></div><div className="an-month-nav"><button aria-label="Previous month" onClick={() => { setCurrentDate(new Date(year, month - 1, 1)); setSelectedCalendarDay(null); }}><ChevronLeft /></button><span aria-live="polite">{currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span><button aria-label="Next month" onClick={() => { setCurrentDate(new Date(year, month + 1, 1)); setSelectedCalendarDay(null); }}><ChevronRight /></button></div></div>
+        <div className="an-section-heading"><div><h2><Calendar />Trading Calendar</h2><p>Daily P&amp;L · {timeZone}</p></div><div className="an-month-nav"><button aria-label="Previous month" onClick={() => { setCurrentDate(new Date(year, month - 1, 1)); setSelectedCalendarDay(null); }}><ChevronLeft /></button><span aria-live="polite">{currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span><button aria-label="Next month" onClick={() => { setCurrentDate(new Date(year, month + 1, 1)); setSelectedCalendarDay(null); }}><ChevronRight /></button></div></div>
         <div className="an-calendar-body"><div className="an-calendar-main">
           <div className="an-calendar-scroll"><div className="an-calendar-grid">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Weekly"].map(day => <span className={cn("an-calendar-dow", day === "Weekly" && "an-profit")} key={day}>{day}</span>)}
@@ -255,15 +279,19 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
                 if (day < 1 || day > daysInMonth) return <div key={column} />;
                 const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                 const data = calendarData[key];
-                return <button key={column} className={cn("an-calendar-day", data && (data.pnl > 0 ? "an-day-profit" : data.pnl < 0 ? "an-day-loss" : "an-day-flat"), selectedCalendarDay === key && "is-selected")} aria-label={`${currentDate.toLocaleDateString("en-US", { month: "long" })} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}`} aria-pressed={selectedCalendarDay === key} aria-current={day === now.getUTCDate() && month === now.getUTCMonth() && year === now.getUTCFullYear() ? "date" : undefined} onClick={() => setSelectedCalendarDay(key)}><span>{day}</span>{data && <><strong className={tone(data.pnl)} title={money(data.pnl)}>{formatCompactVal(data.pnl)}</strong><small>{data.count} trade{data.count !== 1 ? "s" : ""}</small></>}</button>;
+                const broken = violations[key]?.length ?? 0;
+                return <button key={column} className={cn("an-calendar-day", data && (data.pnl > 0 ? "an-day-profit" : data.pnl < 0 ? "an-day-loss" : "an-day-flat"), selectedCalendarDay === key && "is-selected")} aria-label={`${currentDate.toLocaleDateString("en-US", { month: "long" })} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}${broken ? `, ${broken} rule violation${broken === 1 ? "" : "s"}` : ""}`} aria-pressed={selectedCalendarDay === key} aria-current={key === todayKey ? "date" : undefined} onClick={() => setSelectedCalendarDay(key)}><span>{day}</span>{broken > 0 && <AlertTriangle className="an-rule-warning" aria-hidden="true" />}{data && <><strong className={tone(data.pnl)} title={money(data.pnl)}>{formatCompactVal(data.pnl)}</strong><small>{data.count} trade{data.count !== 1 ? "s" : ""}</small></>}</button>;
               })}
               <div className={cn("an-calendar-week-total", tone(weeklyTotals[week].pnl))}><span>Weekly</span><strong title={money(weeklyTotals[week].pnl)}>{formatCompactVal(weeklyTotals[week].pnl)}</strong><small>{weeklyTotals[week].trades} trades</small></div>
             </div>)}
           </div></div>
-          <div className="an-calendar-legend"><span><i />Profitable Day</span><span><i />Losing Day</span><span><i />No Trades</span></div>
+          <div className="an-calendar-legend"><span><i />Profitable Day</span><span><i />Losing Day</span><span><i />No Trades</span><span><AlertTriangle size={13} className="an-rule-legend-icon" aria-hidden="true" />Rule violation</span></div>
+          <p className="an-rule-caption">Rule checks use all trades, regardless of filters. Entry rules use the opening date; daily loss uses the closing date. Missing risk is skipped.</p>
+          {rulesLoading && <p className="an-rule-caption" role="status">Loading active rules…</p>}
+          {rulesError && <p className="an-rule-caption" role="alert">Rule checks unavailable. <button onClick={retryRules}>Retry rules</button></p>}
         </div><aside className="an-day-details" aria-label="Day Trades"><h2><ClipboardList />Day Trades</h2>
           {selectedCalendarDay && <p className="an-selected-date">{new Date(selectedCalendarDay + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
-          <div aria-live="polite">{selectedDayTrades.length ? selectedDayTrades.map(trade => <div className="an-day-trade" key={trade.id}><div><b>{trade.symbol}</b><small>{trade.direction} · {trade.lot_size} lots</small></div><strong className={tone(Number(trade.pnl))}>{money(Number(trade.pnl))}</strong></div>) : <div className="an-empty"><Calendar /><p>{selectedCalendarDay ? "No trades on this day" : "No day selected"}</p></div>}</div>
+          <div aria-live="polite">{selectedCalendarDay && <CalendarRuleViolations date={selectedCalendarDay} violations={violations[selectedCalendarDay] ?? []} trades={trades} timeZone={timeZone} />}{selectedDayTrades.length ? selectedDayTrades.map(trade => <div className="an-day-trade" key={trade.id}><div><b>{trade.symbol}</b><small>{trade.direction} · {trade.lot_size} lots</small></div><strong className={tone(Number(trade.pnl))}>{money(Number(trade.pnl))}</strong></div>) : <div className="an-empty"><Calendar /><p>{selectedCalendarDay ? "No trades on this day" : "No day selected"}</p></div>}</div>
         </aside></div>
       </section>
 

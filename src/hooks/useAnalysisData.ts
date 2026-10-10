@@ -9,6 +9,8 @@ export function useAnalysisData() {
   const trades = useQuery({
     queryKey: ['trades', user?.id, 'complete-analysis'],
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     queryFn: ({ signal }) => fetchAllAnalysisRows<Trade>(after => {
       let query = supabase.from('trades').select('*').eq('user_id', user!.id).order('id').limit(1000);
       if (after) query = query.gt('id', after);
@@ -19,6 +21,8 @@ export function useAnalysisData() {
     // Existing journal-save mutations invalidate the 'journal' prefix.
     queryKey: ['journal', user?.id, 'complete-analysis'],
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     queryFn: ({ signal }) => fetchAllAnalysisRows<Journal>(after => {
       let query = supabase.from('journals').select('*').eq('user_id', user!.id).order('id').limit(1000);
       if (after) query = query.gt('id', after);

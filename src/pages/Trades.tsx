@@ -36,6 +36,7 @@ export default function Trades() {
     entryPrice: '',
     exitPrice: '',
     lotSize: '0.1',
+    riskPct: '',
     openDate: localNow(),
     closeDate: localNow(),
   });
@@ -63,10 +64,10 @@ export default function Trades() {
     const lot = parseFloat(form.lotSize);
     if (isNaN(entry) || isNaN(exit) || isNaN(lot)) return;
     try {
-      await addTrade.mutateAsync({ symbol: 'XAUUSD', direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: toUtcTimestamp(form.openDate), close_time: toUtcTimestamp(form.closeDate) });
+      await addTrade.mutateAsync({ symbol: 'XAUUSD', risk_pct: form.riskPct.trim() ? Number(form.riskPct) : null, direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: toUtcTimestamp(form.openDate), close_time: toUtcTimestamp(form.closeDate) });
       toast.success("Trade added!");
       setShowForm(false);
-      setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', openDate: localNow(), closeDate: localNow() });
+      setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', riskPct: '', openDate: localNow(), closeDate: localNow() });
     } catch (err: any) { toast.error(err.message); }
   }
 
@@ -148,6 +149,11 @@ export default function Trades() {
                   placeholder={field.placeholder} className="w-full bg-input text-foreground border border-border rounded-[20px] px-4 py-3 text-base font-mono-num focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/50" required />
               </div>
             ))}
+            <div>
+              <label htmlFor="new-risk-pct" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Recorded risk (%)</label>
+              <input id="new-risk-pct" type="number" min="0" max="100" step="any" value={form.riskPct} onChange={e => setForm(f => ({ ...f, riskPct: e.target.value }))} placeholder="Not recorded" className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm" />
+              <p className="text-xs text-muted-foreground mt-1">Account equity risked at entry. Leave blank if unknown.</p>
+            </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Open Date</label>
               <input aria-label="Open Date" required type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}

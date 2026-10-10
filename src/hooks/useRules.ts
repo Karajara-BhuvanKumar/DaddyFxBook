@@ -16,6 +16,7 @@ export interface TradingRule {
   position: number;
   rule_type: string;
   threshold: number | null;
+  allowed_sessions?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +75,8 @@ export function useRules() {
 
   const query = useQuery({
     queryKey: ["trading_rules", uid],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     enabled: !!uid,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -86,12 +89,13 @@ export function useRules() {
         ...row,
         rule_type: row.rule_type ?? 'manual',
         threshold: row.threshold ?? null,
+        allowed_sessions: row.allowed_sessions ?? [],
       })) as TradingRule[];
     },
   });
 
   const addRule = useMutation({
-    mutationFn: async (input: { rule: string; rule_type: string; threshold: number | null }) => {
+    mutationFn: async (input: { rule: string; rule_type: string; threshold: number | null; allowed_sessions?: string[] }) => {
       const rules = query.data ?? [];
       try {
         const { error } = await supabase.from("trading_rules").insert({
@@ -99,6 +103,7 @@ export function useRules() {
           rule: input.rule,
           rule_type: input.rule_type,
           threshold: input.threshold,
+          ...(input.allowed_sessions ? { allowed_sessions: input.allowed_sessions } : {}),
           position: rules.length,
         });
         if (error) throw error;

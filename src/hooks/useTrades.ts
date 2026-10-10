@@ -15,6 +15,7 @@ export interface Trade {
   exit_price: number;
   lot_size: number;
   stop_loss: number | null;
+  risk_pct?: number | null;
   take_profit: number | null;
   pnl: number;
   open_time: string;
@@ -77,7 +78,7 @@ export function useAddTrade() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (trade: { symbol: string; direction: string; entry_price: number; exit_price: number; lot_size: number; open_time: string; close_time: string; session?: string }) => {
+    mutationFn: async (trade: { symbol: string; direction: string; entry_price: number; exit_price: number; lot_size: number; open_time: string; close_time: string; session?: string; risk_pct?: number | null }) => {
       if (!user) throw new Error('Not authenticated');
       validateTrade(trade);
       const pnl = calculatePnl(trade.direction, trade.entry_price, trade.exit_price, trade.lot_size);

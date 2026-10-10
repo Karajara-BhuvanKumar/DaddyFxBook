@@ -170,6 +170,22 @@
 .an-calendar-day[class*="an-day-"] > span { color: var(--an-text); }
 .an-calendar-day[aria-current="date"] > span { color: var(--an-blue); }
 .an-calendar-day.is-selected { border-color: var(--an-blue); box-shadow: inset 0 0 0 1px var(--an-blue); }
+.an-calendar-day { position: relative; }
+.an-calendar-day > span { max-width: calc(100% - 15px); }
+.an-calendar-day .an-rule-warning { position: absolute; top: 6px; right: 4px; width: 13px; height: 13px; color: #f59e0b; stroke-width: 2.5; pointer-events: none; }
+.an-rule-legend-icon { color: #f59e0b; }
+.an-rule-caption { color: var(--an-muted); font-size: 11px; line-height: 1.6; margin-top: 10px; }
+.an-rule-caption button { text-decoration: underline; }
+.an-rule-details { padding: 14px 18px; border-bottom: 1px solid var(--an-line); }
+.an-rule-details h3 { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.an-rule-details h3 svg { color: #f59e0b; flex-shrink: 0; }
+.an-rule-details p { color: var(--an-muted); font-size: 11px; line-height: 1.6; margin: 5px 0; overflow-wrap: anywhere; }
+.an-rule-details > ul > li { padding-top: 12px; }
+.an-rule-details h4 { font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.an-rule-details summary { cursor: pointer; font-size: 11px; color: var(--an-blue); }
+.an-rule-details details li { padding: 8px 0; border-bottom: 1px solid var(--an-line); display: grid; gap: 3px; font-size: 11px; overflow-wrap: anywhere; }
+.an-rule-details details li span { color: var(--an-muted); }
+.light .an-rule-warning, .light .an-rule-legend-icon, .light .an-rule-details h3 svg { color: #a15c00; }
 .an-calendar-week-total { background: var(--an-control); }
 .an-calendar-week-total > span { font-size: 9px; text-transform: uppercase; color: var(--an-muted); }
 .an-calendar-week-total.an-profit { background: color-mix(in srgb, var(--an-blue) 7%, var(--an-surface)); border-color: color-mix(in srgb, var(--an-blue) 30%, transparent); }

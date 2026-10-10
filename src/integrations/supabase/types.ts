@@ -100,6 +100,7 @@ export type Database = {
           position: number
           rule_type: string
           threshold: number | null
+          allowed_sessions: string[]
           created_at: string
           updated_at: string
         }
@@ -111,6 +112,7 @@ export type Database = {
           position?: number
           rule_type?: string
           threshold?: number | null
+          allowed_sessions?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -122,6 +124,7 @@ export type Database = {
           position?: number
           rule_type?: string
           threshold?: number | null
+          allowed_sessions?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -164,6 +167,7 @@ export type Database = {
           exit_price: number
           lot_size: number
           stop_loss: number | null
+          risk_pct: number | null
           take_profit: number | null
           pnl: number
           open_time: string
@@ -182,6 +186,7 @@ export type Database = {
           exit_price: number
           lot_size?: number
           stop_loss?: number | null
+          risk_pct?: number | null
           take_profit?: number | null
           pnl?: number
           open_time?: string
@@ -200,6 +205,7 @@ export type Database = {
           exit_price?: number
           lot_size?: number
           stop_loss?: number | null
+          risk_pct?: number | null
           take_profit?: number | null
           pnl?: number
           open_time?: string

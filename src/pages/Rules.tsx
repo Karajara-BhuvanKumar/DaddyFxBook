@@ -1,6 +1,7 @@
+import { RULE_TYPE_OPTIONS, SESSION_OPTIONS, needsRuleThreshold, validateRuleConfiguration, ruleBadge, type RuleType } from '@/lib/ruleConfiguration';
 import LoadError from '@/components/LoadError';
 import { useState } from "react";
-import { Scale, Plus, Trash2, Zap, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
+import { Scale, Plus, Pencil, Trash2, Zap, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -34,28 +35,12 @@ import { toast } from "@/hooks/use-toast";
 // Constants
 // ---------------------------------------------------------------------------
 
-type RuleType = "manual" | "max_trades_per_day" | "max_consecutive_losses" | "max_daily_loss";
-
-const RULE_TYPE_OPTIONS: { value: RuleType; label: string; thresholdLabel?: string }[] = [
-  { value: "manual", label: "Manual (self-checked)" },
-  { value: "max_trades_per_day", label: "Max trades per day", thresholdLabel: "Max trades" },
-  { value: "max_consecutive_losses", label: "Stop after N consecutive losses", thresholdLabel: "Max consecutive losses" },
-  { value: "max_daily_loss", label: "Max daily loss", thresholdLabel: "Max loss ($)" },
-];
-
 const QUICK_IDEAS: { text: string; type?: RuleType; threshold?: number }[] = [
-  { text: "Maximum 3 trades per day", type: "max_trades_per_day", threshold: 3 },
-  { text: "Stop trading after 2 consecutive losses", type: "max_consecutive_losses", threshold: 2 },
-  { text: "Only take A+ setups from the plan" },
-  { text: "Risk 1% or less per trade" },
+  { text: 'Maximum 3 trades per day', type: 'max_trades_per_day', threshold: 3 },
+  { text: 'Stop trading after 2 consecutive losses', type: 'max_consecutive_losses', threshold: 2 },
+  { text: 'Only take A+ setups from the plan' },
+  { text: 'Risk 1% or less per trade', type: 'max_risk_per_trade', threshold: 1 },
 ];
-
-function autoTypeBadge(ruleType: string, threshold: number | null): string | null {
-  if (ruleType === "max_trades_per_day" && threshold) return `Auto: max ${threshold}/day`;
-  if (ruleType === "max_consecutive_losses" && threshold) return `Auto: stop after ${threshold} losses`;
-  if (ruleType === "max_daily_loss" && threshold) return `Auto: max loss $${threshold}`;
-  return null;
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -70,29 +55,25 @@ export default function Rules() {
   const [ruleType, setRuleType] = useState<RuleType>("manual");
   const [threshold, setThreshold] = useState<string>("");
 
-  const needsThreshold = ruleType !== "manual";
+  const [allowedSessions, setAllowedSessions] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const resetForm = () => { setText(''); setRuleType('manual'); setThreshold(''); setAllowedSessions([]); setEditingId(null); };
+  const needsThreshold = needsRuleThreshold(ruleType);
   const thresholdLabel = RULE_TYPE_OPTIONS.find((o) => o.value === ruleType)?.thresholdLabel ?? "Threshold";
 
   const handleAdd = () => {
     const trimmed = text.trim();
     if (!trimmed) return toast({ title: "Rule text is required", variant: "destructive" });
     if (trimmed.length > 200) return toast({ title: "Rule text too long", description: "Max 200 characters", variant: "destructive" });
-    if (needsThreshold && (!threshold || !Number.isFinite(Number(threshold)) || Number(threshold) <= 0 || (ruleType !== "max_daily_loss" && !Number.isInteger(Number(threshold))))) {
-      return toast({ title: "Enter a positive threshold (whole numbers for trade counts)", variant: "destructive" });
-    }
-    addRule.mutate(
-      { rule: trimmed, rule_type: ruleType, threshold: needsThreshold ? Number(threshold) : null },
-      {
-        onSuccess: () => {
-          setText("");
-          setRuleType("manual");
-          setThreshold("");
-        },
-      },
-    );
+    const validationError = validateRuleConfiguration(ruleType, needsThreshold && threshold.trim() ? Number(threshold) : null, allowedSessions);
+    if (validationError) return toast({ title: validationError, variant: 'destructive' });
+    const input = { rule: trimmed, rule_type: ruleType, threshold: needsThreshold ? Number(threshold) : null, allowed_sessions: ruleType === 'permitted_sessions' ? allowedSessions : [] };
+    if (editingId) updateRule.mutate({ id: editingId, patch: input }, { onSuccess: resetForm });
+    else addRule.mutate(input, { onSuccess: resetForm });
   };
 
   const handleQuickIdea = (idea: (typeof QUICK_IDEAS)[number]) => {
+    setEditingId(null); setAllowedSessions([]);
     setText(idea.text);
     if (idea.type) {
       setRuleType(idea.type);
@@ -143,7 +124,7 @@ export default function Rules() {
         <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-sm flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <Plus className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-foreground tracking-tight">Add Rule</h2>
+            <h2 className="text-lg font-bold text-foreground tracking-tight">{editingId ? "Edit Rule" : "Add Rule"}</h2>
           </div>
           <p className="text-xs text-muted-foreground mb-5">
             Define a trading rule you want to track. Pick a type for automatic monitoring.
@@ -151,6 +132,7 @@ export default function Rules() {
 
           {/* Textarea */}
           <Textarea
+            aria-label="Rule description"
             placeholder="Write a rule, for example: Maximum 3 trades per day."
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -190,7 +172,9 @@ export default function Rules() {
               </Label>
               <Input
                 type="number"
-                min={1}
+                aria-label={thresholdLabel}
+                min={ruleType === "max_risk_per_trade" || ruleType === "max_daily_loss" ? "0.01" : "1"}
+                step={ruleType === "max_risk_per_trade" || ruleType === "max_daily_loss" ? "any" : "1"}
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
                 placeholder="e.g. 3"
@@ -199,16 +183,26 @@ export default function Rules() {
             </div>
           )}
 
+          {ruleType === 'permitted_sessions' && <fieldset className="mb-4 space-y-2">
+            <legend className="text-xs font-semibold mb-2">Permitted entry sessions · IST</legend>
+            {SESSION_OPTIONS.map(session => <label key={session.id} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={allowedSessions.includes(session.id)} onChange={e => setAllowedSessions(current => e.target.checked ? [...current, session.id] : current.filter(id => id !== session.id))} />
+              {session.name} · {session.hours}{session.id === 'new-york' ? ' (ends next day)' : ''}
+            </label>)}
+            <p className="text-xs text-muted-foreground">Any selected session permits entry, including overlaps. Hours follow the Analysis session clock.</p>
+          </fieldset>}
+          {ruleType === 'max_risk_per_trade' && <p className="text-xs text-muted-foreground mb-4">Checks the recorded risk percentage on each trade. Trades with unknown risk are skipped.</p>}
           {/* Add button */}
           <Button
             onClick={handleAdd}
-            disabled={addRule.isPending}
+            disabled={addRule.isPending || updateRule.isPending}
             className="w-full h-12 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-md transition-all"
           >
             <Plus className="w-4 h-4 mr-2" />
-            {addRule.isPending ? "Adding..." : "Add Rule"}
+            {addRule.isPending || updateRule.isPending ? "Saving..." : editingId ? "Save Rule" : "Add Rule"}
           </Button>
 
+          {editingId && <Button variant="ghost" onClick={resetForm} className="mt-2">Cancel editing</Button>}
           {/* Quick Ideas */}
           <div className="mt-6 pt-5 border-t border-border/50">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
@@ -251,7 +245,7 @@ export default function Rules() {
           ) : (
             <div className="space-y-3 flex-1 overflow-y-auto">
               {rules.map((r, idx) => {
-                const badge = autoTypeBadge(r.rule_type, r.threshold);
+                const badge = ruleBadge(r.rule_type, r.threshold, r.allowed_sessions);
                 return (
                   <div
                     key={r.id}
@@ -275,6 +269,7 @@ export default function Rules() {
                         </Badge>
                       )}
                     </div>
+                    <Button size="icon" variant="ghost" aria-label={'Edit rule: ' + r.rule} className="h-8 w-8 shrink-0" onClick={() => { setEditingId(r.id); setText(r.rule); setRuleType(r.rule_type as RuleType); setThreshold(r.threshold?.toString() ?? ''); setAllowedSessions(r.allowed_sessions ?? []); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button

@@ -40,8 +40,9 @@ describe("getDayKey", () => {
   it("extracts YYYY-MM-DD from ISO timestamp", () => {
     expect(getDayKey("2025-03-15T14:30:00Z")).toBe("2025-03-15");
   });
-  it("works with timestamp-only strings", () => {
-    expect(getDayKey("2025-01-01T00:00:00+05:30")).toBe("2025-01-01");
+  it("normalizes offsets to UTC unless a timezone is supplied", () => {
+    expect(getDayKey("2025-01-01T00:00:00+05:30")).toBe("2024-12-31");
+    expect(getDayKey("2025-01-01T00:00:00+05:30", "Asia/Kolkata")).toBe("2025-01-01");
   });
 });
 
@@ -72,7 +73,7 @@ describe("evaluateRules — max_trades_per_day", () => {
     ];
     const result = evaluateRules([r], trades, []);
     expect(result["2025-01-10"]).toHaveLength(1);
-    expect(result["2025-01-10"][0].detail).toBe("5 trades (limit 3)");
+    expect(result["2025-01-10"][0].detail).toBe("5 trades taken; limit is 3.");
     expect(result["2025-01-10"][0].tradeIds).toEqual(["t4", "t5"]);
     expect(result["2025-01-10"][0].source).toBe("auto");
   });

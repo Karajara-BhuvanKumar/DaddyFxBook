@@ -34,6 +34,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
     exitPrice: '',
     lotSize: '',
     stopLoss: '',
+    riskPct: '',
     takeProfit: '',
     openDate: '',
     closeDate: '',
@@ -73,6 +74,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         exitPrice: trade.exit_price.toString(),
         lotSize: trade.lot_size.toString(),
         stopLoss: trade.stop_loss?.toString() || '',
+        riskPct: trade.risk_pct?.toString() ?? '',
         takeProfit: trade.take_profit?.toString() || '',
         openDate: toLocalDateTime(trade.open_time),
         closeDate: toLocalDateTime(trade.close_time),
@@ -104,6 +106,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         entry_price: parseFloat(form.entryPrice) || 0,
         exit_price: parseFloat(form.exitPrice) || 0,
         lot_size: parseFloat(form.lotSize) || 0,
+        risk_pct: form.riskPct.trim() ? Number(form.riskPct) : null,
         stop_loss: form.stopLoss ? parseFloat(form.stopLoss) : null,
         take_profit: form.takeProfit ? parseFloat(form.takeProfit) : null,
         open_time: toUtcTimestamp(form.openDate, trade.open_time),
@@ -200,6 +203,11 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                   </div>
                 ))}
 
+                <div>
+                  <label htmlFor="edit-risk-pct" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Recorded risk (%)</label>
+                  <input id="edit-risk-pct" type="number" min="0" max="100" step="any" value={form.riskPct} onChange={e => setForm(f => ({ ...f, riskPct: e.target.value }))} placeholder="Not recorded" className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm" />
+                  <p className="text-xs text-muted-foreground mt-1">Account equity risked at entry. Leave blank if unknown.</p>
+                </div>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Open Date</label>
                   <input aria-label="Open Date" required type="datetime-local" value={form.openDate} onChange={e => setForm(f => ({ ...f, openDate: e.target.value }))}
