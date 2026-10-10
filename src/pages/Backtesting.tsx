@@ -35,6 +35,7 @@ import {
 
 import type { BacktestSession, BacktestTrade } from "@/lib/backtest";
 import { computeAnalytics } from "@/lib/backtest";
+import "@/components/backtest/backtesting.css";
 
 function SessionCard({ s }: { s: BacktestSession }) {
   const del = useDeleteSession();
@@ -49,20 +50,20 @@ function SessionCard({ s }: { s: BacktestSession }) {
 
   return (
     <div 
-      className="rounded-[20px] flex flex-col group transition-all duration-200" 
-      style={{ background: "var(--session-card)", border: "1px solid var(--session-card-border)", padding: 24 }}
+      className="bt-session-card rounded-[20px] flex flex-col group transition-all duration-200"
+      style={{ background: "var(--session-card)", border: "1px solid var(--session-card-border)" }}
     >
       <div className="flex items-start justify-between gap-2 mb-4">
         <Link to={`/backtesting/${s.id}`} className="flex-1 min-w-0 block">
           <div className="flex items-center gap-3 mb-1.5">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <FlaskConical className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-foreground dark:text-white text-base truncate group-hover:text-blue-400 transition-colors">
+              <h3 className="font-bold text-foreground dark:text-white text-sm group-hover:text-blue-400 transition-colors">
                 {s.name}
               </h3>
-              <p className="text-xs text-muted-foreground dark:text-zinc-500 font-semibold truncate">
+              <p className="text-xs text-muted-foreground font-medium break-words mt-1">
                 {s.pair ?? "—"} <span className="mx-1.5 opacity-50">•</span> {s.strategy ?? "No strategy"}
               </p>
             </div>
@@ -106,7 +107,7 @@ function SessionCard({ s }: { s: BacktestSession }) {
       </div>
 
       {tradeQuery.isError && <LoadError name="session statistics" retry={tradeQuery.refetch} />}
-      <Link to={`/backtesting/${s.id}`} className="block mt-2">
+      <Link to={`/backtesting/${s.id}`} className="block mt-auto pt-2">
         <div className="grid grid-cols-2 gap-2 mb-4">
           <Stat label="Trades" value={stats ? String(stats.total) : "—"} />
           <Stat label="Win rate" value={stats ? `${(stats.winRate * 100).toFixed(1)}%` : "—"} />
@@ -121,8 +122,8 @@ function SessionCard({ s }: { s: BacktestSession }) {
             tone={stats ? (stats.totalPnl >= 0 ? "profit" : "loss") : undefined}
           />
         </div>
-        <p className="text-[11px] font-semibold text-muted-foreground dark:text-zinc-600">
-          Created {new Date(s.created_at).toLocaleDateString()}
+        <p className="bt-session-footer text-[11px] font-medium text-muted-foreground">
+          <span>Created {new Date(s.created_at).toLocaleDateString()}</span><span>Open session →</span>
         </p>
       </Link>
 
@@ -156,8 +157,8 @@ function SessionCard({ s }: { s: BacktestSession }) {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
   return (
-    <div className="rounded-[20px] border border-border dark:border-zinc-900 bg-card dark:bg-[#0b0b0b] px-3.5 py-3 transition-colors group-hover:border-blue-600/[0.35]">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-zinc-500 font-bold mb-1.5">{label}</div>
+    <div className="bt-card-stat">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">{label}</div>
       <div
         className={`font-black text-[15px] ${
           tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-700 dark:text-red-500" : "text-foreground dark:text-white"
@@ -177,15 +178,15 @@ export default function Backtesting() {
   const [form, setForm] = useState({ name: "", pair: "XAUUSD", strategy: "", description: "" });
 
   return (
-    <div className="space-y-6 md:space-y-8 overflow-guard">
+    <div className="bt-workspace space-y-6 overflow-guard">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="min-w-0">
           <h1 className="page-title text-foreground flex flex-wrap items-center gap-2 sm:gap-3">
             Strategy Lab
             <span className="text-[10px] bg-warning/15 text-warning font-bold px-2 py-0.5 rounded-md tracking-wider uppercase border border-warning/20">Elite</span>
           </h1>
-          <p className="text-sm text-muted-foreground dark:text-zinc-500 mt-1.5 font-medium tracking-wide">
-            Manually backtest strategies. Sessions and trades are saved to your account. Generate an AI report to review a strategy.
+          <p className="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed">
+            Test your strategies, review every trade, and turn performance into insight. Sessions are saved to your account.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -256,7 +257,7 @@ export default function Backtesting() {
       </div>
 
       {isError ? <LoadError name="backtest sessions" retry={refetch} /> : isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bt-session-grid">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-44 rounded-[20px]" />
           ))}
@@ -273,8 +274,9 @@ export default function Backtesting() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sessions.map((s) => <SessionCard key={s.id} s={s} />)}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground"><h2 className="text-sm font-semibold text-foreground">Your sessions</h2><span>{sessions.length} {sessions.length === 1 ? "session" : "sessions"}</span></div>
+          <div className="bt-session-grid">{sessions.map((s) => <SessionCard key={s.id} s={s} />)}</div>
         </div>
       )}
     </div>

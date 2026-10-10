@@ -1,193 +1,93 @@
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-  Cell,
-} from "recharts";
+import { useId } from "react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, ReferenceLine } from "recharts";
 import type { BacktestAnalytics, BreakdownRow } from "@/lib/backtest";
-import { BreakdownList, type BreakdownItem } from "@/components/BreakdownList";
+import SetupAnalysis, { BreakdownTable, formatR, resultClass } from "./SetupAnalysis";
+import "./backtesting.css";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-[24px] border border-border dark:border-white/[0.06] bg-card dark:bg-[#0B0B0B] p-5">
-      <h3 className="text-sm font-bold text-foreground dark:text-white mb-4">{title}</h3>
-      {children}
-    </div>
-  );
+function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return <section className="bt-panel" aria-label={title}>
+    <div className="bt-panel-heading"><h3>{title}</h3>{description && <p>{description}</p>}</div>
+    {children}
+  </section>;
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: "profit" | "loss" }) {
-  return (
-    <div className="rounded-[20px] bg-card dark:bg-[#0B0B0B] border border-border dark:border-white/[0.06] px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-zinc-500 mb-1">{label}</div>
-      <div
-        className={`font-mono text-base font-extrabold ${
-          tone === "profit" ? "text-blue-500" : tone === "loss" ? "text-red-700 dark:text-red-500" : "text-foreground dark:text-white"
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  );
+function Metric({ label, value, detail, tone }: { label: string; value: string; detail?: string; tone?: number }) {
+  return <div className="bt-metric"><span>{label}</span><strong className={tone == null ? "" : resultClass(tone)}>{value}</strong>{detail && <small>{detail}</small>}</div>;
 }
 
-function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
-  const items: BreakdownItem[] = rows.map((r) => ({
-    key: r.key,
-    trades: r.trades,
-    wins: r.wins,
-    winRate: r.winRate,
-    netValue: r.netR,
-    unit: "R" as const,
-  }));
-  return <BreakdownList rows={items} />;
+const tooltipStyle = { background: "var(--chart-tooltip)", border: "1px solid var(--chart-tooltip-border)", borderRadius: 12, fontSize: 12, color: "var(--chart-tooltip-text)" };
+const axisProps = { stroke: "var(--chart-axis)", fontSize: 11, tickLine: false, axisLine: false };
+
+function PerformanceChart({ a, drawdown = false }: { a: BacktestAnalytics; drawdown?: boolean }) {
+  const gradient = useId().replace(/:/g, "");
+  const color = drawdown ? "hsl(var(--loss))" : "hsl(var(--profit))";
+  return <div className="bt-chart" role="img" aria-label={`${drawdown ? "Drawdown" : "Cumulative R"} across ${a.total} trades`}>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={drawdown ? a.drawdownCurve : a.equityCurve} margin={{ top: 12, right: 12, left: 0, bottom: 4 }} accessibilityLayer>
+        <defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity={0.24} /><stop offset="100%" stopColor={color} stopOpacity={0.01} /></linearGradient></defs>
+        <CartesianGrid strokeDasharray="3 4" stroke="var(--chart-grid-line)" vertical={false} />
+        <XAxis {...axisProps} dataKey="idx" minTickGap={30} />
+        <YAxis {...axisProps} width={48} tickFormatter={v => `${v}R`} />
+        <ReferenceLine y={0} stroke="var(--chart-axis)" strokeDasharray="3 4" />
+        <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: "var(--chart-tooltip-text)" }} labelFormatter={v => `Trade ${v}`} formatter={(v: number) => [`${Number(v).toFixed(2)}R`, drawdown ? "Drawdown" : "Cumulative R"]} />
+        <Area type="linear" dataKey={drawdown ? "drawdown" : "equity"} stroke={color} fill={`url(#${gradient})`} strokeWidth={2.5} dot={a.total === 1} isAnimationActive={false} />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>;
+}
+
+function Breakdown({ title, rows }: { title: string; rows: BreakdownRow[] }) {
+  return <Card title={title}><BreakdownTable rows={rows} /></Card>;
 }
 
 export default function AnalyticsPanel({ a }: { a: BacktestAnalytics }) {
-  if (a.total === 0) {
-    return (
-      <div className="rounded-[24px] border border-border dark:border-white/[0.06] bg-card dark:bg-[#0B0B0B] p-10 text-center text-sm text-muted-foreground dark:text-zinc-500 font-medium">
-        Add trades to unlock analytics.
-      </div>
-    );
-  }
-  const distColors = ["hsl(var(--primary))", "#EF4444", "#71717A"];
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-        <Metric label="Trades" value={String(a.total)} />
-        <Metric label="Wins" value={String(a.wins)} tone="profit" />
-        <Metric label="Losses" value={String(a.losses)} tone="loss" />
-        <Metric label="Break-even" value={String(a.breakeven)} />
-        <Metric label="Win rate" value={`${(a.winRate * 100).toFixed(1)}%`} />
-        <Metric label="Loss rate" value={`${(a.lossRate * 100).toFixed(1)}%`} />
-        <Metric label="Net R" value={`${a.netR >= 0 ? "+" : ""}${a.netR.toFixed(2)}`} tone={a.netR >= 0 ? "profit" : "loss"} />
-        <Metric label="Total R+" value={a.totalRGained.toFixed(2)} tone="profit" />
-        <Metric label="Total R−" value={a.totalRLost.toFixed(2)} tone="loss" />
-        <Metric label="Profit factor" value={(Number.isFinite(a.profitFactor) ? a.profitFactor.toFixed(2) : "∞")} />
-        <Metric label="Expectancy" value={`${a.expectancy.toFixed(2)}R`} />
-        <Metric label="Avg RR" value={a.avgRR.toFixed(2)} />
-        <Metric label="Largest win" value={`${a.largestWinner.toFixed(2)}R`} tone="profit" />
-        <Metric label="Largest loss" value={`${a.largestLoser.toFixed(2)}R`} tone="loss" />
-        <Metric label="Max win streak" value={String(a.maxConsecutiveWins)} />
-        <Metric label="Max loss streak" value={String(a.maxConsecutiveLosses)} />
-        <Metric label="Recorded P&L" value={(a.recordedPnlCount ? a.totalPnl.toFixed(2) : "Not recorded")} tone={a.totalPnl >= 0 ? "profit" : "loss"} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Equity curve (R)">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={a.equityCurve}>
-              <defs>
-                <linearGradient id="eqg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
-              <XAxis dataKey="idx" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--chart-tooltip)",
-                  border: "1px solid var(--chart-tooltip-border)",
-                  borderRadius: 12,
-                  fontSize: 12,
-                  color: "var(--chart-tooltip-text)"
-                }}
-                itemStyle={{ color: "var(--chart-tooltip-text)" }}
-              />
-              <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" fill="url(#eqg)" strokeWidth={3} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card title="Drawdown (R)">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={a.drawdownCurve}>
-              <defs>
-                <linearGradient id="ddg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#EF4444" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
-              <XAxis dataKey="idx" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--chart-tooltip)",
-                  border: "1px solid var(--chart-tooltip-border)",
-                  borderRadius: 12,
-                  fontSize: 12,
-                  color: "var(--chart-tooltip-text)"
-                }}
-                itemStyle={{ color: "var(--chart-tooltip-text)" }}
-              />
-              <Area type="monotone" dataKey="drawdown" stroke="#EF4444" fill="url(#ddg)" strokeWidth={3} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card title="Win / Loss distribution">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={a.distribution}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
-              <XAxis dataKey="name" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--chart-tooltip)",
-                  border: "1px solid var(--chart-tooltip-border)",
-                  borderRadius: 12,
-                  fontSize: 12,
-                  color: "var(--chart-tooltip-text)"
-                }}
-                itemStyle={{ color: "var(--chart-tooltip-text)" }}
-                cursor={{ fill: "var(--chart-cursor)" }}
-              />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {a.distribution.map((_, i) => <Cell key={i} fill={distColors[i % distColors.length]} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card title="Per-trade R">
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={a.equityCurve}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
-              <XAxis dataKey="idx" stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--chart-axis)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--chart-tooltip)",
-                  border: "1px solid var(--chart-tooltip-border)",
-                  borderRadius: 12,
-                  fontSize: 12,
-                  color: "var(--chart-tooltip-text)"
-                }}
-                itemStyle={{ color: "var(--chart-tooltip-text)" }}
-              />
-              <Line type="monotone" dataKey="r" stroke="hsl(var(--primary))" dot={false} strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card title="By pair"><BreakdownTable rows={a.byPair} /></Card>
-        <Card title="By setup"><BreakdownTable rows={a.bySetup} /></Card>
-        <Card title="By session"><BreakdownTable rows={a.bySession} /></Card>
-        <Card title="By market condition"><BreakdownTable rows={a.byCondition} /></Card>
-        <Card title="Long vs Short"><BreakdownTable rows={a.byDirection} /></Card>
-      </div>
+  if (a.total === 0) return <div className="bt-panel bt-empty">Add trades to unlock analytics.</div>;
+  const distColors = ["hsl(var(--profit))", "hsl(var(--loss))", "var(--chart-axis)"];
+  return <div className="bt-analytics">
+    <div className="bt-section-heading"><div><h2>Performance overview</h2><p>All {a.total} trades in this session · Results in R unless noted</p></div></div>
+    <div className="bt-kpis">
+      <Metric label="Net R" value={formatR(a.netR)} detail="Cumulative return" tone={a.netR} />
+      <Metric label="Win rate" value={`${(a.winRate * 100).toFixed(1)}%`} detail={`${a.wins} wins from ${a.total} trades`} />
+      <Metric label="Profit factor" value={Number.isFinite(a.profitFactor) ? a.profitFactor.toFixed(2) : "∞"} detail="Gross R gained / lost" />
+      <Metric label="Expectancy" value={formatR(a.expectancy)} detail="Average return per trade" tone={a.expectancy} />
     </div>
-  );
+    <div className="bt-primary-charts">
+      <Card title="Cumulative R performance" description="Return over the sequence of trades"><PerformanceChart a={a} /></Card>
+      <Card title="Win / loss distribution" description={`${a.total} trades · ${(a.lossRate * 100).toFixed(1)}% loss rate`}>
+        <div className="bt-outcome-bar" aria-hidden="true">{a.distribution.map((d, i) => <span key={d.name} style={{ width: `${d.value / a.total * 100}%`, background: distColors[i] }} />)}</div>
+        <div className="bt-outcomes">{a.distribution.map((d, i) => <div key={d.name}><span><i style={{ background: distColors[i] }} />{d.name}</span><strong>{d.value}</strong><small>{(d.value / a.total * 100).toFixed(1)}%</small></div>)}</div>
+        <div className="bt-recorded"><span>Recorded P&L<small>{a.recordedPnlCount} of {a.total} trades recorded</small></span><strong className={a.recordedPnlCount ? resultClass(a.totalPnl) : ""}>{a.recordedPnlCount ? a.totalPnl.toFixed(2) : "Not recorded"}</strong></div>
+      </Card>
+    </div>
+    <SetupAnalysis rows={a.bySetup} />
+    <div className="bt-section-heading"><div><h2>Performance breakdown</h2><p>Compare results across markets, sessions, and direction.</p></div></div>
+    <div className="bt-breakdowns">
+      <div><Breakdown title="By session" rows={a.bySession} /><Breakdown title="By pair" rows={a.byPair} /></div>
+      <div><Breakdown title="By market condition" rows={a.byCondition} /><Breakdown title="Long vs Short" rows={a.byDirection} /></div>
+    </div>
+    <div className="bt-section-heading"><div><h2>Risk & consistency</h2><p>Inspect drawdowns, individual returns, and streaks.</p></div></div>
+    <div className="bt-secondary-charts">
+      <Card title="Drawdown (R)" description="Decline from the running equity peak"><PerformanceChart a={a} drawdown /></Card>
+      <Card title="Per-trade R" description="Each bar represents one trade">
+        <div className="bt-chart" role="img" aria-label={`Individual R returns for ${a.total} trades`}><ResponsiveContainer width="100%" height="100%">
+          <BarChart data={a.equityCurve} margin={{ top: 12, right: 12, left: 0, bottom: 4 }} accessibilityLayer>
+            <CartesianGrid strokeDasharray="3 4" stroke="var(--chart-grid-line)" vertical={false} />
+            <XAxis {...axisProps} dataKey="idx" minTickGap={30} /><YAxis {...axisProps} width={48} tickFormatter={v => `${v}R`} />
+            <ReferenceLine y={0} stroke="var(--chart-axis)" />
+            <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: "var(--chart-tooltip-text)" }} cursor={{ fill: "var(--chart-cursor)" }} labelFormatter={v => `Trade ${v}`} formatter={(v: number) => [formatR(Number(v)), "Return"]} />
+            <Bar dataKey="r" maxBarSize={28} radius={[3, 3, 0, 0]} isAnimationActive={false}>{a.equityCurve.map(p => <Cell key={p.idx} fill={p.r < 0 ? distColors[1] : distColors[0]} />)}</Bar>
+          </BarChart>
+        </ResponsiveContainer></div>
+      </Card>
+    </div>
+    <div className="bt-secondary-metrics">
+      <Metric label="Total R gained" value={formatR(a.totalRGained)} tone={a.totalRGained} />
+      <Metric label="Total R lost" value={`${a.totalRLost.toFixed(2)}R`} tone={-a.totalRLost} />
+      <Metric label="Avg RR" value={a.avgRR.toFixed(2)} />
+      <Metric label="Largest win" value={formatR(a.largestWinner)} tone={a.largestWinner} />
+      <Metric label="Largest loss" value={formatR(a.largestLoser)} tone={a.largestLoser} />
+      <Metric label="Max win streak" value={String(a.maxConsecutiveWins)} />
+      <Metric label="Max loss streak" value={String(a.maxConsecutiveLosses)} />
+    </div>
+  </div>;
 }

@@ -93,7 +93,7 @@ export default function BacktestSession() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 overflow-guard">
+    <div className="bt-workspace space-y-5 overflow-guard">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link to="/backtesting" aria-label="Back to backtesting">
@@ -105,13 +105,13 @@ export default function BacktestSession() {
             <FlaskConical className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-white tracking-tight truncate">{session.name}</h1>
-            <p className="text-xs sm:text-[13px] text-muted-foreground dark:text-zinc-500 font-semibold truncate mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-white tracking-tight break-words">{session.name}</h1>
+            <p className="text-xs sm:text-[13px] text-muted-foreground font-medium break-words mt-1">
               {session.pair ?? "—"} <span className="mx-1.5 opacity-50">•</span> {session.strategy ?? "No strategy"} <span className="mx-1.5 opacity-50">•</span> {trades.length} trades
             </p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+        <div className="flex flex-row items-center gap-2 w-full lg:w-auto shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2 w-full sm:w-auto bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] text-muted-foreground dark:text-zinc-300 hover:text-foreground dark:hover:text-white rounded-[20px] h-11 min-h-[44px]" disabled={!!exporting || trades.length === 0}>
@@ -160,7 +160,7 @@ export default function BacktestSession() {
       </div>
 
       <Tabs defaultValue="trades">
-        <TabsList className="w-full overflow-x-auto flex-nowrap justify-start scrollbar-none">
+        <TabsList className="bt-tabs">
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="ai">AI Report</TabsTrigger>
@@ -178,7 +178,7 @@ export default function BacktestSession() {
               />
             </div>
             <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-              <SelectTrigger className="w-full sm:w-[140px] bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] text-muted-foreground dark:text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by outcome" className="w-full sm:w-[160px] bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] text-muted-foreground dark:text-zinc-300 rounded-xl h-11"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All outcomes</SelectItem>
                 <SelectItem value="win">Wins</SelectItem>
@@ -187,7 +187,7 @@ export default function BacktestSession() {
               </SelectContent>
             </Select>
             <Select value={sessionFilter} onValueChange={setSessionFilter}>
-              <SelectTrigger className="w-full sm:w-[140px] bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] text-muted-foreground dark:text-zinc-300 rounded-[20px] h-10"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by session" className="w-full sm:w-[190px] bg-card dark:bg-[#0B0B0B] border-border dark:border-white/[0.06] text-muted-foreground dark:text-zinc-300 rounded-xl h-11"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All sessions</SelectItem>
                 {uniqueSessions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -195,9 +195,10 @@ export default function BacktestSession() {
             </Select>
           </div>
 
-          <div className="rounded-[24px] border border-border dark:border-white/[0.06] bg-card dark:bg-[#0B0B0B] overflow-hidden">
+          <p className="text-xs text-muted-foreground" aria-live="polite">Showing {filtered.length} of {trades.length} trades</p>
+          <div className="rounded-[20px] border border-border dark:border-white/[0.06] bg-card dark:bg-[#0B0B0B] overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="bt-trade-table w-full text-sm" aria-label="Backtest trades">
                 <thead className="bg-card dark:bg-[#0B0B0B] border-b border-border dark:border-white/[0.06] text-[10px] uppercase tracking-wider text-muted-foreground dark:text-zinc-500 font-bold">
                   <tr>
                     <th className="text-left px-4 py-3">#</th>
@@ -225,9 +226,9 @@ export default function BacktestSession() {
                   ) : (
                     filtered.map((t, i) => (
                       <tr key={t.id} className="hover:bg-foreground/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                        <td className="px-4 py-3 text-muted-foreground dark:text-zinc-500 font-medium tabular-nums">{i + 1}</td>
-                        <td className="px-4 py-3 font-bold text-foreground dark:text-white">{t.pair}</td>
-                        <td className="px-4 py-3">
+                        <td data-label="Trade #" className="px-4 py-3 text-muted-foreground dark:text-zinc-500 font-medium tabular-nums">{i + 1}</td>
+                        <td data-label="Pair" className="px-4 py-3 font-bold text-foreground dark:text-white">{t.pair}</td>
+                        <td data-label="Direction" className="px-4 py-3">
                           <span
                             className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                               t.direction === "long" ? "bg-blue-500/10 text-blue-500 border border-blue-500/10" : "bg-red-500/10 text-red-700 dark:text-red-500 border border-red-500/10"
@@ -236,10 +237,10 @@ export default function BacktestSession() {
                             {t.direction}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right font-mono font-medium text-muted-foreground dark:text-zinc-300">{t.entry_price ?? "—"}</td>
-                        <td className="px-4 py-3 text-right font-mono font-medium text-muted-foreground dark:text-zinc-300">{t.exit_price ?? "—"}</td>
-                        <td className="px-4 py-3 text-right font-mono font-medium text-muted-foreground dark:text-zinc-400">{t.rr?.toFixed(2) ?? "—"}</td>
-                        <td className="px-4 py-3">
+                        <td data-label="Entry" className="px-4 py-3 text-right font-mono font-medium text-muted-foreground dark:text-zinc-300">{t.entry_price ?? "—"}</td>
+                        <td data-label="Exit" className="px-4 py-3 text-right font-mono font-medium text-muted-foreground dark:text-zinc-300">{t.exit_price ?? "—"}</td>
+                        <td data-label="RR" className="px-4 py-3 text-right font-mono font-medium text-muted-foreground dark:text-zinc-400">{t.rr?.toFixed(2) ?? "—"}</td>
+                        <td data-label="Result" className="px-4 py-3">
                           <span
                             className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                               t.outcome === "win"
@@ -252,20 +253,20 @@ export default function BacktestSession() {
                             {t.outcome}
                           </span>
                         </td>
-                        <td
+                        <td data-label="R gained"
                           className={`px-4 py-3 text-right font-mono font-bold ${
                             (t.r_gained ?? 0) >= 0 ? "text-blue-500" : "text-red-700 dark:text-red-500"
                           }`}
                         >
                           {(t.r_gained ?? 0) >= 0 ? "+" : ""}{(t.r_gained ?? 0).toFixed(2)}R
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground dark:text-zinc-400 font-medium">{t.setup ?? "—"}</td>
-                        <td className="px-4 py-3 text-muted-foreground dark:text-zinc-400 font-medium">{t.session ?? "—"}</td>
-                        <td className="px-4 py-3">
+                        <td data-label="Setup" className="px-4 py-3 text-muted-foreground dark:text-zinc-400 font-medium">{t.setup ?? "—"}</td>
+                        <td data-label="Session" className="px-4 py-3 text-muted-foreground dark:text-zinc-400 font-medium">{t.session ?? "—"}</td>
+                        <td data-label="Actions" className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
                             {t.screenshot_url && (
-                              <a href={t.screenshot_url} target="_blank" rel="noreferrer">
-                                <Button aria-label="Edit backtest trade" size="icon" variant="ghost" className="h-11 w-11"><ExternalLink className="w-3.5 h-3.5" /></Button>
+                              <a href={t.screenshot_url} target="_blank" rel="noreferrer" aria-label="Open trade screenshot" className="inline-flex h-11 w-11 items-center justify-center rounded-md hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                <ExternalLink className="w-3.5 h-3.5" />
                               </a>
                             )}
                             <Button
