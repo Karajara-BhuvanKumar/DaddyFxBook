@@ -1,10 +1,18 @@
 # Account settings
 
-The settings page has three sections: Profile, Preferences, and Security. Theme, accent, compact layout, and photo changes save immediately. Profile, region, and trading-default edits use Save changes; Cancel restores those unsaved values. Exports include all accessible records, paginated in batches of 1,000.
+Profile and Preferences share one local draft. Appearance, accent, compact layout, region, time format, currency, profile details, photos and trading defaults change only in the form until Save changes is clicked. The workspace uses the last successfully saved settings. Switching between these tabs preserves the draft; Cancel clears all draft fields, pending photos and invalid color text.
 
-Appearance selections update the shared settings cache immediately and save automatically, including when navigating away during a save. Failed automatic saves restore the previous appearance and show an error. Region preferences still preview until Save or Cancel; failed manual saves retain the draft for retry. System appearance follows OS theme changes, and the header theme toggle persists its choice through the same settings mutation.
+Save changes sends all pending fields in one settings update and is disabled while saving or when no changes remain. Changes saved confirms success. Failures keep the full draft for retry and show an inline error plus the existing error toast. There are no optimistic appearance updates. A pending photo is previewed with a temporary local URL, uploaded only on Save, then saved with the other fields. A failed settings update cleans up only that attempt's new upload. Previously saved photos are not deleted by Cancel.
 
-Accent colors apply to profit numbers, calendar profit cells, chart lines and fills, shared buttons, focus indicators, and shell highlights. Existing blue Tailwind utilities use the selected primary color. Loss styling stays red. Compact mode adjusts shell, settings, and dashboard spacing, retaining mobile input touch sizes. The region controls configure the header date and clock; trading timestamps, analysis session definitions, and the dedicated market clock keep their existing behavior. Default currency labels the account-size default; it does not convert recorded trading amounts.
+The separate header theme shortcut is disabled on Settings to avoid bypassing the form. Outside Settings it retains its explicit theme-toggle action. Saved System theme continues to follow the OS. Password updates, reset emails, sign-out and exports remain separate explicit actions.
+
+## Accent picker
+
+The four original named presets remain available. The picker adds 84 swatches across 12 hue families, six brightness levels, grays and browns; a draggable saturation/brightness gradient; keyboard-accessible hue, saturation and brightness sliders; a native custom picker; and validated hex input. Named preset IDs remain compatible; custom colors use normalized six-digit hex strings in the existing accent_color text column.
+
+Only the two sample cards inside the picker preview unsaved colors. Shared accent tokens update after a successful save and are restored from the account on reload or sign-in. The exact chosen color remains saved, while display brightness and black/white button labels adapt for contrast in each theme. Shared buttons, highlights, active navigation, profit numbers and accent chart strokes/fills consume those tokens. Loss, warning and distinct data-series colors keep their semantic roles.
+
+Compact mode, timezone and time format keep their existing roles. Currency labels the account-size default and does not convert recorded trade amounts. Trading timestamps and the dedicated IST session clock retain their behavior.
 
 ## Deployment configuration
 
@@ -18,10 +26,7 @@ Use the existing Supabase project and tables. No database migration is required.
 
 ## Verification
 
-Workspace preference repair: 7 integration tests exercise automatic appearance saving, navigation during an outstanding save, save/remount, rollback on failure, manual region Save/Cancel, OS theme changes, and header-toggle persistence using mocked database responses with the real settings hook. The production build and all 155 tests pass. Browser checks confirm purple Dashboard profits, calendar cells, chart gradients, and Trades profits, including after a reload. Desktop, tablet, and phone browser checks use an isolated local fixture, without accessing a real account. Live settings persistence still requires validation against the configured Supabase project.
-
-The production build, existing 99 tests, and 5 added password-control tests passed. Browser checks used mocked Supabase responses at 320, 390, 768, and 1440 pixels. They covered profile save/reload/cancel/error recovery, image type and size rejection, photo upload/removal, theme and timezone saving, password validation/error/success, reset requests, the recovery page, sign-out confirmation cancellation, and CSV export.
-
-Live email delivery, production redirect allowlisting, and actual storage/database policies were not verified: the available Supabase connections denied project access. Before deploying, complete a reset using a real email link and upload/reload/remove a photo with a test account.
-
-The full TypeScript check still reports existing errors in the AI provider modules and the missing CalendarIcon in AIReport.tsx. None of the changed settings files produced TypeScript errors.
+- Integration tests use the real settings hook with isolated database/storage mocks to verify no writes or global appearance changes during edits, combined saving, Cancel, failed-save retention/retry, fresh-cache persistence, photo staging/cleanup, invalid input and double-submission prevention.
+- Color tests cover all 84 swatches, named presets, invalid input, RGB/HSV round trips, black/white extremes and minimum 4.5:1 contrast for foreground text and button labels in both themes.
+- Browser verification: node scripts/settings-accent-qa.cjs. Tests the real routes with fixture requests, save/reload/cancel/error recovery, pointer and keyboard input, staged photos, 320/390/768/1440px layouts in both themes, and computed browser button contrast for extreme colors.
+- Production build and TypeScript checks pass. No live database or account data is modified by the tests; live persistence depends on the existing deployment credentials and ownership policies.

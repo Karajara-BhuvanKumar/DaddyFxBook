@@ -1,4 +1,4 @@
-/* Saved preferences and unsaved previews use the same tokens throughout the shell. */
+/* Only successfully saved preferences reach the shared workspace tokens. */
 html[data-accent] { --shell-blue: hsl(var(--primary)); --shell-active: hsl(var(--primary) / .12); }
 html[data-accent] .app-account-avatar { border-color: hsl(var(--primary)); }
 html[data-accent] .app-nav-item.is-active > svg,
@@ -14,6 +14,20 @@ html[data-accent] .performance-timeframes button.selected { box-shadow: inset 0 
 html[data-accent] .dashboard-customize input { accent-color: hsl(var(--primary)); }
 html[data-accent] .dashboard-customize > button { color: hsl(var(--primary)); }
 html[data-accent] .btn-premium:hover { background: hsl(var(--primary) / .85); }
+
+/* Opaque accent controls use a contrast-aware foreground, including legacy
+   blue utilities. Transparent accent badges keep their existing text colors. */
+html[data-accent] :is(.bg-primary, .bg-blue-400, .bg-blue-500, .bg-blue-600, .bg-blue-700, .from-blue-600, .app-add-trade, .app-skip-link, .btn-premium, .pc-generate),
+html[data-accent] [class~="bg-[hsl(var(--primary))]"],
+html[data-accent] .an-segments button[aria-pressed=true],
+html[data-accent] .an-distribution-bar > span:not(.an-loss-fill):not(.an-no-results),
+html[data-accent] .th-segment button[aria-pressed=true],
+html[data-accent] .th-mobile-view-tabs button[aria-pressed=true] { color: hsl(var(--primary-foreground)); }
+html[data-accent] .app-add-trade:hover { color: hsl(var(--primary-foreground)); }
+html[data-accent] .app-theme-toggle, html[data-accent] .app-theme-toggle:hover { color: hsl(var(--primary)); }
+html[data-accent] .trade-time-picker { --picker-accent: hsl(var(--primary)); }
+html[data-accent] :is(.trade-calendar-selected, .trade-time-done) { color: hsl(var(--primary-foreground)); }
+html[data-accent] .trade-time-done:hover { background: hsl(var(--primary) / .9); }
 
 html[data-compact] { font-size: 14px; }
 html[data-compact=true] { font-size: 13px; }

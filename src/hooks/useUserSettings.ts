@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useIsMutating } from "@tanstack/
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { normalizeAccent } from '@/lib/accentColors';
 export { ACCENT_COLORS } from "@/lib/workspacePreferences";
 
 
@@ -51,6 +52,12 @@ export const DEFAULTS = (uid: string): UserSettings => ({
   notify_monthly: false,
 });
 
+export function validateAvatarFile(file: File) {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
+  if (file.size > 2 * 1024 * 1024) throw new Error("Your photo must be 2 MB or smaller.");
+}
+type SettingsUpdate = Partial<UserSettings> & { avatarFile?: File };
+
 export function useUserSettings() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -77,49 +84,47 @@ export function useUserSettings() {
 
   const updateMutation = useMutation({
     mutationKey,
-    onMutate: async (patch: Partial<UserSettings>) => {
+    onMutate: async () => {
       await qc.cancelQueries({ queryKey: ["user_settings", uid] });
-      const previous = qc.getQueryData<UserSettings>(["user_settings", uid]);
-      // Appearance is saved on selection and must survive navigation while saving.
-      const appearance = Object.fromEntries(Object.entries(patch).filter(([key]) => ["theme", "accent_color", "compact_mode"].includes(key)));
-      if (previous && Object.keys(appearance).length) qc.setQueryData(["user_settings", uid], { ...previous, ...appearance });
-      return { previous, optimistic: Object.keys(appearance).length > 0 };
     },
-    mutationFn: async (patch: Partial<UserSettings>) => {
+    mutationFn: async ({ avatarFile, ...patch }: SettingsUpdate) => {
       if (!uid) throw new Error("Please sign in again.");
-      const { data, error } = await supabase.from("user_settings").update(patch).eq("user_id", uid).select("*").single();
-      if (error) throw error;
-      return { ...DEFAULTS(uid), ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== null)) } as UserSettings;
+      if (patch.accent_color !== undefined) {
+        const color = normalizeAccent(patch.accent_color);
+        if (!color) throw new Error('Enter a valid accent color, such as #3B82F6.');
+        patch.accent_color = color;
+      }
+      let uploadedPath: string | undefined;
+      try {
+        if (avatarFile) {
+          validateAvatarFile(avatarFile);
+          const extensions = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+          const path = `${uid}/avatar-${crypto.randomUUID()}.${extensions[avatarFile.type as keyof typeof extensions]}`;
+          const bucket = supabase.storage.from('avatars');
+          const { error } = await bucket.upload(path, avatarFile, { contentType: avatarFile.type });
+          if (error) throw error;
+          uploadedPath = path;
+          const { data, error: urlError } = await bucket.createSignedUrl(path, 60 * 60 * 24 * 365);
+          if (urlError) throw urlError;
+          if (!data?.signedUrl) throw new Error('Could not load your uploaded photo. Please try again.');
+          patch.avatar_url = data.signedUrl;
+        }
+        const { data, error } = await supabase.from("user_settings").update(patch).eq("user_id", uid).select("*").single();
+        if (error) throw error;
+        return { ...DEFAULTS(uid), ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== null)) } as UserSettings;
+      } catch (error) {
+        // Only clean up this attempt's new upload, never a previously saved photo.
+        if (uploadedPath) await supabase.storage.from('avatars').remove([uploadedPath]).catch(() => {});
+        throw error;
+      }
     },
     onSuccess: (saved) => {
       qc.setQueryData(["user_settings", uid], saved);
     },
-    onError: (e: Error, _patch, context) => {
-      if (context?.optimistic && context.previous) qc.setQueryData(["user_settings", uid], context.previous);
+    onError: (e: Error) => {
       toast({ title: "Failed to update settings", description: e.message, variant: "destructive" });
     },
   });
-
-  const uploadAvatar = async (file: File) => {
-    if (!uid) throw new Error("Please sign in again.");
-    const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-    const ext = extensions[file.type];
-    if (!ext) throw new Error("Choose a JPG, PNG, or WebP image.");
-    if (file.size > 2 * 1024 * 1024) throw new Error("Your photo must be 2 MB or smaller.");
-    const path = `${uid}/avatar-${crypto.randomUUID()}.${ext}`;
-    const bucket = supabase.storage.from("avatars");
-    const { error } = await bucket.upload(path, file, { contentType: file.type });
-    if (error) throw error;
-    try {
-      const { data, error: urlError } = await bucket.createSignedUrl(path, 60 * 60 * 24 * 365);
-      if (urlError) throw urlError;
-      if (!data?.signedUrl) throw new Error("Could not load your uploaded photo. Please try again.");
-      await updateMutation.mutateAsync({ avatar_url: data.signedUrl });
-    } catch (error) {
-      await bucket.remove([path]);
-      throw error;
-    }
-  };
 
   return {
     settings,
@@ -129,6 +134,5 @@ export function useUserSettings() {
     updateSettings: updateMutation.mutate,
     updateSettingsAsync: updateMutation.mutateAsync,
     isUpdating: pendingUpdates > 0 || updateMutation.isPending,
-    uploadAvatar,
   };
 }

@@ -5,8 +5,8 @@ import { Link } from "react-router-dom";
 import { Camera, Check, ChevronRight, Download, Globe2, Loader2, LogOut, Mail, Monitor, Moon, Palette, ShieldCheck, SlidersHorizontal, Sun, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserSettings, ACCENT_COLORS, type UserSettings } from "@/hooks/useUserSettings";
-import { useWorkspacePreferences } from "@/contexts/WorkspacePreferencesContext";
+import { useUserSettings, validateAvatarFile, type UserSettings } from "@/hooks/useUserSettings";
+import AccentColorPicker from "@/components/AccentColorPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,10 +32,14 @@ type ExportTable = "trades" | "journals" | "backtest_sessions";
 
 export default function Settings() {
   const { user } = useAuth();
-  const { settings, isLoading, isError, refetch, updateSettingsAsync, isUpdating, uploadAvatar } = useUserSettings();
+  const { settings, isLoading, isError, refetch, updateSettingsAsync, isUpdating } = useUserSettings();
   const [draft, setDraft] = useState<Partial<UserSettings>>({});
-  const { previewPreferences } = useWorkspacePreferences();
-  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [accentValid, setAccentValid] = useState(true);
+  const [pickerVersion, setPickerVersion] = useState(0);
+  const [saveError, setSaveError] = useState('');
+  const saving = useRef(false);
   const [resetBusy, setResetBusy] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [exporting, setExporting] = useState<ExportTable | null>(null);
@@ -43,14 +47,14 @@ export default function Settings() {
   const [signingOut, setSigningOut] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const values = settings ? { ...settings, ...draft } : null;
-  const dirty = Object.keys(draft).length > 0;
-  const busy = isUpdating || photoBusy;
+  const dirty = Object.keys(draft).some(key => !Object.is(draft[key as keyof UserSettings], settings?.[key as keyof UserSettings])) || !!photoFile || !accentValid;
+  const busy = isUpdating;
 
   useEffect(() => {
-    const preview = Object.fromEntries(Object.entries(draft).filter(([key]) => ["theme", "accent_color", "compact_mode", "timezone", "time_format", "currency"].includes(key)));
-    previewPreferences(preview);
-  }, [draft, previewPreferences]);
-  useEffect(() => () => previewPreferences(null), [previewPreferences]);
+    if (!photoFile) { setPhotoPreview(null); return; }
+    const url = URL.createObjectURL(photoFile); setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -60,11 +64,7 @@ export default function Settings() {
   }, [dirty]);
 
   function edit<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
-    if (key === "theme" || key === "accent_color" || key === "compact_mode") {
-      // These are workspace choices, not a page-local preview.
-      void updateSettingsAsync({ [key]: value }).catch(() => { /* The hook reports and rolls back failed saves. */ });
-      return;
-    }
+    setSaveError('');
     setDraft(previous => {
       const next = { ...previous };
       if (value === settings?.[key]) delete next[key]; else next[key] = value;
@@ -73,7 +73,8 @@ export default function Settings() {
   }
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    const patch = { ...draft };
+    if (!dirty || busy || saving.current || !accentValid) return;
+    const patch = Object.fromEntries(Object.entries(draft).filter(([key, value]) => !Object.is(value, settings?.[key as keyof UserSettings]))) as Partial<UserSettings>;
     if (NUMBERS.some(({ key, max, step }) => key in patch && (!Number.isFinite(patch[key]) || patch[key]! < 0 || patch[key]! > max || (step === "1" && !Number.isInteger(patch[key]))))) {
       toast({ title: "Check your trading defaults", description: "Enter valid, non-negative amounts. Risk must be 0–100%, and trades per day must be a whole number.", variant: "destructive" });
       return;
@@ -84,22 +85,24 @@ export default function Settings() {
     }
     if (patch.display_name !== undefined) patch.display_name = patch.display_name?.trim() || null;
     if (patch.username !== undefined) patch.username = patch.username?.trim() || null;
-    try { await updateSettingsAsync(patch); setDraft({}); toast({ title: "Changes saved", description: "Your settings are up to date." }); }
-    catch { /* The settings hook reports the error; keep the draft for retry. */ }
+    saving.current = true; setSaveError('');
+    try {
+      await updateSettingsAsync({ ...patch, ...(photoFile ? { avatarFile: photoFile } : {}) });
+      resetDraft(); toast({ title: "Changes saved", description: "Your settings are up to date." });
+    } catch (error) { setSaveError(error instanceof Error ? error.message : 'Could not save your settings. Please try again.'); }
+    finally { saving.current = false; }
   }
-  async function changePhoto(file?: File) {
+  function resetDraft() {
+    setDraft({}); setPhotoFile(null); setAccentValid(true); setSaveError(''); setPickerVersion(v => v + 1);
+    if (fileInput.current) fileInput.current.value = '';
+  }
+  function changePhoto(file?: File) {
     if (!file) return;
-    setPhotoBusy(true);
-    try { await uploadAvatar(file); toast({ title: "Profile photo updated" }); }
-    catch (error) { reportError("Couldn't upload your photo", error); }
-    finally { setPhotoBusy(false); if (fileInput.current) fileInput.current.value = ""; }
+    try { validateAvatarFile(file); setPhotoFile(file); setSaveError(''); }
+    catch (error) { reportError("Couldn't select your photo", error); }
+    finally { if (fileInput.current) fileInput.current.value = ''; }
   }
-  async function removePhoto() {
-    setPhotoBusy(true);
-    try { await updateSettingsAsync({ avatar_url: null }); toast({ title: "Profile photo removed" }); }
-    catch { /* Reported by the settings hook. */ }
-    finally { setPhotoBusy(false); }
-  }
+  function removePhoto() { setPhotoFile(null); edit('avatar_url', null); }
   async function resetPassword() {
     if (!user?.email) return;
     setResetBusy(true);
@@ -145,7 +148,7 @@ export default function Settings() {
   if (isLoading) return <div className="settings-loading" role="status"><Loader2 className="animate-spin" /> Loading your settings…</div>;
   if (isError || !values) return <div className="settings-loading"><p>We couldn't load your settings.</p><Button variant="outline" onClick={() => refetch()}>Try again</Button></div>;
   const initials = (values.display_name || user?.email || "U").slice(0, 2).toUpperCase();
-  const saveFooter = <div className="settings-savebar"><span role="status">{isUpdating ? "Saving your changes…" : dirty ? "You have unsaved changes" : <><Check size={14} /> All changes saved</>}</span><div><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={() => setDraft({})}>Cancel</Button><Button type="submit" disabled={!dirty || busy}>{isUpdating && <Loader2 size={15} className="animate-spin" />}Save changes</Button></div></div>;
+  const saveFooter = <>{saveError && <p role="alert" className="settings-error settings-save-error">{saveError} Your changes are still here; try saving again.</p>}<div className="settings-savebar"><span role="status">{isUpdating ? "Saving your changes…" : dirty ? "You have unsaved changes" : <><Check size={14} /> All changes saved</>}</span><div><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={resetDraft}>Cancel</Button><Button type="submit" disabled={!dirty || busy || !accentValid}>{isUpdating && <Loader2 size={15} className="animate-spin" />}Save changes</Button></div></div></>;
 
   return <div className="settings-page">
     <header className="settings-header"><div><p className="settings-eyebrow">MAKE IT YOURS</p><h1>Account settings</h1><p>A few simple details. A workspace that feels like you.</p></div><span className="settings-private"><ShieldCheck size={15} /> Your personal workspace</span></header>
@@ -161,8 +164,8 @@ export default function Settings() {
           <Card title="Personal information" description="Your profile, just the way you like it." icon={<UserRound size={19} />}>
             <fieldset disabled={busy}>
               <div className="settings-photo-row">
-                <Avatar className="settings-avatar"><AvatarImage src={settings?.avatar_url || undefined} alt="Your profile photo" className="object-cover" /><AvatarFallback>{initials}</AvatarFallback></Avatar>
-                <div className="settings-photo-content"><h3>Profile photo</h3><p>JPG, PNG or WebP. Up to 2 MB.</p><div className="settings-photo-actions"><input ref={fileInput} aria-label="Upload profile photo" type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void changePhoto(e.target.files?.[0])} /><Button type="button" variant="outline" onClick={() => fileInput.current?.click()}>{photoBusy ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}{photoBusy ? "Updating…" : "Change photo"}</Button>{settings?.avatar_url && <Button type="button" variant="ghost" onClick={removePhoto}>Remove</Button>}</div></div>
+                <Avatar className="settings-avatar"><AvatarImage src={photoPreview || values.avatar_url || undefined} alt="Your profile photo" className="object-cover" /><AvatarFallback>{initials}</AvatarFallback></Avatar>
+                <div className="settings-photo-content"><h3>Profile photo</h3><p>JPG, PNG or WebP. Up to 2 MB.</p><div className="settings-photo-actions"><input ref={fileInput} aria-label="Upload profile photo" type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => void changePhoto(e.target.files?.[0])} /><Button type="button" variant="outline" onClick={() => fileInput.current?.click()}><Camera size={15} />Change photo</Button>{(photoFile || values.avatar_url) && <Button type="button" variant="ghost" onClick={removePhoto}>Remove</Button>}</div></div>
               </div>
               <div className="settings-card-body settings-fields">
                 <Field label="Display name" id="display-name"><Input id="display-name" autoComplete="name" maxLength={80} placeholder="Your name" value={values.display_name || ""} onChange={e => edit("display_name", e.target.value)} /></Field>
@@ -180,8 +183,8 @@ export default function Settings() {
         <form onSubmit={save}>
           <Card title="Workspace preferences" description="Set the look and everyday defaults for your workspace." icon={<Palette size={19} />}>
             <fieldset disabled={busy} className="settings-card-body settings-preferences">
-              <div><h3>Appearance</h3><p className="settings-hint">Appearance changes save automatically.</p><div className="settings-themes">{([{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "system", label: "System", icon: Monitor }]).map(({ value, label, icon: Icon }) => <button type="button" key={value} className={values.theme === value ? "selected" : ""} aria-pressed={values.theme === value} onClick={() => edit("theme", value)}><span className={`settings-theme-preview preview-${value}`}><i /><i /><i /></span><span><Icon size={15} />{label}{values.theme === value && <Check size={14} />}</span></button>)}</div></div>
-              <div className="settings-preference-row"><div><h3>Accent color</h3><p className="settings-hint">Applies to profits, charts, buttons and highlights. Saves automatically.</p></div><div className="settings-colors">{ACCENT_COLORS.map(color => <button type="button" key={color.id} aria-label={`${color.label} accent`} aria-pressed={values.accent_color === color.id} onClick={() => edit("accent_color", color.id)} style={{ backgroundColor: `hsl(${color.hsl})` }}>{values.accent_color === color.id && <Check size={18} />}</button>)}</div></div>
+              <div><h3>Appearance</h3><p className="settings-hint">Changes stay in this form until you select Save changes.</p><div className="settings-themes">{([{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "system", label: "System", icon: Monitor }]).map(({ value, label, icon: Icon }) => <button type="button" key={value} className={values.theme === value ? "selected" : ""} aria-pressed={values.theme === value} onClick={() => edit("theme", value)}><span className={`settings-theme-preview preview-${value}`}><i /><i /><i /></span><span><Icon size={15} />{label}{values.theme === value && <Check size={14} />}</span></button>)}</div></div>
+              <AccentColorPicker key={pickerVersion} value={values.accent_color} onChange={v => edit('accent_color', v)} onValidityChange={setAccentValid} disabled={busy} />
               <div className="settings-preference-row"><div><Label htmlFor="compact-mode">Compact layout</Label><p className="settings-hint">Smaller text and tighter spacing.</p></div><Switch id="compact-mode" checked={values.compact_mode} onCheckedChange={v => edit("compact_mode", v)} /></div>
               <div className="settings-preference-section"><h3><Globe2 size={17} />Region & time</h3><div className="settings-fields"><Field label="Timezone" id="timezone" hint="Timezone for the workspace header date and clock."><select id="timezone" value={values.timezone} onChange={e => edit("timezone", e.target.value)}>{Array.from(new Set([...TIMEZONES, values.timezone])).map(zone => <option key={zone}>{zone}</option>)}</select></Field><Field label="Time format" id="time-format"><select id="time-format" value={values.time_format} onChange={e => edit("time_format", e.target.value)}><option value="12h">12-hour (2:30 PM)</option><option value="24h">24-hour (14:30)</option></select></Field><Field label="Default currency" id="currency" hint="Currency for your account-size default. Trade amounts are not converted."><select id="currency" value={values.currency} onChange={e => edit("currency", e.target.value)}>{Array.from(new Set(["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", values.currency])).map(currency => <option key={currency}>{currency}</option>)}</select></Field></div></div>
               <details className="settings-trading"><summary>Trading defaults <ChevronRight size={16} /></summary><p className="settings-hint">Your account and risk preferences.</p><div className="settings-fields">{NUMBERS.map(({ key, label, max, step }) => <Field key={key} label={key === "account_size" ? `${label} (${values.currency})` : label} id={key}><Input id={key} type="number" required min={0} max={max} step={step} value={Number.isNaN(values[key]) ? "" : values[key]} onChange={e => edit(key, e.target.value === "" ? NaN : Number(e.target.value))} /></Field>)}<Field label="Preferred session" id="session"><select id="session" value={values.preferred_session} onChange={e => edit("preferred_session", e.target.value)}>{["Asian", "London", "New York"].map(session => <option key={session}>{session}</option>)}</select></Field></div><Link to="/rules" className="settings-back-link">Manage your trading rules <ChevronRight size={15} /></Link></details>
