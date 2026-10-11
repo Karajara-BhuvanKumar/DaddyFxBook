@@ -124,6 +124,12 @@ function streaks(values: number[]) {
   return { winStreak, lossStreak };
 }
 
+function performanceSession(value: string | null | undefined) {
+  const name = value?.trim().toLowerCase().replace(/\s+/g, ' ')
+    .replace(/^off[ -]session /, '').replace(/ off[ -]session$/, '');
+  return IST_MARKET_SESSIONS.find(session => session.name.toLowerCase() === name)?.name;
+}
+
 export function analyzeTrades(trades: Trade[], journals: Journal[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
   const { includedClosedTrades, rejected } = includedTrades(trades, period, outcome, now);
   const core = metrics(includedClosedTrades);
@@ -146,9 +152,12 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
     monthly[month] = sum([monthly[month] ?? 0, t.pnl]);
     const weekday = dayPerf[(date.getUTCDay() + 6) % 7];
     weekday.pnl = sum([weekday.pnl, t.pnl]); weekday.count++;
-    // Use the actual entry instant in IST, regardless of journal or trade labels.
-    const entrySession = sessionsAt(new Date(t.open_time))[0];
-    const session = sessionPerf.find(s => s.name === entrySession?.name) ?? unassignedSession;
+    // Regular and off-session labels contribute to the same performance bucket.
+    // Prefer the saved journal, then the trade label; retain IST timing for unlabeled trades.
+    const sessionName = performanceSession(parseStrategySetup(journalMap.get(t.id)?.strategy_setup).market_session)
+      ?? performanceSession(t.session)
+      ?? sessionsAt(new Date(t.open_time))[0]?.name;
+    const session = sessionPerf.find(s => s.name === sessionName) ?? unassignedSession;
     const symbol = symbolGroups[t.symbol] ??= { pnl: 0, count: 0, wins: 0, losses: 0 };
     for (const group of [session, symbol]) {
       group.pnl = sum([group.pnl, t.pnl]); group.count++;

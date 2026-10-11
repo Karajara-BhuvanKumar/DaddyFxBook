@@ -27,26 +27,42 @@ function showAnalysis() {
 }
 
 describe("Analysis redesign", () => {
-  it('renders IST entry session metrics and updates them after an opening-time edit', () => {
+  it.each(['Asian', 'London', 'New York'])('renders all combined metrics for %s and preserves the timeline through edits and filters', name => {
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-05T18:00:00Z'));
-    const assigned = journals.map((j, i) => ({ ...j, strategy_setup: JSON.stringify({ market_session: i < 2 ? 'New York' : '' }) }));
-    const timed = trades.map((t, i) => ({ ...t, open_time: `2026-10-0${i + 1}T${i < 2 ? '11:30' : '10:00'}:00Z` }));
+    const assigned = journals.map((j, i) => ({ ...j, strategy_setup: JSON.stringify({ market_session: i === 0 ? name : i === 1 ? `Off Session ${name}` : '' }) }));
+    const timed = trades.map((t, i) => ({ ...t, session: null, open_time: `2026-10-0${i + 1}T10:00:00Z` }));
     const { container, rerender } = render(<AnalysisView trades={timed} allJournals={assigned} />);
     const cards = () => container.querySelectorAll('.an-session-grid > div');
-    const ny = within(cards()[2] as HTMLElement);
-    expect(cards()[2].querySelector('.an-session-pnl')).toHaveTextContent('$60.00');
-    expect(ny.getByText('Trades').nextElementSibling).toHaveTextContent('2');
-    expect(ny.getByText('Win Rate').nextElementSibling).toHaveTextContent('50.0%');
-    expect(ny.getByText('Avg Trade').nextElementSibling).toHaveTextContent('$30.00');
-    expect(ny.getByText('Trade Share').nextElementSibling).toHaveTextContent('67%');
+    const index = ['Asian', 'London', 'New York'].indexOf(name);
+    const card = within(cards()[index] as HTMLElement);
+    const timeline = container.querySelector('.an-session-timeline')!.innerHTML;
+    expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('$60.00');
+    expect(card.getByText('Trades').nextElementSibling).toHaveTextContent('2');
+    expect(card.getByText('Win Rate').nextElementSibling).toHaveTextContent('50.0%');
+    expect(card.getByText('Avg Trade').nextElementSibling).toHaveTextContent('$30.00');
+    expect(card.getByText('Trade Share').nextElementSibling).toHaveTextContent('67%');
     expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('1 trade ($0.00)');
-    expect(screen.queryByText(/Entry group/)).not.toBeInTheDocument();
-    const edited = assigned.map((j, i) => i === 0 ? { ...j, strategy_setup: JSON.stringify({ market_session: 'London' }) } : j);
+    expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('includes its regular and off-session categories');
+    expect(screen.queryByText(/excluded from these cards/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Winners' }));
+    expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
+    expect(card.getByText('Trades').nextElementSibling).toHaveTextContent('1');
+    expect(card.getByText('Win Rate').nextElementSibling).toHaveTextContent('100.0%');
+    expect(card.getByText('Avg Trade').nextElementSibling).toHaveTextContent('$100.00');
+    expect(card.getByText('Trade Share').nextElementSibling).toHaveTextContent('100%');
+    fireEvent.click(screen.getByRole('button', { name: 'Losers' }));
+    expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');
+    expect(card.getByText('Win Rate').nextElementSibling).toHaveTextContent('0.0%');
+    fireEvent.click(screen.getByRole('button', { name: 'All Trades' }));
+    const otherIndex = (index + 1) % 3;
+    const edited = assigned.map((j, i) => i === 0 ? { ...j, strategy_setup: JSON.stringify({ market_session: ['Asian', 'London', 'New York'][otherIndex] }) } : j);
     rerender(<AnalysisView trades={timed} allJournals={edited} />);
-    expect(cards()[2].querySelector('.an-session-pnl')).toHaveTextContent('$60.00');
+    expect(cards()[otherIndex].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
+    expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');
     rerender(<AnalysisView trades={timed.map((t, i) => i === 0 ? { ...t, open_time: '2026-10-01T05:30:00Z' } : t)} allJournals={edited} />);
-    expect(cards()[1].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
-    expect(cards()[2].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');
+    expect(cards()[otherIndex].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
+    expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');
+    expect(container.querySelector('.an-session-timeline')!.innerHTML).toBe(timeline);
   });
 
   it("preserves setup aggregation and updates it with the page filters", () => {
