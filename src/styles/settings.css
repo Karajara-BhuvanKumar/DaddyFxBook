@@ -122,6 +122,9 @@
 .accent-preview-link { color: var(--sample-accent); font-size: 10px; white-space: nowrap; }
 .accent-preview svg { width: 74px; min-width: 30px; height: 28px; margin-left: auto; }
 .accent-preview path { stroke: var(--sample-accent); stroke-width: 2.5; fill: none; }
+.accent-preview[data-contrast=low] .accent-preview-button { outline: 1px solid currentColor; }
+.accent-preview[data-contrast=low] .accent-preview-link { color: inherit; text-decoration: underline var(--sample-accent) 3px; text-underline-offset: 4px; }
+.accent-preview[data-contrast=low] path { filter: drop-shadow(0 0 1px var(--sample-ink)); }
 .settings-save-error { margin: 0 28px 16px; }
 @media (max-width: 850px) {
   .accent-editor { grid-template-columns: 1fr; gap: 23px; }

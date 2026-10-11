@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACCENT_COLORS, ACCENT_SWATCHES, accentAppearance, accentHex, contrastRatio, hexToHsv, hsvToHex, normalizeAccent, normalizeHex } from '@/lib/accentColors';
+import { ACCENT_COLORS, ACCENT_SWATCHES, accentAppearance, accentHex, contrastRatio, hexToHsv, hslToHex, hsvToHex, normalizeAccent, normalizeHex } from '@/lib/accentColors';
 import { resolvePreferences } from '@/lib/workspacePreferences';
 
 describe('custom workspace accents', () => {
@@ -21,15 +21,23 @@ describe('custom workspace accents', () => {
     expect(ACCENT_SWATCHES).toHaveLength(84);
     expect(new Set(ACCENT_SWATCHES.map(c => c.hex)).size).toBe(84);
   });
-  it('keeps text and button labels readable for every swatch and extreme custom shades in both themes', () => {
-    const colors = [...ACCENT_COLORS.map(c => c.id), ...ACCENT_SWATCHES.map(c => c.hex), '#000000', '#ffffff', '#ffff00', '#00ffff', '#000001', '#fffffe'];
+  it('uses the exact chosen color in both themes, with contrasting labels instead of color substitution', () => {
+    const colors = [...ACCENT_COLORS.map(c => c.id), ...ACCENT_SWATCHES.map(c => c.hex), '#000000', '#ffffff', '#ffff00', '#00ffff', '#000001', '#fffffe', '#ff0001', '#12abcd'];
     for (const theme of ['light', 'dark']) for (const color of colors) {
       const appearance = accentAppearance(color, theme);
-      const surfaces = theme === 'light' ? ['#ffffff', '#f5f7fa', '#eef0f4'] : ['#000000', '#0a0a0a', '#141414', '#242426'];
-      for (const surface of surfaces) expect(contrastRatio(appearance.hex, surface), color + ' on ' + surface).toBeGreaterThanOrEqual(4.5);
+      expect(appearance.hex).toBe(accentHex(color));
+      expect(hslToHex(...appearance.hsl.split(' ').map(parseFloat) as [number, number, number])).toBe(accentHex(color));
       expect(contrastRatio(appearance.hex, appearance.foreground), color + ' button').toBeGreaterThanOrEqual(4.5);
       expect(normalizeAccent(color)).toBe(color);
     }
-    expect(accentHex('#000000')).toBe('#000000');
+    expect(accentAppearance('#000000', 'dark').needsContrastSupport).toBe(true);
+    expect(accentAppearance('#ffffff', 'light').needsContrastSupport).toBe(true);
+  });
+  it('does not lose RGB precision through the shared HSL tokens', () => {
+    for (let r = 0; r <= 255; r += 17) for (let g = 0; g <= 255; g += 17) for (let b = 0; b <= 255; b += 17) {
+      const hex = '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+      const { hsl } = accentAppearance(hex, 'light');
+      expect(hslToHex(...hsl.split(' ').map(parseFloat) as [number, number, number])).toBe(hex);
+    }
   });
 });

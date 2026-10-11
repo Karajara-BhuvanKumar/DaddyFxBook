@@ -24,7 +24,7 @@ export function resolvePreferences(settings?: Partial<WorkspacePreferences> | nu
 
 export function applyWorkspaceAppearance(preferences: WorkspacePreferences, resolvedTheme = "dark") {
   const root = document.documentElement;
-  const { hsl, subtleHsl, foregroundHsl } = accentAppearance(preferences.accent_color, resolvedTheme);
+  const { hsl, subtleHsl, foregroundHsl, needsContrastSupport } = accentAppearance(preferences.accent_color, resolvedTheme);
   for (const property of ["--primary", "--profit", "--ring", "--sidebar-primary", "--sidebar-ring"]) root.style.setProperty(property, hsl);
   root.style.setProperty("--profit-color", `hsl(${hsl})`);
   root.style.setProperty("--primary-foreground", foregroundHsl);
@@ -33,6 +33,7 @@ export function applyWorkspaceAppearance(preferences: WorkspacePreferences, reso
   root.style.setProperty("--sidebar-accent", subtleHsl);
   root.style.setProperty("--sidebar-accent-foreground", resolvedTheme === 'light' ? '221 39% 11%' : '210 40% 98%');
   root.dataset.accent = preferences.accent_color;
+  root.dataset.accentContrast = needsContrastSupport ? 'low' : 'normal';
   root.dataset.compact = String(preferences.compact_mode);
   // next-themes owns theme classes and OS theme changes. CSS owns density.
   root.style.removeProperty("font-size");

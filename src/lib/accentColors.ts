@@ -51,18 +51,21 @@ export function contrastRatio(a: string, b: string) {
   return (Math.max(x, y) + .05) / (Math.min(x, y) + .05);
 }
 export function accentAppearance(value: string, theme: string) {
-  const original = accentHex(value), { h, s: hsvS, v } = hexToHsv(original);
+  const hex = accentHex(value), { h, s: hsvS, v } = hexToHsv(hex);
   const lightness = v / 100 * (1 - hsvS / 200);
   const saturation = lightness === 0 || lightness === 1 ? 0 : (v / 100 - lightness) / Math.min(lightness, 1 - lightness) * 100;
-  let l = lightness * 100, hex = original;
-  // Keep the chosen hue. Adapt only brightness when text/highlights need contrast.
-  const light = theme === 'light', surface = light ? '#eef0f4' : '#242426';
-  while (contrastRatio(hex, surface) < 5 && (light ? l > 0 : l < 100)) {
-    l = clamp(l + (light ? -.5 : .5), 100);
-    hex = hslToHex(h, saturation, l);
-  }
+  const light = theme === 'light';
   const foreground = contrastRatio(hex, '#ffffff') >= contrastRatio(hex, '#000000') ? '#ffffff' : '#000000';
-  return { hex, hsl: `${h.toFixed(2)} ${saturation.toFixed(2)}% ${l.toFixed(2)}%`, subtleHsl: `${h.toFixed(2)} ${Math.min(saturation, 45).toFixed(2)}% ${light ? 94 : 12}%`, foreground, foregroundHsl: foreground === '#ffffff' ? '0 0% 100%' : '0 0% 0%' };
+  // Never alter or round the base color to fit a theme. Existing HSL consumers
+  // get full precision; only surrounding tints, labels and outlines adapt.
+  const surfaces = light ? ['#ffffff', '#eef0f4'] : ['#000000', '#242426'];
+  const needsContrastSupport = surfaces.some(surface => contrastRatio(hex, surface) < 4.5);
+  return {
+    hex, hsl: `${h} ${saturation}% ${lightness * 100}%`,
+    subtleHsl: `${h} ${Math.min(saturation, 45)}% ${light ? 94 : 12}%`,
+    foreground, foregroundHsl: foreground === '#ffffff' ? '0 0% 100%' : '0 0% 0%',
+    needsContrastSupport,
+  };
 }
 
 const HUES = [

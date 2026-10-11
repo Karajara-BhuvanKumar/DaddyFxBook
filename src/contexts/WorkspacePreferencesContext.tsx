@@ -18,6 +18,7 @@ export function WorkspacePreferencesProvider({ saved, children }: { saved?: Part
     for (const property of ["--primary", "--primary-foreground", "--profit", "--profit-color", "--ring", "--accent", "--sidebar-accent", "--sidebar-accent-foreground", "--sidebar-primary", "--sidebar-primary-foreground", "--sidebar-ring"]) root.style.removeProperty(property);
     delete root.dataset.compact;
     delete root.dataset.accent;
+    delete root.dataset.accentContrast;
   }, []);
   const value = useMemo(() => ({ preferences }), [preferences]);
   return <WorkspacePreferencesContext.Provider value={value}>{children}</WorkspacePreferencesContext.Provider>;

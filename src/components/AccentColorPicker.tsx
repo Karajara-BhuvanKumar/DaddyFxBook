@@ -41,10 +41,10 @@ export default function AccentColorPicker({ value, onChange, onValidityChange, d
           style={{ backgroundColor: `hsl(${hsv.h} 100% 50%)` }}
           onPointerDown={event => { if (disabled || event.button !== 0) return; event.currentTarget.setPointerCapture(event.pointerId); pickPoint(event); }}
           onPointerMove={event => { if (!disabled && event.currentTarget.hasPointerCapture(event.pointerId)) pickPoint(event); }}>
-          <span style={{ left: `clamp(8px, ${hsv.s}%, calc(100% - 8px))`, top: `clamp(8px, ${100 - hsv.v}%, calc(100% - 8px))`, background: hex }} />
+          <span style={{ left: `${hsv.s}%`, top: `${100 - hsv.v}%`, background: hex }} />
         </div>
         <label className="accent-slider-label" htmlFor="accent-hue">Hue <span>{Math.round(hsv.h)}°</span></label>
-        <input id="accent-hue" className="accent-slider accent-hue" type="range" step="any" min="0" max="359" value={hsv.h} disabled={disabled} onChange={e => changeHsv({ h: Number(e.target.value) })} />
+        <input id="accent-hue" className="accent-slider accent-hue" type="range" step="any" min="0" max="360" value={hsv.h} disabled={disabled} onChange={e => changeHsv({ h: Number(e.target.value) })} />
         <div className="accent-tuning">
           <div><label className="accent-slider-label" htmlFor="accent-saturation">Saturation <span>{Math.round(hsv.s)}%</span></label><input id="accent-saturation" className="accent-slider" type="range" step="any" min="0" max="100" value={hsv.s} disabled={disabled} onChange={e => changeHsv({ s: Number(e.target.value) })} /></div>
           <div><label className="accent-slider-label" htmlFor="accent-brightness">Brightness <span>{Math.round(hsv.v)}%</span></label><input id="accent-brightness" className="accent-slider" type="range" step="any" min="0" max="100" value={hsv.v} disabled={disabled} onChange={e => changeHsv({ v: Number(e.target.value) })} /></div>
@@ -63,7 +63,7 @@ export default function AccentColorPicker({ value, onChange, onValidityChange, d
       </div>
       <div className="accent-palette">
         <p className="accent-section-label">Original presets</p>
-        <div className="accent-presets">{ACCENT_COLORS.map(color => <button type="button" key={color.id} aria-label={`${color.label} accent`} aria-pressed={value === color.id} disabled={disabled} onClick={() => choose(color.id)}><i style={{ background: accentHex(color.id) }} />{color.label}{value === color.id && <Check size={13} />}</button>)}</div>
+        <div className="accent-presets">{ACCENT_COLORS.map(color => <button type="button" key={color.id} aria-label={`${color.label} accent`} aria-pressed={hex === accentHex(color.id)} disabled={disabled} onClick={() => choose(accentHex(color.id))}><i style={{ background: accentHex(color.id) }} />{color.label}{hex === accentHex(color.id) && <Check size={13} />}</button>)}</div>
         <p className="accent-section-label">Spectrum & shades <span>84 colors</span></p>
         <div className="accent-swatches" role="group" aria-label="Color swatches">{ACCENT_SWATCHES.map(color => <button type="button" key={color.label} aria-label={`${color.label} ${color.hex}`} title={`${color.label} · ${color.hex.toUpperCase()}`} aria-pressed={hex === color.hex} disabled={disabled} onClick={() => choose(color.hex)} style={{ background: color.hex, color: contrastRatio(color.hex, '#ffffff') > contrastRatio(color.hex, '#000000') ? '#fff' : '#000' }}>{hex === color.hex && <Check size={15} />}</button>)}</div>
         <p className="settings-hint accent-palette-note">From soft pastels to deep tones, with neutral and brown shades.</p>
@@ -72,11 +72,11 @@ export default function AccentColorPicker({ value, onChange, onValidityChange, d
     <div className="accent-preview-heading"><span>Color preview</span><span>Only these samples change while you edit.</span></div>
     <div className="accent-previews">{['light', 'dark'].map(theme => {
       const appearance = accentAppearance(value, theme);
-      return <div key={theme} className={`accent-preview accent-preview-${theme}`} aria-label={`${theme === 'light' ? 'Light' : 'Dark'} mode accent preview`} style={{ '--sample-accent': appearance.hex, '--sample-ink': appearance.foreground } as CSSProperties}>
+      return <div key={theme} className={`accent-preview accent-preview-${theme}`} data-contrast={appearance.needsContrastSupport ? 'low' : 'normal'} aria-label={`${theme === 'light' ? 'Light' : 'Dark'} mode accent preview`} style={{ '--sample-accent': appearance.hex, '--sample-ink': appearance.foreground } as CSSProperties}>
         <span className="accent-preview-title">{theme === 'light' ? 'Light' : 'Dark'} mode</span>
         <div><span className="accent-preview-button">Button</span><span className="accent-preview-link">Active item</span><svg viewBox="0 0 90 32" aria-hidden="true"><path d="M2 28 L20 19 L35 24 L52 10 L68 15 L88 3" /></svg></div>
       </div>;
     })}</div>
-    <p className="settings-hint">Accent brightness and button text adapt for contrast in each theme. Your chosen color is preserved.</p>
+    <p className="settings-hint">Your exact color is used in both themes. Readable labels and outlines provide contrast.</p>
   </section>;
 }

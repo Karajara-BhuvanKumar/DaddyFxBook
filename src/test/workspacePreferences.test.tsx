@@ -7,7 +7,7 @@ import Settings from "@/pages/Settings";
 import { DEFAULTS, useUserSettings, type UserSettings } from "@/hooks/useUserSettings";
 import { WorkspacePreferencesProvider, useWorkspacePreferences } from "@/contexts/WorkspacePreferencesContext";
 import { formatWorkspaceDate, formatWorkspaceTime } from "@/lib/workspacePreferences";
-import { accentAppearance } from "@/lib/accentColors";
+import { accentAppearance, accentHex } from "@/lib/accentColors";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const backend = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), toast: vi.fn(), upload: vi.fn(), signedUrl: vi.fn(), remove: vi.fn() }));
@@ -64,6 +64,40 @@ async function openSettings() {
 
 
 describe("Workspace preferences", () => {
+  it('saves exact near-red colors and fractional risk values even when trading defaults are collapsed', async () => {
+    saved.max_daily_risk = 2.75;
+    const { panel } = await openSettings();
+    fireEvent.change(panel.getByLabelText('Custom color'), { target: { value: '#ff0001' } });
+    const hue = panel.getByLabelText(/Hue/) as HTMLInputElement;
+    expect(Number(hue.value)).toBeCloseTo(359.764705882);
+    fireEvent.change(panel.getByLabelText('Default risk (%)'), { target: { value: '1.25' } });
+    expect(backend.save).not.toHaveBeenCalled();
+    fireEvent.click(panel.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(panel.getByText('All changes saved')).toBeVisible());
+    expect(backend.save).toHaveBeenCalledWith({ accent_color: '#ff0001', default_risk_pct: 1.25 });
+    expect(saved.max_daily_risk).toBe(2.75);
+    expect(panel.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+  });
+
+  it('reports invalid fields from another tab and keeps the complete draft available to correct or cancel', async () => {
+    const { panel, container } = await openSettings();
+    fireEvent.change(panel.getByLabelText('Custom color'), { target: { value: '#abcdef' } });
+    fireEvent.change(container.querySelector('#username')!, { target: { value: 'invalid username' } });
+    fireEvent.click(panel.getByRole('button', { name: 'Save changes' }));
+    expect(panel.getByRole('alert')).toHaveTextContent('Username:');
+    expect(backend.save).not.toHaveBeenCalled();
+    fireEvent.change(container.querySelector('#username')!, { target: { value: 'valid.user' } });
+    fireEvent.change(panel.getByLabelText('Trades per day'), { target: { value: '1.5' } });
+    fireEvent.click(panel.getByRole('button', { name: 'Save changes' }));
+    expect(panel.getByRole('alert')).toHaveTextContent('Trades per day: enter a whole number');
+    expect(backend.save).not.toHaveBeenCalled();
+    expect(panel.getByLabelText('Custom color')).toHaveValue('#abcdef');
+    fireEvent.click(panel.getByRole('button', { name: 'Cancel' }));
+    expect(panel.queryByRole('alert')).not.toBeInTheDocument();
+    expect(panel.getByLabelText('Trades per day')).toHaveValue(3);
+    expect(container.querySelector('#username')).toHaveValue('');
+  });
+
   it("keeps all preferences local and saves them together only on explicit submission", async () => {
     const { panel } = await openSettings();
     fireEvent.click(panel.getByRole('button', { name: 'Purple accent' }));
@@ -82,8 +116,8 @@ describe("Workspace preferences", () => {
     fireEvent.click(panel.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(backend.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Changes saved' })));
     expect(backend.save).toHaveBeenCalledTimes(1);
-    expect(backend.save).toHaveBeenCalledWith({ accent_color: 'purple', theme: 'light', compact_mode: true, timezone: 'Asia/Kolkata', time_format: '12h', currency: 'INR', max_daily_risk: 4 });
-    expect(document.documentElement.dataset.accent).toBe('purple');
+    expect(backend.save).toHaveBeenCalledWith({ accent_color: accentHex('purple'), theme: 'light', compact_mode: true, timezone: 'Asia/Kolkata', time_format: '12h', currency: 'INR', max_daily_risk: 4 });
+    expect(document.documentElement.dataset.accent).toBe(accentHex('purple'));
     await waitFor(() => expect(document.documentElement).toHaveClass('light'));
     expect(document.documentElement.dataset.compact).toBe('true');
     expect(screen.getByTestId('clock')).toHaveTextContent('Oct 9, 2026 05:00 AM');
@@ -102,7 +136,7 @@ describe("Workspace preferences", () => {
     expect(panel.getByRole('button', { name: 'Cancel' })).toBeDisabled();
     hide();
     await act(async () => finish({ data: saved, error: null }));
-    await waitFor(() => expect(document.documentElement.dataset.accent).toBe('green'));
+    await waitFor(() => expect(document.documentElement.dataset.accent).toBe(accentHex('green')));
   });
 
   it('Cancel discards every draft, including profile edits from another tab', async () => {
@@ -169,8 +203,9 @@ describe("Workspace preferences", () => {
     const { panel } = await openSettings();
     fireEvent.change(panel.getByLabelText('Custom color'), { target: { value: '#zzzzzz' } });
     expect(panel.getByLabelText('Custom color')).toHaveAttribute('aria-invalid', 'true');
-    expect(panel.getByRole('button', { name: 'Save changes' })).toBeDisabled();
-    fireEvent.submit(panel.getByRole('button', { name: 'Save changes' }).closest('form')!);
+    expect(panel.getByRole('button', { name: 'Save changes' })).toBeEnabled();
+    fireEvent.click(panel.getByRole('button', { name: 'Save changes' }));
+    expect(panel.getByRole('alert')).toHaveTextContent('Accent color: enter a valid HEX value');
     expect(backend.save).not.toHaveBeenCalled();
     fireEvent.click(panel.getByRole('button', { name: 'Cancel' }));
     expect(panel.getByLabelText('Custom color')).toHaveAttribute('aria-invalid', 'false');
@@ -221,7 +256,7 @@ describe("Workspace preferences", () => {
     fireEvent.click(panel.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(saved.avatar_url).toBe('https://example.test/avatar.png'));
     expect(backend.upload).toHaveBeenCalledOnce();
-    expect(backend.save).toHaveBeenCalledWith({ avatar_url: 'https://example.test/avatar.png', accent_color: 'purple' });
+    expect(backend.save).toHaveBeenCalledWith({ avatar_url: 'https://example.test/avatar.png', accent_color: accentHex('purple') });
   });
 
   it('preserves photo and settings drafts after a failed combined save and cleans the new upload', async () => {

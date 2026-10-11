@@ -29,6 +29,29 @@ html[data-accent] .trade-time-picker { --picker-accent: hsl(var(--primary)); }
 html[data-accent] :is(.trade-calendar-selected, .trade-time-done) { color: hsl(var(--primary-foreground)); }
 html[data-accent] .trade-time-done:hover { background: hsl(var(--primary) / .9); }
 
+/* Keep the exact accent in fills, strokes and decorations. For colors that
+   blend into the theme, readable neutral labels and edges supply contrast. */
+html[data-accent-contrast=low] :is(.text-primary, .text-profit, .text-blue-300, .text-blue-400, .text-blue-500, .text-blue-600, .text-blue-700,
+  .app-brand-name > span, .app-nav-badge, .dashboard-customize > button, .dashboard-stat-link, .dashboard-empty a,
+  .performance-change:not(.is-loss), .pnl-day.profit-day, .pnl-week-total.profit-day, .pnl-day.today .pnl-day-number,
+  .an-profit, .an-period-badge, .an-clock-time time span, .an-rule-details summary,
+  .settings-eyebrow, .settings-back-link, .settings-avatar > span) { color: hsl(var(--foreground)); }
+html[data-accent-contrast=low] .settings-success { color: hsl(var(--foreground)) !important; }
+html[data-accent-contrast=low] :is(.settings-back-link, .dashboard-stat-link, .dashboard-empty a) {
+  text-decoration: underline hsl(var(--primary)) 2px; text-underline-offset: 4px;
+}
+html[data-accent-contrast=low] :is(.bg-primary, .app-add-trade, .btn-premium,
+  .an-segments button[aria-pressed=true], .th-segment button[aria-pressed=true], .trade-calendar-selected, .trade-time-done) {
+  outline: 1px solid hsl(var(--primary-foreground)); outline-offset: -1px;
+}
+html[data-accent-contrast=low] :is(.app-nav-item.is-active > svg, .app-theme-toggle, .settings-heading-icon > svg,
+  .settings-private > svg, .settings-tab-list > button[data-state=active] > svg,
+  .settings-savebar > span > svg, .settings-themes .selected > span > svg:last-child,
+  [stroke="hsl(var(--primary))"], [stroke="hsl(var(--profit))"],
+  [fill="hsl(var(--primary))"], [fill="hsl(var(--profit))"]) {
+  filter: drop-shadow(0 0 1px hsl(var(--primary-foreground)));
+}
+
 html[data-compact] { font-size: 14px; }
 html[data-compact=true] { font-size: 13px; }
 html[data-compact=true] .app-content { padding: 16px 20px 28px; }

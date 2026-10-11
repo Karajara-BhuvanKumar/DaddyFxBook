@@ -6,7 +6,7 @@ const url = 'https://settings-qa.supabase.co';
 const host = new URL(url).hostname;
 const uid = '11111111-1111-4111-8111-111111111111';
 const user = { id:uid, email:'bhuvan@example.com', aud:'authenticated', role:'authenticated', app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-01-01T00:00:00Z' };
-let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url:null,timezone:'Asia/Kolkata',time_format:'24h',currency:'USD',account_size:10000,default_risk_pct:1,max_daily_risk:3,max_weekly_risk:6,max_trades_per_day:3,preferred_session:'London',theme:'dark',accent_color:'blue',chart_style:'smooth',compact_mode:false,notify_daily:true,notify_weekly:true,notify_monthly:false };
+let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url:null,timezone:'Asia/Kolkata',time_format:'24h',currency:'USD',account_size:10000,default_risk_pct:1,max_daily_risk:2.75,max_weekly_risk:6,max_trades_per_day:3,preferred_session:'London',theme:'dark',accent_color:'blue',chart_style:'smooth',compact_mode:false,notify_daily:true,notify_weekly:true,notify_monthly:false };
 (async()=>{
  const server = require('child_process').spawn(process.execPath, [require('path').resolve('./node_modules/vite/bin/vite.js'), '--host', '127.0.0.1', '--port', '5199'], {cwd:require('path').resolve('.'),env:{...process.env,VITE_SUPABASE_URL:url,VITE_SUPABASE_PUBLISHABLE_KEY:'settings-qa-placeholder'},stdio:'ignore',windowsHide:true});
  await new Promise(resolve=>setTimeout(resolve,1800));
@@ -37,6 +37,41 @@ let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url
  await expect(preferences.getByRole('group',{name:'Color swatches'}).getByRole('button')).toHaveCount(84);
  await expect(save()).toBeDisabled();
  const original=await page.locator('html').getAttribute('style');
+ const rgb=hex=>'rgb('+hex.slice(1).match(/../g).map(v=>parseInt(v,16)).join(', ')+')';
+ async function exactPreview(hex) {
+   await expect(preferences.getByLabel('Custom color',{exact:true})).toHaveValue(hex);
+   await expect(preferences.getByLabel('Open custom color picker',{exact:true})).toHaveValue(hex);
+   await expect(preferences.locator('.accent-selected i')).toHaveCSS('background-color',rgb(hex));
+   await expect(preferences.locator('.accent-gradient > span')).toHaveCSS('background-color',rgb(hex));
+   for(const theme of ['light','dark']) {
+     await expect(preferences.locator('.accent-preview-'+theme+' .accent-preview-button')).toHaveCSS('background-color',rgb(hex));
+     await expect(preferences.locator('.accent-preview-'+theme+' path')).toHaveCSS('stroke',rgb(hex));
+   }
+ }
+ // Every palette/preset renders and selects its own exact RGB value.
+ for(const swatch of await preferences.locator('.accent-swatches button').all()) {
+   const hex=(await swatch.getAttribute('aria-label')).match(/#[a-f0-9]{6}/)[0];
+   await expect(swatch).toHaveCSS('background-color',rgb(hex));
+   await swatch.click();await exactPreview(hex);await expect(swatch).toHaveAttribute('aria-pressed','true');
+ }
+ for(const preset of await preferences.locator('.accent-presets button').all()) {
+   const dot=await preset.locator('i').evaluate(el=>getComputedStyle(el).backgroundColor);
+   await preset.click();const hex=await preferences.getByLabel('Custom color',{exact:true}).inputValue();
+   expect(rgb(hex)).toBe(dot);await exactPreview(hex);await expect(preset).toHaveAttribute('aria-pressed','true');
+ }
+ await preferences.getByLabel('Custom color',{exact:true}).fill('#ff0001');
+ await exactPreview('#ff0001');
+ expect(Number(await preferences.locator('#accent-hue').inputValue())).toBeCloseTo(359.764705882);
+ // Known HSV endpoints and a gradient midpoint verify conversion independently.
+ await preferences.locator('#accent-hue').focus();await page.keyboard.press('End');await exactPreview('#ff0000');
+ await preferences.locator('#accent-saturation').focus();await page.keyboard.press('Home');await exactPreview('#ffffff');
+ await preferences.locator('#accent-brightness').focus();await page.keyboard.press('Home');await exactPreview('#000000');
+ await preferences.getByLabel('Custom color',{exact:true}).fill('#00ff00');
+ const midpoint=await preferences.locator('.accent-gradient').boundingBox();
+ await page.mouse.click(midpoint.x+midpoint.width/2,midpoint.y+midpoint.height/2);await exactPreview('#408040');
+ expect(updates).toHaveLength(0);
+ expect(await page.locator('html').getAttribute('style')).toBe(original);
+ await cancel().click();
  await preferences.getByRole('button',{name:'Purple accent',exact:true}).click();
  await preferences.getByRole('button',{name:'Light',exact:true}).click();
  await preferences.getByRole('switch',{name:'Compact layout'}).click();
@@ -50,6 +85,16 @@ let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url
  await expect(save()).toBeDisabled();
  await expect(preferences.getByRole('button',{name:'Dark',exact:true})).toHaveAttribute('aria-pressed','true');
  await preferences.getByLabel('Custom color',{exact:true}).fill('#12abcd');
+ await preferences.locator('.settings-trading summary').click();
+ await preferences.getByLabel('Default risk (%)',{exact:true}).fill('1.25');
+ await preferences.getByLabel('Trades per day',{exact:true}).fill('1.5');
+ await preferences.locator('.settings-trading summary').click();
+ await save().click();
+ await expect(preferences.getByRole('alert')).toContainText('Trades per day: enter a whole number');
+ expect(updates).toHaveLength(0);
+ await preferences.locator('.settings-trading summary').click();
+ await preferences.getByLabel('Trades per day',{exact:true}).fill('3');
+ await preferences.locator('.settings-trading summary').click();
  await preferences.getByLabel('Timezone',{exact:true}).selectOption('America/New_York');
  expect(updates).toHaveLength(0);
  failSave=true;
@@ -63,6 +108,8 @@ let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url
  expect(updates).toHaveLength(1);
  expect(settings.accent_color).toBe('#12abcd');
  expect(settings.timezone).toBe('America/New_York');
+ expect(settings.default_risk_pct).toBe(1.25);
+ expect(settings.max_daily_risk).toBe(2.75);
  await expect(page.locator('html')).toHaveAttribute('data-accent','#12abcd');
  await page.reload();
  await page.getByRole('tab',{name:'Preferences',exact:true}).click();
@@ -80,7 +127,9 @@ let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url
  await expect(save()).toBeEnabled();
  await cancel().click();
  await preferences.getByLabel('Custom color',{exact:true}).fill('#invalid');
- await expect(save()).toBeDisabled();
+ await expect(save()).toBeEnabled();
+ await save().click();
+ await expect(preferences.getByRole('alert')).toContainText('Accent color: enter a valid HEX value');
  await expect(preferences.getByLabel('Custom color',{exact:true})).toHaveAttribute('aria-invalid','true');
  await cancel().click();
  for(const theme of ['dark','light']) {
@@ -92,8 +141,17 @@ let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url
      expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
      expect(await preferences.locator('.accent-picker').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);
    }
-   for(const color of ['#000000','#ffffff','#ffff00','#ff0000','#0000ff']) {
+   for(const color of ['#000000','#ffffff','#ffff00','#ff0001','#0000ff','#12abcd']) {
      await preferences.getByLabel('Custom color',{exact:true}).fill(color);await save().click();await expect(preferences.getByText('All changes saved',{exact:true})).toBeVisible();
+     expect(settings.accent_color).toBe(color);
+     await exactPreview(color);
+     await expect(page.locator('.app-add-trade')).toHaveCSS('background-color',rgb(color));
+     await expect(page.locator('.app-nav-item.is-active > svg')).toHaveCSS('color',rgb(color));
+     // Check chart tokens through browser CSS conversion, not just matching strings.
+     expect(await page.evaluate(()=>{
+       const el=document.createElement('span');el.style.color='hsl(var(--profit))';document.body.appendChild(el);
+       const color=getComputedStyle(el).color;el.remove();return color;
+     })).toBe(rgb(color));
      const contrast=await page.locator('.app-add-trade').evaluate(el=>{
        const css=getComputedStyle(el);
        const lum=value=>{const rgb=value.match(/[0-9.]+/g).slice(0,3).map(n=>{const c=Number(n)/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;});return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
@@ -127,6 +185,6 @@ let settings = { user_id:uid, display_name:'Bhuvan',username:'bhuvan',avatar_url
  await profile.getByRole('button',{name:'Remove',exact:true}).click();expect(settings.avatar_url).toBeTruthy();
  await profile.getByRole('button',{name:'Cancel',exact:true}).click();
  expect(errors).toEqual([]);
- console.log('Settings browser checks passed: manual save, cancel, failed save/retry, refresh, gradient/keyboard input, 84 swatches, staged photo, dark/light at 320–1440px, actual button contrast for extreme colors.');
+ console.log('Settings browser checks passed: exact RGB for all 84 swatches and 4 presets, HSV controls, exact saved colors in both themes, decimal risk saves, visible validation, cancel, failure/retry, reload, staged photo, responsive layouts and button contrast.');
  } finally {await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
