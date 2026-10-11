@@ -2,7 +2,7 @@ import type { Trade, Journal } from "@/hooks/useTrades";
 import type { BreakdownItem } from "@/components/BreakdownList";
 import { parseStrategySetup, buildSetupKey, buildBroadSetupKey } from "@/lib/strategySetup";
 import { holdingDuration } from './holdingTime';
-import { IST_MARKET_SESSIONS, sessionsAt } from './marketSessions';
+import { IST_MARKET_SESSIONS } from './marketSessions';
 
 export const HOLDING_RANGES = [
   { label: 'Under 15 minutes', short: '<15m', min: 0, max: 15 * 60000 },
@@ -153,10 +153,8 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
     const weekday = dayPerf[(date.getUTCDay() + 6) % 7];
     weekday.pnl = sum([weekday.pnl, t.pnl]); weekday.count++;
     // Regular and off-session labels contribute to the same performance bucket.
-    // Prefer the saved journal, then the trade label; retain IST timing for unlabeled trades.
-    const sessionName = performanceSession(parseStrategySetup(journalMap.get(t.id)?.strategy_setup).market_session)
-      ?? performanceSession(t.session)
-      ?? sessionsAt(new Date(t.open_time))[0]?.name;
+    // Only the journal's Market Session selection assigns a performance bucket.
+    const sessionName = performanceSession(parseStrategySetup(journalMap.get(t.id)?.strategy_setup).market_session);
     const session = sessionPerf.find(s => s.name === sessionName) ?? unassignedSession;
     const symbol = symbolGroups[t.symbol] ??= { pnl: 0, count: 0, wins: 0, losses: 0 };
     for (const group of [session, symbol]) {

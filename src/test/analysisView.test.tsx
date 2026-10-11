@@ -30,7 +30,7 @@ describe("Analysis redesign", () => {
   it.each(['Asian', 'London', 'New York'])('renders all combined metrics for %s and preserves the timeline through edits and filters', name => {
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-05T18:00:00Z'));
     const assigned = journals.map((j, i) => ({ ...j, strategy_setup: JSON.stringify({ market_session: i === 0 ? name : i === 1 ? `Off Session ${name}` : '' }) }));
-    const timed = trades.map((t, i) => ({ ...t, session: null, open_time: `2026-10-0${i + 1}T10:00:00Z` }));
+    const timed = trades.map((t, i) => ({ ...t, session: name, open_time: `2026-10-0${i + 1}T${i === 2 ? '05:30' : '10:00'}:00Z` }));
     const { container, rerender } = render(<AnalysisView trades={timed} allJournals={assigned} />);
     const cards = () => container.querySelectorAll('.an-session-grid > div');
     const index = ['Asian', 'London', 'New York'].indexOf(name);
@@ -43,6 +43,7 @@ describe("Analysis redesign", () => {
     expect(card.getByText('Trade Share').nextElementSibling).toHaveTextContent('67%');
     expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('1 trade ($0.00)');
     expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('includes its regular and off-session categories');
+    expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('Performance uses only your journal’s Market Session selection');
     expect(screen.queryByText(/excluded from these cards/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Winners' }));
     expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
@@ -59,6 +60,13 @@ describe("Analysis redesign", () => {
     rerender(<AnalysisView trades={timed} allJournals={edited} />);
     expect(cards()[otherIndex].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
     expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');
+    rerender(<AnalysisView trades={timed} allJournals={[]} />);
+    for (const emptyCard of cards()) {
+      expect(within(emptyCard as HTMLElement).getByText('Trades').nextElementSibling).toHaveTextContent('0');
+      expect(emptyCard.querySelector('.an-session-pnl')).toHaveTextContent('$0.00');
+    }
+    expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('3 trades ($60.00)');
+    rerender(<AnalysisView trades={timed} allJournals={edited} />);
     rerender(<AnalysisView trades={timed.map((t, i) => i === 0 ? { ...t, open_time: '2026-10-01T05:30:00Z' } : t)} allJournals={edited} />);
     expect(cards()[otherIndex].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
     expect(cards()[index].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');

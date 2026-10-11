@@ -115,26 +115,26 @@ describe('combined regular and off-session performance', () => {
     expect(result.sessionPerf.find(s => s.name === name)).toEqual({ name, pnl: 6, count: 3, wins: 1, losses: 1 });
     expect(result.unassignedSession.count).toBe(0);
   });
-  it('uses trade labels and then IST timing when journal labels are missing or unrecognized', () => {
+  it('leaves missing, blank, invalid and unrecognized journal sessions unassigned regardless of trade labels or timing', () => {
     const trades = [
       { ...at('00:00:00', 10, 0), session: 'New York Off Session' },
       { ...at('08:00:00', 20, 1), session: 'Off Session Asian' },
       at('11:00:00', -5, 2), at('00:00:00', 7, 3),
     ];
-    const journals = [entry(trades[0], 'Unknown'), { ...entry(trades[1], ''), strategy_setup: '{invalid' }];
+    const journals = [entry(trades[0], 'Unknown'), { ...entry(trades[1], ''), strategy_setup: '{invalid' }, entry(trades[2], '')];
     const result = analyzeTrades(trades, journals, '30 Days', 'All Trades', now);
-    expect(result.sessionPerf.map(s => s.pnl)).toEqual([20, -5, 10]);
-    expect(result.unassignedSession).toEqual({ pnl: 7, count: 1, wins: 1, losses: 0 });
+    expect(result.sessionPerf.every(s => s.count === 0 && s.pnl === 0)).toBe(true);
+    expect(result.unassignedSession).toEqual({ pnl: 32, count: 4, wins: 3, losses: 1 });
     expect(sum([...result.sessionPerf.map(s => s.pnl), result.unassignedSession.pnl])).toBe(result.totalPnl);
   });
   it.each([
-    ['05:29:59.999', -1], ['05:30:00', 0], ['07:59:59.999', 0], ['08:00:00', -1],
-    ['10:59:59.999', -1], ['11:00:00', 1], ['14:29:59.999', 1], ['14:30:00', -1],
-    ['16:59:59.999', -1], ['17:00:00', 2], ['20:29:59.999', 2], ['20:30:00', -1], ['00:00:00', -1],
-  ])('preserves the unlabeled entry fallback at %s IST to bucket %s', (time, index) => {
+    '05:29:59.999', '05:30:00', '07:59:59.999', '08:00:00',
+    '10:59:59.999', '11:00:00', '14:29:59.999', '14:30:00',
+    '16:59:59.999', '17:00:00', '20:29:59.999', '20:30:00', '00:00:00',
+  ])('does not infer a journal session from an entry at %s IST', time => {
     const result = analyzeTrades([at(time, 10, 0)], [], '30 Days', 'All Trades', now);
-    expect(result.sessionPerf.map(s => s.count)).toEqual([0, 1, 2].map(i => i === index ? 1 : 0));
-    expect(result.unassignedSession.count).toBe(index === -1 ? 1 : 0);
+    expect(result.sessionPerf.map(s => s.count)).toEqual([0, 0, 0]);
+    expect(result.unassignedSession.count).toBe(1);
   });
   it('updates the performance group after a saved session edit, independently of opening time', () => {
     const trade = at('11:00:00', 0, 0);
