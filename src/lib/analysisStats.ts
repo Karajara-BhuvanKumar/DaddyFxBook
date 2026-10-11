@@ -2,6 +2,7 @@ import type { Trade, Journal } from "@/hooks/useTrades";
 import type { BreakdownItem } from "@/components/BreakdownList";
 import { parseStrategySetup, buildSetupKey, buildBroadSetupKey } from "@/lib/strategySetup";
 import { holdingDuration } from './holdingTime';
+import { IST_MARKET_SESSIONS, sessionsAt } from './marketSessions';
 
 export const HOLDING_RANGES = [
   { label: 'Under 15 minutes', short: '<15m', min: 0, max: 15 * 60000 },
@@ -61,12 +62,6 @@ const timestamp = (value: unknown): number => {
   if (month < 1 || month > 12 || day < 1 || day > last || hour > 23 || minute > 59 || second > 59) return NaN;
   return Date.parse(value);
 };
-
-export function utcSession(date: Date) {
-  const seconds = date.getUTCHours() * 3600 + date.getUTCMinutes() * 60 + date.getUTCSeconds() + date.getUTCMilliseconds() / 1000;
-  const segment = seconds < 28800 ? 0 : seconds < 46800 ? 1 : seconds < 79200 ? 2 : 3;
-  return { progress: seconds / 86400 * 100, segment, name: ['Asian', 'London', 'New York', 'Asian'][segment] };
-}
 
 export function includedTrades(trades: Trade[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
   const seen = new Set<string>();
@@ -129,16 +124,6 @@ function streaks(values: number[]) {
   return { winStreak, lossStreak };
 }
 
-function journalSession(journal?: Journal): 'Asian' | 'London' | 'New York' | null {
-  const value = parseStrategySetup(journal?.strategy_setup).market_session;
-  if (typeof value !== 'string') return null;
-  const name = value.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^off session /, '');
-  if (['asian', 'sydney', 'tokyo'].includes(name)) return 'Asian';
-  if (name === 'london') return 'London';
-  if (name === 'new york') return 'New York';
-  return null;
-}
-
 export function analyzeTrades(trades: Trade[], journals: Journal[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
   const { includedClosedTrades, rejected } = includedTrades(trades, period, outcome, now);
   const core = metrics(includedClosedTrades);
@@ -148,7 +133,7 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
   const calendarData: Record<string, { pnl: number; count: number }> = {};
   const monthly: Record<string, number> = {};
   const dayPerf = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({ day, pnl: 0, count: 0 }));
-  const sessionPerf = ['Asian', 'London', 'New York'].map(name => ({ name, pnl: 0, count: 0, wins: 0, losses: 0 }));
+  const sessionPerf = IST_MARKET_SESSIONS.map(({ name }) => ({ name, pnl: 0, count: 0, wins: 0, losses: 0 }));
   const unassignedSession = { pnl: 0, count: 0, wins: 0, losses: 0 };
   const journalMap = new Map(journals.map(j => [j.trade_id, j]));
   const symbolGroups: Record<string, { pnl: number; count: number; wins: number; losses: number }> = {};
@@ -161,9 +146,9 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
     monthly[month] = sum([monthly[month] ?? 0, t.pnl]);
     const weekday = dayPerf[(date.getUTCDay() + 6) % 7];
     weekday.pnl = sum([weekday.pnl, t.pnl]); weekday.count++;
-    // Only the saved journal assigns performance to a session. Never infer it from time
-    // or a possibly stale trade.session value when a journal session is missing.
-    const session = sessionPerf.find(s => s.name === journalSession(journalMap.get(t.id))) ?? unassignedSession;
+    // Use the actual entry instant in IST, regardless of journal or trade labels.
+    const entrySession = sessionsAt(new Date(t.open_time))[0];
+    const session = sessionPerf.find(s => s.name === entrySession?.name) ?? unassignedSession;
     const symbol = symbolGroups[t.symbol] ??= { pnl: 0, count: 0, wins: 0, losses: 0 };
     for (const group of [session, symbol]) {
       group.pnl = sum([group.pnl, t.pnl]); group.count++;

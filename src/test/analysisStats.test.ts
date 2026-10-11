@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeTrades, includedTrades, metrics, sum, utcSession } from '@/lib/analysisStats';
+import { analyzeTrades, includedTrades, metrics, sum } from '@/lib/analysisStats';
 import type { Trade, Journal } from '@/hooks/useTrades';
 
 const now = Date.parse('2026-10-05T15:00:00Z');
@@ -86,59 +86,40 @@ describe('analysis accounting', () => {
   });
 });
 
-describe('journal-based session performance', () => {
-  const entry = (trade: Trade, session: unknown): Journal => ({ id: `journal-${trade.id}`, trade_id: trade.id, user_id: trade.user_id,
+describe('session performance from actual IST entry instants', () => {
+  const entry = (trade: Trade, session: string): Journal => ({ id: 'journal-' + trade.id, trade_id: trade.id, user_id: trade.user_id,
     pre_trade_notes: null, post_trade_notes: null, emotions: null, lessons: null, tags: null, rating: null, risk_reward: null,
     strategy_setup: JSON.stringify({ market_session: session }), created_at: '', updated_at: '' });
-  it('uses the journal selection even when the timestamp and trade session disagree', () => {
-    const trades = [make(100, 0), make(-40, 1), make(20, 2)].map(t => ({ ...t, session: 'London' }));
-    const journals = trades.map((t, i) => entry(t, ['New York', 'New York', 'Asian'][i]));
+  const at = (time: string, pnl: number, i: number) => ({ ...make(pnl, i), open_time: '2026-10-01T' + time + '+05:30', close_time: '2026-10-02T09:00:00Z', session: 'London' });
+  it('ignores conflicting journal and trade labels and accounts for off-session trades', () => {
+    const trades = [at('05:30:00', 100, 0), at('11:00:00', -40, 1), at('17:00:00', 20, 2), at('14:30:00', 5, 3)];
+    const journals = trades.map(t => entry(t, 'Off Session New York'));
     const result = analyzeTrades(trades, journals, '30 Days', 'All Trades', now);
     expect(result.sessionPerf).toEqual([
-      { name: 'Asian', pnl: 20, count: 1, wins: 1, losses: 0 },
-      { name: 'London', pnl: 0, count: 0, wins: 0, losses: 0 },
-      { name: 'New York', pnl: 60, count: 2, wins: 1, losses: 1 },
+      { name: 'Asian', pnl: 100, count: 1, wins: 1, losses: 0 },
+      { name: 'London', pnl: -40, count: 1, wins: 0, losses: 1 },
+      { name: 'New York', pnl: 20, count: 1, wins: 1, losses: 0 },
     ]);
-    expect(result.unassignedSession.count).toBe(0);
-    const winners = analyzeTrades(trades, journals, '30 Days', 'Winners', now);
-    expect(winners.sessionPerf[2]).toMatchObject({ pnl: 100, count: 1, wins: 1, losses: 0 });
-    expect(analyzeTrades(trades, journals, 'Today', 'All Trades', now).sessionPerf.every(s => s.count === 0)).toBe(true);
+    expect(result.unassignedSession).toEqual({ pnl: 5, count: 1, wins: 1, losses: 0 });
+    expect(sum([...result.sessionPerf.map(s => s.pnl), result.unassignedSession.pnl])).toBe(result.totalPnl);
+    expect(analyzeTrades(trades, [], '30 Days', 'Winners', now).sessionPerf[1].count).toBe(0);
   });
-  it('includes all six journal session choices in their named group exactly once', () => {
-    const names = ['Asian', 'Off Session Asian', 'London', 'Off Session London', 'New York', 'Off Session New York'];
-    const trades = names.map((_, i) => make(i % 2 ? -10 : 25, i));
-    const result = analyzeTrades(trades, trades.map((t, i) => entry(t, names[i])), '30 Days', 'All Trades', now);
-    result.sessionPerf.forEach(s => expect(s).toMatchObject({ count: 2, pnl: 15, wins: 1, losses: 1 }));
-    expect(sum(result.sessionPerf.map(s => s.pnl))).toBe(result.totalPnl);
+  it.each([
+    ['05:29:59.999', -1], ['05:30:00', 0], ['07:59:59.999', 0], ['08:00:00', -1],
+    ['10:59:59.999', -1], ['11:00:00', 1], ['14:29:59.999', 1], ['14:30:00', -1],
+    ['16:59:59.999', -1], ['17:00:00', 2], ['20:29:59.999', 2], ['20:30:00', -1], ['00:00:00', -1],
+  ])('assigns entry at %s IST to bucket %s', (time, index) => {
+    const result = analyzeTrades([at(time, 10, 0)], [], '30 Days', 'All Trades', now);
+    expect(result.sessionPerf.map(s => s.count)).toEqual([0, 1, 2].map(i => i === index ? 1 : 0));
+    expect(result.unassignedSession.count).toBe(index === -1 ? 1 : 0);
   });
-  it('keeps missing, malformed and unknown journal sessions unassigned without a time or trade-tag fallback', () => {
-    const trades = [1, 2, 3, 4, 5].map((value, i) => ({ ...make(value, i), session: 'London' }));
-    const journals = [entry(trades[1], ''), entry(trades[2], 'Unknown'), entry(trades[3], 12), { ...entry(trades[4], 'London'), strategy_setup: 'broken JSON' }];
-    const result = analyzeTrades(trades, journals, '30 Days', 'All Trades', now);
-    expect(result.sessionPerf.every(s => s.count === 0)).toBe(true);
-    expect(result.unassignedSession).toMatchObject({ pnl: 15, count: 5 });
-    expect(result.totalPnl).toBe(15);
-  });
-  it('moves performance when a journal session is edited, without changing overall P&L', () => {
-    const trade = make(0);
-    const initial = analyzeTrades([trade], [entry(trade, 'London')], '30 Days', 'All Trades', now);
-    const edited = analyzeTrades([trade], [entry(trade, '  off session   NEW YORK  ')], '30 Days', 'All Trades', now);
-    expect(initial.sessionPerf[1].count).toBe(1);
-    expect(edited.sessionPerf[1].count).toBe(0);
-    expect(edited.sessionPerf[2]).toMatchObject({ pnl: 0, count: 1, wins: 0, losses: 0 });
-    expect(initial.totalPnl).toBe(edited.totalPnl);
-  });
-});
-
-describe('UTC session boundaries', () => {
-  it.each([['07:59:00', 'Asian', 0], ['08:00:00', 'London', 1], ['12:59:00', 'London', 1], ['13:00:00', 'New York', 2], ['21:59:00', 'New York', 2], ['22:00:00', 'Asian', 3], ['23:59:59', 'Asian', 3], ['00:00:00', 'Asian', 0]] as const)('%s is %s', (time, name, segment) => {
-    const result = utcSession(new Date(`2026-10-05T${time}Z`));
-    const [hour, minute, second] = time.split(':').map(Number);
-    expect(result).toEqual({ name, segment, progress: (hour * 3600 + minute * 60 + second) / 86400 * 100 });
-  });
-  it('is independent of timezone offsets and daylight saving', () => {
-    expect(utcSession(new Date('2026-10-05T13:30:00+05:30'))).toEqual(utcSession(new Date('2026-10-05T08:00:00Z')));
-    expect(utcSession(new Date('2026-11-01T01:30:00-04:00')).name).toBe('Asian');
-    expect(utcSession(new Date('2026-11-01T01:30:00-05:00')).name).toBe('Asian');
+  it('changes session only when opening time changes, independently of journal or closing time', () => {
+    const trade = at('11:00:00', 0, 0);
+    const before = analyzeTrades([trade], [entry(trade, 'London')], '30 Days', 'All Trades', now);
+    const journalEdit = analyzeTrades([trade], [entry(trade, 'Asian')], '30 Days', 'All Trades', now);
+    expect(journalEdit.sessionPerf).toEqual(before.sessionPerf);
+    const after = analyzeTrades([{ ...trade, open_time: '2026-10-01T17:00:00+05:30' }], [], '30 Days', 'All Trades', now);
+    expect(after.sessionPerf[2]).toMatchObject({ count: 1, pnl: 0 });
+    expect(after.totalPnl).toBe(before.totalPnl);
   });
 });

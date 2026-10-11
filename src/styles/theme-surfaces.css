@@ -50,8 +50,7 @@
 .light .performance-change.is-loss { background: hsl(var(--loss) / .07); border-color: hsl(var(--loss) / .25); }
 .light .trading-dashboard .is-loss, .light .pnl-day.loss-day, .light .pnl-week-total.loss-day { color: hsl(var(--loss)); }
 .light .pnl-week-total > small { opacity: 1; }
-.light .an-market-sydney { --market-color: #7040bd; }
-.light .an-market-tokyo { --market-color: #805500; }
+.light .an-market-asian { --market-color: #805500; }
 .light .an-market-london { --market-color: #2563eb; }
 .light .an-market-new-york { --market-color: #087b70; }
 .light .an-session-name > span { color: #936200; background: #fff5d6; }

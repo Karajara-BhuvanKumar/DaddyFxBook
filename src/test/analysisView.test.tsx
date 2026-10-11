@@ -27,10 +27,11 @@ function showAnalysis() {
 }
 
 describe("Analysis redesign", () => {
-  it('renders journal-assigned session metrics and updates them after a journal edit', () => {
+  it('renders IST entry session metrics and updates them after an opening-time edit', () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-05T18:00:00Z'));
     const assigned = journals.map((j, i) => ({ ...j, strategy_setup: JSON.stringify({ market_session: i < 2 ? 'New York' : '' }) }));
-    const { container, rerender } = render(<AnalysisView trades={trades} allJournals={assigned} />);
+    const timed = trades.map((t, i) => ({ ...t, open_time: `2026-10-0${i + 1}T${i < 2 ? '11:30' : '10:00'}:00Z` }));
+    const { container, rerender } = render(<AnalysisView trades={timed} allJournals={assigned} />);
     const cards = () => container.querySelectorAll('.an-session-grid > div');
     const ny = within(cards()[2] as HTMLElement);
     expect(cards()[2].querySelector('.an-session-pnl')).toHaveTextContent('$60.00');
@@ -41,7 +42,9 @@ describe("Analysis redesign", () => {
     expect(container.querySelector('.an-session-unassigned')).toHaveTextContent('1 trade ($0.00)');
     expect(screen.queryByText(/Entry group/)).not.toBeInTheDocument();
     const edited = assigned.map((j, i) => i === 0 ? { ...j, strategy_setup: JSON.stringify({ market_session: 'London' }) } : j);
-    rerender(<AnalysisView trades={trades} allJournals={edited} />);
+    rerender(<AnalysisView trades={timed} allJournals={edited} />);
+    expect(cards()[2].querySelector('.an-session-pnl')).toHaveTextContent('$60.00');
+    rerender(<AnalysisView trades={timed.map((t, i) => i === 0 ? { ...t, open_time: '2026-10-01T05:30:00Z' } : t)} allJournals={edited} />);
     expect(cards()[1].querySelector('.an-session-pnl')).toHaveTextContent('$100.00');
     expect(cards()[2].querySelector('.an-session-pnl')).toHaveTextContent('-$40.00');
   });

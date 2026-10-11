@@ -1,5 +1,5 @@
 import { sum } from '@/lib/analysisStats';
-import { istSessionClock } from '@/lib/marketSessions';
+import { normalizeSessionIds, sessionsAt } from '@/lib/marketSessions';
 import { SESSION_OPTIONS, validateRuleConfiguration } from '@/lib/ruleConfiguration';
 
 export interface RuleRow { id: string; rule: string; active: boolean; rule_type: string; threshold: number | null; allowed_sessions?: string[] | null }
@@ -54,7 +54,7 @@ export function evaluateRules(rules: RuleRow[], trades: TradeRow[], manualViolat
       for (const v of manualViolations.filter(v => v.rule_id === rule.id)) add(v.violation_date, v.note || 'Manually flagged', [], 'manual');
       continue;
     }
-    const sessions = rule.allowed_sessions ?? [];
+    const sessions = normalizeSessionIds(rule.allowed_sessions ?? []);
     if (validateRuleConfiguration(rule.rule_type, rule.threshold, sessions)) continue;
     const limit = rule.threshold!;
     if (rule.rule_type === 'max_daily_loss') {
@@ -72,7 +72,7 @@ export function evaluateRules(rules: RuleRow[], trades: TradeRow[], manualViolat
         if (offending.length) add(day, 'Recorded risk: ' + [...new Set(offending.map(t => t.risk_pct + '%'))].join(', ') + '; maximum allowed is ' + limit + '%.', offending);
       }
       if (rule.rule_type === 'permitted_sessions') {
-        const offending = rows.filter(t => !istSessionClock(new Date(t.open_time)).active.some(s => sessions.includes(s.id)));
+        const offending = rows.filter(t => !sessionsAt(new Date(tradeInstant(t.open_time))).some(s => sessions.includes(s.id)));
         if (offending.length) add(day, offending.length + ' trade' + (offending.length === 1 ? '' : 's') + ' taken outside permitted sessions: ' + SESSION_OPTIONS.filter(s => sessions.includes(s.id)).map(s => s.name + ' (' + s.hours + ' IST)').join(', ') + '.', offending);
       }
       if (rule.rule_type === 'max_consecutive_losses') {

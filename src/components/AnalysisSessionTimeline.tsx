@@ -20,12 +20,12 @@ export const AnalysisSessionTimeline = memo(function AnalysisSessionTimeline() {
     };
   }, []);
   const { progress, active, time, date } = istSessionClock(clock);
-  const names = active.map(s => s.name).join(' + ');
+  const names = active.map(s => s.name).join(' + ') || 'Off session';
   const markerStyle = { left: `${progress}%` };
   return <div className="an-session-timeline" aria-label={`IST market sessions. Active: ${names}`}>
     <div className="an-clock-summary">
       <div className="an-clock-time"><time dateTime={clock.toISOString()}>{time}<span>IST</span></time><span>{date}</span></div>
-      <div className="an-active-markets"><span className="an-clock-eyebrow">Active now</span><div aria-live="polite" aria-atomic="true">{active.map(s => <span key={s.id} className={`an-market-badge an-market-${s.id}`}><i />{s.name}</span>)}</div></div>
+      <div className="an-active-markets"><span className="an-clock-eyebrow">Active now</span><div aria-live="polite" aria-atomic="true">{!active.length && <span className="an-market-badge">Off session</span>}{active.map(s => <span key={s.id} className={`an-market-badge an-market-${s.id}`}><i />{s.name}</span>)}</div></div>
     </div>
     <div className="an-session-chart" role="group" aria-label="Today's 24-hour market timeline in IST">
       <div className="an-session-times" aria-hidden="true">{IST_TIMELINE_TICKS.map(tick => <span key={tick.label}
@@ -45,6 +45,6 @@ export const AnalysisSessionTimeline = memo(function AnalysisSessionTimeline() {
         })}
       </div>
     </div>
-    <div className="an-clock-note"><span>Aligned lanes show session overlaps. New York continues across midnight.</span><span>Performance uses your saved journal’s Market Session, including off-session entries under their named session.</span></div>
+    <div className="an-clock-note"><span>Fixed IST windows (UTC+05:30), with no daylight-saving adjustments.</span><span>Performance uses trade opening times in IST. Starts are included; ends are excluded.</span></div>
   </div>;
 });

@@ -22,10 +22,11 @@ describe('calendar discipline from actual trade evidence', () => {
     expect(run([{ ...r, active: false }], rows)).toEqual({});
     expect(run([r], rows.filter(t => t.id !== 'b'))).toEqual({});
   });
-  it('checks fixed IST session boundaries, overlaps and overnight windows using entry instants', () => {
+  it('allows the union of selected IST windows and flags gaps using entry instants', () => {
     const r = rule('permitted_sessions', null, { allowed_sessions: ['london', 'new-york'] });
-    const rows = [trade('before', '2026-10-09T07:59:59Z'), trade('start', '2026-10-09T08:00:00Z'), trade('overlap', '2026-10-09T14:00:00Z'), trade('overnight', '2026-10-09T20:00:00Z', { close_time: '' }), trade('end', '2026-10-09T22:00:00Z', { close_time: '' })];
-    expect(run([r], rows)['2026-10-09'][0].tradeIds).toEqual(['before', 'end']);
+    const rows = [trade('before', '2026-10-09T05:29:59.999Z'), trade('start', '2026-10-09T05:30:00Z'), trade('gap', '2026-10-09T09:00:00Z'), trade('ny', '2026-10-09T11:30:00Z'), trade('end', '2026-10-09T15:00:00Z')];
+    expect(run([r], rows)['2026-10-09'][0].tradeIds).toEqual(['before', 'gap', 'end']);
+    expect(run([{ ...r, active: false }], rows)).toEqual({});
     expect(run([{ ...r, allowed_sessions: [] }], rows)).toEqual({});
     expect(run([{ ...r, allowed_sessions: ['unknown'] }], rows)).toEqual({});
   });

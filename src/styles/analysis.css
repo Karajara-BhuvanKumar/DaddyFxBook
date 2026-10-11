@@ -84,8 +84,7 @@
 .an-clock-time > span, .an-clock-eyebrow { color: var(--an-muted); font-size: 10px; }
 .an-active-markets { display: flex; flex-direction: column; gap: 6px; }
 .an-active-markets > div { display: flex; flex-wrap: wrap; gap: 6px; }
-.an-market-sydney { --market-color: #a78bfa; --market-fill: #7752ce; }
-.an-market-tokyo { --market-color: #fbbf24; --market-fill: #ab7308; }
+.an-market-asian { --market-color: #fbbf24; --market-fill: #ab7308; }
 .an-market-london { --market-color: #60a5fa; --market-fill: #2563eb; }
 .an-market-new-york { --market-color: #2dd4bf; --market-fill: #0d8279; }
 .an-market-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid color-mix(in srgb, var(--market-color) 30%, transparent); border-radius: 6px; color: var(--market-color); background: color-mix(in srgb, var(--market-color) 8%, transparent); font-size: 11px; font-weight: 600; }

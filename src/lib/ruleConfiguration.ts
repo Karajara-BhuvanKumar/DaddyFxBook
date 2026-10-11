@@ -1,4 +1,4 @@
-import { IST_MARKET_SESSIONS } from '@/lib/marketSessions';
+import { IST_MARKET_SESSIONS, normalizeSessionIds } from '@/lib/marketSessions';
 
 export const RULE_TYPE_OPTIONS = [
   { value: 'manual', label: 'Manual (self-checked)', thresholdLabel: '' },
@@ -24,6 +24,6 @@ export function ruleBadge(type: string, threshold: number | null, sessions: stri
   if (type === 'max_consecutive_losses') return `Auto: stop after ${threshold} losses`;
   if (type === 'max_daily_loss') return `Auto: max loss $${threshold}`;
   if (type === 'max_risk_per_trade') return `Auto: max risk ${threshold}%`;
-  if (type === 'permitted_sessions') return `Auto: ${SESSION_OPTIONS.filter(s => sessions.includes(s.id)).map(s => s.name).join(', ')} · IST`;
+  if (type === 'permitted_sessions') return `Auto: ${SESSION_OPTIONS.filter(s => normalizeSessionIds(sessions).includes(s.id)).map(s => s.name).join(', ')} · IST`;
   return null;
 }

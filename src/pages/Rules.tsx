@@ -1,3 +1,4 @@
+import { normalizeSessionIds } from '@/lib/marketSessions';
 import { RULE_TYPE_OPTIONS, SESSION_OPTIONS, needsRuleThreshold, validateRuleConfiguration, ruleBadge, type RuleType } from '@/lib/ruleConfiguration';
 import LoadError from '@/components/LoadError';
 import { useState } from "react";
@@ -187,9 +188,9 @@ export default function Rules() {
             <legend className="text-xs font-semibold mb-2">Permitted entry sessions · IST</legend>
             {SESSION_OPTIONS.map(session => <label key={session.id} className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={allowedSessions.includes(session.id)} onChange={e => setAllowedSessions(current => e.target.checked ? [...current, session.id] : current.filter(id => id !== session.id))} />
-              {session.name} · {session.hours}{session.id === 'new-york' ? ' (ends next day)' : ''}
+              {session.name} · {session.hours} IST
             </label>)}
-            <p className="text-xs text-muted-foreground">Any selected session permits entry, including overlaps. Hours follow the Analysis session clock.</p>
+            <p className="text-xs text-muted-foreground">Entry is permitted during any selected session. Start times are included; end times are excluded. All times are IST (UTC+05:30).</p>
           </fieldset>}
           {ruleType === 'max_risk_per_trade' && <p className="text-xs text-muted-foreground mb-4">Checks the recorded risk percentage on each trade. Trades with unknown risk are skipped.</p>}
           {/* Add button */}
@@ -269,7 +270,7 @@ export default function Rules() {
                         </Badge>
                       )}
                     </div>
-                    <Button size="icon" variant="ghost" aria-label={'Edit rule: ' + r.rule} className="h-8 w-8 shrink-0" onClick={() => { setEditingId(r.id); setText(r.rule); setRuleType(r.rule_type as RuleType); setThreshold(r.threshold?.toString() ?? ''); setAllowedSessions(r.allowed_sessions ?? []); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" aria-label={'Edit rule: ' + r.rule} className="h-8 w-8 shrink-0" onClick={() => { setEditingId(r.id); setText(r.rule); setRuleType(r.rule_type as RuleType); setThreshold(r.threshold?.toString() ?? ''); setAllowedSessions(normalizeSessionIds(r.allowed_sessions ?? [])); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
