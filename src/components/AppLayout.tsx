@@ -39,7 +39,7 @@ export default function AppLayout() {
     return () => window.removeEventListener('beforeunload', warn);
   }, [user?.id]);
   const meta = titleMap[location.pathname] ?? {
-    title: location.pathname.startsWith("/backtesting/") ? "Backtesting" : "DaddyFXBook",
+    title: /^\/(preview\/)?tools(\/|$)/.test(location.pathname) ? "Tools" : location.pathname.startsWith("/backtesting/") ? "Backtesting" : "DaddyFXBook",
   };
 
   return (

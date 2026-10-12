@@ -1,10 +1,11 @@
 import { useEffect, useState, memo } from "react";
-import { Search, Plus, Clock3, Bell, Menu, ChevronDown, LayoutDashboard, BriefcaseBusiness, BookOpen, Scale, BarChart3, BrainCircuit, Activity, Settings } from "lucide-react";
+import { Search, Plus, Clock3, Bell, Menu, ChevronDown, LayoutDashboard, BriefcaseBusiness, BookOpen, Scale, BarChart3, BrainCircuit, Activity, Settings, Wrench } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useWorkspacePreferences } from "@/contexts/WorkspacePreferencesContext";
 import { formatWorkspaceDate, formatWorkspaceTime } from "@/lib/workspacePreferences";
+import { marketZoneInfo } from "@/lib/marketTime";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -20,6 +21,7 @@ const searchPages = [
   { label: "Analysis", path: "/analysis", icon: BarChart3 },
   { label: "Performance Coach", path: "/ai-report", icon: BrainCircuit },
   { label: "Backtesting", path: "/backtesting", icon: Activity },
+  { label: "Tools", path: "/tools", icon: Wrench },
   { label: "Settings", path: "/settings", icon: Settings },
 ];
 
@@ -30,6 +32,8 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { setMobileOpen } = useSidebar();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const toolsPage = /^\/(preview\/)?tools(\/|$)/.test(pathname);
+  const clockPreferences = preferences;
   const [time, setTime] = useState(new Date());
   const [searchOpen, setSearchOpen] = useState(false);
   const initial = (settings?.display_name || user?.email || "D").slice(0, 1);
@@ -61,7 +65,7 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
         <button onClick={() => setMobileOpen(true)} className="app-icon-button app-menu-button" aria-label="Open navigation menu"><Menu /></button>
         <div className="app-header-title">
           <h1>{title}</h1>
-          <p>{subtitle ?? formatWorkspaceDate(time, preferences.timezone, { weekday: "short", month: "short", day: "numeric" })}</p>
+          <p>{subtitle ?? formatWorkspaceDate(time, clockPreferences.timezone, { weekday: "short", month: "short", day: "numeric" })}</p>
         </div>
         <button className="app-header-search" onClick={() => setSearchOpen(true)} aria-label="Search pages and actions">
           <Search aria-hidden="true" /><span>Search...</span><kbd>Ctrl+K</kbd>
@@ -69,7 +73,7 @@ function TopHeader({ title, subtitle }: { title: string; subtitle?: string }) {
         <div className="app-header-actions">
           <ThemeToggle />
           <button onClick={() => navigate("/trades?add=true")} className="app-icon-button app-add-trade" aria-label="Add trade" title="Add trade"><Plus /></button>
-          <div className="app-header-clock" title={preferences.timezone}><Clock3 aria-hidden="true" /><time suppressHydrationWarning>{formatWorkspaceTime(time, preferences, true)}</time></div>
+          <div className="app-header-clock" title={clockPreferences.timezone}><Clock3 aria-hidden="true" /><time suppressHydrationWarning>{formatWorkspaceTime(time, clockPreferences, true)}{toolsPage && ` ${marketZoneInfo(time, clockPreferences.timezone).abbreviation}`}</time></div>
           <Popover>
             <PopoverTrigger asChild><button className="app-icon-button app-notifications" aria-label="Notifications"><Bell /></button></PopoverTrigger>
             <PopoverContent align="end" className="app-notification-popover">

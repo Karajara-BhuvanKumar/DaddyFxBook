@@ -19,6 +19,7 @@ const AIReport = lazy(() => import("./pages/AIReport"));
 const Backtesting = lazy(() => import("./pages/Backtesting"));
 const BacktestSession = lazy(() => import("./pages/BacktestSession"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Tools = lazy(() => import("./pages/Tools"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ShareTrade = lazy(() => import("./pages/ShareTrade"));
 const Preview = import.meta.env.DEV ? lazy(() => import("./pages/Preview")) : null;
@@ -88,6 +89,7 @@ const App = () => (
                   </Route>
                 )}
                 <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                  <Route path="/tools/*" element={<Tools />} />
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/trades" element={<Trades />} />
                   <Route path="/journal" element={<Journal />} />
@@ -98,6 +100,7 @@ const App = () => (
                   <Route path="/backtesting/:id" element={<BacktestSession />} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
+                {import.meta.env.DEV && <Route path="/preview/tools/*" element={<AppLayout />}><Route path="*" element={<Tools />} /></Route>}
                 <Route path="/trade/share/:tradeId" element={<ShareTrade />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

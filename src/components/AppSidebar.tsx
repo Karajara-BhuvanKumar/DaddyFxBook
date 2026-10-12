@@ -5,7 +5,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, BriefcaseBusiness, BookOpen, BarChart3, LogOut,
   ChevronsLeft, ChevronsRight, ChevronRight, BrainCircuit, Activity, Settings, Scale,
-  type LucideIcon,
+  Wrench, type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { to: "/analysis", label: "Analysis", icon: BarChart3 },
   { to: "/ai-report", label: "Performance Coach", icon: BrainCircuit, badge: "PRO" },
   { to: "/backtesting", label: "Backtesting", icon: Activity, badge: "ELITE" },
+  { to: "/tools", label: "Tools", icon: Wrench },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
