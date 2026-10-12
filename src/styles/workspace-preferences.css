@@ -33,7 +33,7 @@ html[data-accent] .trade-time-done:hover { background: hsl(var(--primary) / .9);
    blend into the theme, readable neutral labels and edges supply contrast. */
 html[data-accent-contrast=low] :is(.text-primary, .text-profit, .text-blue-300, .text-blue-400, .text-blue-500, .text-blue-600, .text-blue-700,
   .app-brand-name > span, .app-nav-badge, .dashboard-customize > button, .dashboard-stat-link, .dashboard-empty a,
-  .performance-change:not(.is-loss), .pnl-day.profit-day, .pnl-week-total.profit-day, .pnl-day.today .pnl-day-number,
+  .performance-change:not(.is-loss), .pnl-day.today .pnl-day-number,
   .an-profit, .an-period-badge, .an-clock-time time span, .an-rule-details summary,
   .settings-eyebrow, .settings-back-link, .settings-avatar > span) { color: hsl(var(--foreground)); }
 html[data-accent-contrast=low] .settings-success { color: hsl(var(--foreground)) !important; }
