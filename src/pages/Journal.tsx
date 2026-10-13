@@ -6,7 +6,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useTrades, useJournal, useSaveJournal, useChecklist, useSaveChecklist, useScreenshots, useUploadScreenshot, useAllJournals } from "@/hooks/useTrades";
 import { BookOpen, Save, Star, Check, Activity, ArrowLeft, Search, ArrowUpRight, ArrowDownRight, RefreshCw, FileText, SlidersHorizontal, DollarSign, Smile, Tag, Image, Plus, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { AITradeReviewPanel } from "@/components/ai-report/AITradeReviewPanel";
 import { StrategySetupCard } from "@/components/journal/StrategySetupCard";
 import { ExportJournalDialog } from "@/components/journal/ExportJournalDialog";
 import { emptyStrategySetup, parseStrategySetup, type StrategySetup } from "@/lib/strategySetup";
@@ -562,7 +561,6 @@ export default function Journal() {
               <StrategySetupCard value={strategySetup} onChange={setStrategySetup} />
 
               {screenshotsQuery.isError && <LoadError name="screenshots" retry={screenshotsQuery.refetch} />}
-              <div id="journal-ai-review" tabIndex={-1}><AITradeReviewPanel tradeId={selectedTrade.id} /></div>
             </fieldset>
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground">
