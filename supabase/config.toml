@@ -1,4 +1,7 @@
-project_id = "hfzfypjngoytwbxnymfi"
+project_id = "iivuvsnyznhwzpyxzjpk"
+
+[functions.performance-coach]
+verify_jwt = true
 
 [functions.ai-report]
 verify_jwt = true

@@ -23,7 +23,9 @@ describe("Performance coach evidence", () => {
   });
   it("includes the custom end day and rejects missing or reversed dates", () => {
     const custom = resolveCoachWindow("Custom", "2026-10-01", "2026-10-03", new Date("2026-10-07T12:00:00Z"));
-    expect(new Date(custom.end).getDate()).toBe(4);
+    expect(custom.start).toBe("2026-09-30T18:30:00.000Z");
+    expect(custom.end).toBe("2026-10-03T18:30:00.000Z");
+    expect(custom.timezone).toBe("Asia/Kolkata");
     expect(() => resolveCoachWindow("Custom", "", "")).toThrow();
     expect(() => resolveCoachWindow("Custom", "2026-10-04", "2026-10-01")).toThrow(/end date/);
     expect(() => resolveCoachWindow("Custom", "2026-02-30", "2026-03-01")).toThrow(/valid/);

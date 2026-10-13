@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, BarChart3, BookOpen, Check, ChevronDown, Copy, Download, Eye, EyeOff, FileSearch, History, Loader2, Plug, RefreshCw, Settings2, ShieldCheck, Target, X } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, Check, ChevronDown, Copy, Download, FileSearch, History, Loader2, Plug, RefreshCw, Settings2, ShieldCheck, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { generateWithFallback, validateOpenRouterKey, type IncludeFlags } from "@/lib/ai";
+import type { IncludeFlags } from "@/lib/ai";
 import { fetchCoachData } from "@/lib/coach/data";
 import { analyzeCoachData } from "@/lib/coach/analysis";
 import { resolveCoachWindow } from "@/lib/coach/period";
 import { DEFAULT_SOURCES, SOURCE_LABELS, type Period } from "@/lib/coach/types";
 import { buildCoachPrompt, COACH_SYSTEM, coachReportToText, parseCoachReport, readSavedReviews, saveReview, type SavedCoachReport } from "@/lib/coach/report";
+import { CoachConnectionError, generateCoachReview, getCoachProviderStatus } from "@/lib/coach/provider";
 import { CoachReview, ProcessMeasures } from "@/components/coach/CoachReview";
 import "@/styles/performance-coach.css";
 
@@ -35,31 +36,27 @@ export default function AIReportPage() {
   const [connectionOpen, setConnectionOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [legacyOpen, setLegacyOpen] = useState(false);
-  const [keyDraft, setKeyDraft] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [showKey, setShowKey] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [keyError, setKeyError] = useState("");
   const [report, setReport] = useState<SavedCoachReport | null>(null);
   const [savedReviews, setSavedReviews] = useState<SavedCoachReport[]>([]);
   const [generating, setGenerating] = useState(false);
   const [stage, setStage] = useState("");
   const [error, setError] = useState("");
+  const [retryable, setRetryable] = useState(false);
   const [storageWarning, setStorageWarning] = useState("");
   const controller = useRef<AbortController | null>(null);
   const reportTop = useRef<HTMLDivElement>(null);
   const activeUser = useRef(uid);
   activeUser.current = uid;
-  const keyName = `dfb-coach-key:${uid}`;
   const dataQuery = useQuery({ queryKey: ["performance-coach-data", uid], enabled: !!uid, queryFn: ({ signal }) => fetchCoachData(uid, signal), staleTime: 60_000, retry: false });
+  const providerQuery = useQuery({ queryKey: ["performance-coach-provider", uid], enabled: !!uid, queryFn: getCoachProviderStatus, staleTime: 60_000, retry: false });
 
   useEffect(() => {
-    const key = readStorage(`dfb-coach-key:${uid}`) || readStorage("openrouter_api_key");
-    setApiKey(key); setKeyDraft(key);
+    // Retire browser-stored API keys from the previous direct-OpenRouter integration.
+    try { localStorage.removeItem(`dfb-coach-key:${uid}`); localStorage.removeItem("openrouter_api_key"); } catch { /* storage may be unavailable */ }
     setInstructions(readStorage(`dfb-coach-focus:${uid}`) || readStorage("ai_report_instructions"));
     const reviews = uid ? readSavedReviews(uid) : [];
     setSavedReviews(reviews); setReport(reviews[0] || null);
-    setError(""); setStorageWarning(""); setGenerating(false);
+    setError(""); setRetryable(false); setStorageWarning(""); setGenerating(false);
     return () => { controller.current?.abort(); };
   }, [uid]);
 
@@ -70,32 +67,12 @@ export default function AIReportPage() {
   const analysis = useMemo(() => dataQuery.data && range.value ? analyzeCoachData(dataQuery.data, range.value, include) : null, [dataQuery.data, range.value, include]);
   const sourceCount = Object.values(include).filter(Boolean).length;
 
-  async function saveConnection(event: React.FormEvent) {
-    event.preventDefault();
-    if (!keyDraft.trim()) { setKeyError("Enter your connection key."); return; }
-    setChecking(true); setKeyError("");
-    const forUser = uid;
-    try {
-      const key = keyDraft.trim();
-      const result = await validateOpenRouterKey(key);
-      if (activeUser.current !== forUser) return;
-      if (!result.valid) throw new Error("Couldn't verify this key. Check the key, available credits, and your connection.");
-      localStorage.setItem(keyName, key);
-      localStorage.removeItem("openrouter_api_key");
-      setApiKey(key); setKeyDraft(key); setConnectionOpen(false); toast.success("Coach connection saved.");
-    } catch (error) { setKeyError(error instanceof Error ? error.message : "Couldn't save your connection."); }
-    finally { setChecking(false); }
-  }
-  function forgetConnection() {
-    try { localStorage.removeItem(keyName); localStorage.removeItem("openrouter_api_key"); setApiKey(""); setKeyDraft(""); setKeyError(""); toast.success("Connection removed from this browser."); }
-    catch { setKeyError("Couldn't remove this connection. Check browser storage permissions."); }
-  }
   async function generate() {
-    if (generating || !uid) return;
-    if (!apiKey) { setConnectionOpen(true); return; }
+    if (controller.current || !uid) return;
+    if (!providerQuery.data?.ready) { setConnectionOpen(true); return; }
     if (!range.value || !sourceCount) return;
     const abort = new AbortController(); controller.current = abort;
-    setGenerating(true); setError(""); setStorageWarning(""); setStage("Reading your selected trading records…");
+    setGenerating(true); setError(""); setRetryable(false); setStorageWarning(""); setStage("Reading your selected trading records…");
     try {
       const window = resolveCoachWindow(period, from, to, new Date());
       const fresh = await fetchCoachData(uid, abort.signal);
@@ -104,11 +81,8 @@ export default function AIReportPage() {
       const context = analyzeCoachData(fresh, window, include);
       if (!context.tradeCount) throw new Error("There are no trades in this period. Choose a wider range or add your first trade.");
       setStage("Reviewing performance, journal context, and recurring patterns…");
-      const result = await generateWithFallback({ apiKey, prompt: buildCoachPrompt(context, instructions), systemInstruction: COACH_SYSTEM, temperature: 0.3, maxTokens: 6500, signal: abort.signal,
-        onModelAttempt: (_model, attempt) => { if (attempt > 1) setStage("The coach is reconnecting. Your review is still in progress…"); },
-      });
+      const result = await generateCoachReview(buildCoachPrompt(context, instructions), COACH_SYSTEM, abort.signal);
       if (abort.signal.aborted) return;
-      if (!result.success || !result.report) throw new Error("The coach couldn't complete your review. Check your connection and credits, then try again.");
       setStage("Checking report structure and evidence references…");
       const structured = parseCoachReport(result.report, context);
       const saved: SavedCoachReport = { version: 1, id: crypto.randomUUID(), generatedAt: result.timestamp, report: structured, analysis: context, instructions: instructions.trim() };
@@ -119,7 +93,7 @@ export default function AIReportPage() {
       toast.success("Your performance review is ready.");
       requestAnimationFrame(() => { reportTop.current?.scrollIntoView({ behavior: "smooth", block: "start" }); reportTop.current?.focus({ preventScroll: true }); });
     } catch (error) {
-      if (!abort.signal.aborted) setError(error instanceof Error ? error.message : "Couldn't complete the review. Please try again.");
+      if (!abort.signal.aborted) { setError(error instanceof Error ? error.message : "Couldn't complete the review. Please try again."); setRetryable(error instanceof CoachConnectionError ? error.retryable : false); }
     } finally { if (controller.current === abort) { controller.current = null; setGenerating(false); setStage(""); } }
   }
   function cancel() { controller.current?.abort(); setGenerating(false); setStage(""); }
@@ -136,7 +110,7 @@ export default function AIReportPage() {
   }
 
   return <div className="pc-page">
-    <header className="pc-header"><div><div className="pc-eyebrow"><span />YOUR EDGE STARTS WITH UNDERSTANDING</div><h1>Performance Coach</h1><p>Understand the pattern. Improve the process.</p></div><div className="pc-header-actions"><Button variant="outline" onClick={() => setHistoryOpen(true)}><History size={15} />Past reviews{savedReviews.length > 0 && <span className="pc-count">{savedReviews.length}</span>}</Button><Button variant="ghost" disabled={generating} onClick={() => setConnectionOpen(true)}><span className={`pc-connection-dot ${apiKey ? "is-connected" : ""}`} />{apiKey ? "Connection saved" : "Connect coach"}<Settings2 size={14} /></Button></div></header>
+    <header className="pc-header"><div><div className="pc-eyebrow"><span />YOUR EDGE STARTS WITH UNDERSTANDING</div><h1>Performance Coach</h1><p>Understand the pattern. Improve the process.</p></div><div className="pc-header-actions"><Button variant="outline" onClick={() => setHistoryOpen(true)}><History size={15} />Past reviews{savedReviews.length > 0 && <span className="pc-count">{savedReviews.length}</span>}</Button><Button variant="ghost" disabled={generating} onClick={() => setConnectionOpen(true)}><span className={`pc-connection-dot ${providerQuery.data?.ready ? "is-connected" : ""}`} />{providerQuery.data?.ready ? "Coach ready" : "Coach status"}<Settings2 size={14} /></Button></div></header>
 
     <section className="pc-builder" aria-label="Review setup"><fieldset disabled={generating}>
       <div className="pc-builder-top"><div><span className="pc-kicker">YOUR REVIEW WINDOW</span><div className="pc-periods" role="group" aria-label="Report period">{PERIODS.map(p => <button key={p} type="button" aria-pressed={period === p} onClick={() => { setPeriod(p); setAsOf(new Date()); }}>{p}</button>)}</div></div><Button className="pc-generate" onClick={generate} disabled={generating || dataQuery.isPending || !range.value || !sourceCount || !uid || !analysis?.tradeCount}>{generating ? <Loader2 size={17} className="animate-spin" /> : <FileSearch size={17} />}{generating ? "Preparing your review…" : "Generate Performance Report"}{!generating && <ArrowRight size={16} />}</Button></div>
@@ -148,9 +122,10 @@ export default function AIReportPage() {
 
     {dataQuery.isError && <div className="pc-notice pc-error" role="alert"><p>Couldn't load your trading records. Your past reviews are still available.</p><Button variant="outline" onClick={() => dataQuery.refetch()}>Retry loading data</Button></div>}
     {analysis?.limitations.some(l => l.includes("could not be loaded")) && <div className="pc-notice"><p>Some sources are unavailable: {analysis.limitations.filter(l => l.includes("could not be loaded")).join(" ")}</p><Button variant="ghost" onClick={() => dataQuery.refetch()}>Retry sources</Button></div>}
-    {!apiKey && !report && !dataQuery.isPending && <div className="pc-connect-notice"><Plug size={17} /><p>Connect your coach once to start generating reviews.</p><Button variant="ghost" onClick={() => setConnectionOpen(true)}>Set up connection <ArrowRight size={14} /></Button></div>}
+    {providerQuery.isError && <div className="pc-notice pc-error" role="alert"><p>{providerQuery.error instanceof Error ? providerQuery.error.message : "The coach provider is unavailable."}</p><Button variant="outline" onClick={() => providerQuery.refetch()}>Check again</Button></div>}
+    {!providerQuery.data?.ready && !report && !dataQuery.isPending && <div className="pc-connect-notice"><Plug size={17} /><p>The coach needs a working server connection to generate reviews.</p><Button variant="ghost" onClick={() => setConnectionOpen(true)}>Check connection <ArrowRight size={14} /></Button></div>}
     {generating && <div className="pc-generating" role="status"><div className="pc-loading-icon"><Loader2 size={24} className="animate-spin" /></div><div><h2>Your performance review is taking shape</h2><p>{stage}</p><span>Large journals may take a couple of minutes. Your previous review stays available.</span></div><Button variant="ghost" onClick={cancel}><X size={15} />Cancel</Button></div>}
-    {error && <div className="pc-notice pc-error" role="alert"><div><strong>Review couldn't be completed</strong><p>{error}</p></div><Button variant="outline" onClick={generate} disabled={generating}>Try again <RefreshCw size={14} /></Button></div>}
+    {error && <div className="pc-notice pc-error" role="alert"><div><strong>Review couldn't be completed</strong><p>{error}</p></div>{retryable && <Button variant="outline" onClick={generate} disabled={generating}>Try again <RefreshCw size={14} /></Button>}</div>}
     {storageWarning && <p className="pc-notice" role="status">{storageWarning}</p>}
 
     <div ref={reportTop} tabIndex={-1} className="pc-report-anchor">
@@ -161,7 +136,7 @@ export default function AIReportPage() {
     </div>
     <footer className="pc-footer"><span>DaddyFXBook <i>·</i> Reflect. Adjust. Repeat.</span><button onClick={() => setLegacyOpen(true)}>Previous scorecards <ArrowRight size={12} /></button></footer>
 
-    <Dialog open={connectionOpen} onOpenChange={open => { if (!checking) { setConnectionOpen(open); setShowKey(false); } }}><DialogContent className="pc-dialog"><DialogHeader><DialogTitle>Connect your Performance Coach</DialogTitle><DialogDescription>Use your OpenRouter connection for report generation. Routing is handled automatically.</DialogDescription></DialogHeader><form onSubmit={saveConnection} className="pc-connection-form"><Label htmlFor="coach-key">OpenRouter API key</Label><div className="pc-key-input"><Input id="coach-key" type={showKey ? "text" : "password"} value={keyDraft} disabled={checking} autoComplete="off" spellCheck={false} onChange={e => { setKeyDraft(e.target.value); setKeyError(""); }} placeholder="sk-or-…" /><button type="button" onClick={() => setShowKey(!showKey)} aria-label={showKey ? "Hide key" : "Show key"}>{showKey ? <EyeOff size={16} /> : <Eye size={16} />}</button></div><p className="pc-muted pc-small">Saved for your account in this browser. Selected journal data is sent to OpenRouter when you generate a review. Verifying the key makes a small test request.</p>{keyError && <p role="alert" className="pc-error-text">{keyError}</p>}<div className="pc-dialog-actions">{apiKey && <Button type="button" variant="ghost" disabled={checking} onClick={forgetConnection}>Remove connection</Button>}<Button type="submit" disabled={checking || !keyDraft.trim()}>{checking && <Loader2 size={15} className="animate-spin" />}{checking ? "Verifying…" : "Verify & save"}</Button></div></form></DialogContent></Dialog>
+    <Dialog open={connectionOpen} onOpenChange={setConnectionOpen}><DialogContent className="pc-dialog"><DialogHeader><DialogTitle>Performance Coach connection</DialogTitle><DialogDescription>OpenRouter is connected securely on the server. Selected journal data is sent only when you generate a review.</DialogDescription></DialogHeader><div className="pc-connection-form"><p role="status">{providerQuery.isPending ? "Checking the coach connection…" : providerQuery.data?.ready ? "Coach connection is ready." : providerQuery.error instanceof Error ? providerQuery.error.message : "The coach connection is unavailable."}</p><div className="pc-dialog-actions"><Button type="button" variant="outline" disabled={providerQuery.isFetching} onClick={() => providerQuery.refetch()}>{providerQuery.isFetching ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}Check again</Button></div></div></DialogContent></Dialog>
     <Dialog open={historyOpen} onOpenChange={setHistoryOpen}><DialogContent className="pc-dialog"><DialogHeader><DialogTitle>Past performance reviews</DialogTitle><DialogDescription>Your five most recent reviews, saved for this account on this browser. Download reviews to keep a separate copy.</DialogDescription></DialogHeader><div className="pc-history-list">{savedReviews.length ? savedReviews.map(saved => <button key={saved.id} onClick={() => { setReport(saved); setHistoryOpen(false); setStorageWarning(""); }}><div><span>{saved.analysis.window.period} · {new Date(saved.generatedAt).toLocaleDateString()}</span><strong>{saved.report.verdict.headline}</strong><small>{saved.analysis.tradeCount} trades · {saved.analysis.window.label}</small></div><ArrowRight size={16} /></button>) : <p className="pc-muted">Your first completed review will appear here.</p>}</div></DialogContent></Dialog>
     <Dialog open={legacyOpen} onOpenChange={setLegacyOpen}><DialogContent className="pc-legacy-dialog"><DialogHeader><DialogTitle>Previous scorecards</DialogTitle><DialogDescription>Existing saved scores use the original scoring rules. They are kept separately from the new report's transparent process measures.</DialogDescription></DialogHeader>{legacyOpen && <Suspense fallback={<p>Loading saved scorecards…</p>}><LegacyScorecards /></Suspense>}</DialogContent></Dialog>
   </div>;
