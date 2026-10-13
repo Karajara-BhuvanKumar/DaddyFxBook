@@ -34,6 +34,36 @@ describe('position sizing', () => {
   it('does not suggest an oversized minimum position', () => expect(calculatePositionSize(10, 0.1, 50, 10)).toMatchObject({ lots: 0, lossAtStop: 0 }));
   it('keeps the gold contract and pip definition consistent', () => {
     const gold = POSITION_INSTRUMENTS.find(i => i.symbol === 'XAUUSD')!;
-    expect(gold.contractSize * gold.pipSize).toBe(1);
+    expect(gold.contractSize).toBe(100);
+    expect(gold.pipSize).toBe(0.1);
+    const pipValue = gold.contractSize * gold.pipSize;
+    expect(pipValue).toBe(10);
+    expect(30 * gold.pipSize).toBe(3);
+    const result = calculatePositionSize(10000, 1, 30, pipValue)!;
+    expect(result.riskAmount).toBe(100);
+    expect(result.estimate.lots).toBeCloseTo(1 / 3, 12);
+    expect(result.estimate.miniLots).toBeCloseTo(10 / 3, 12);
+    expect(result.estimate.microLots).toBeCloseTo(100 / 3, 12);
+    expect(result.estimate.lossAtStop).toBeCloseTo(100, 12);
+    expect(result.lots).toBe(0.33);
+    expect(result.lossAtStop).toBe(99);
+  });
+  it.each(POSITION_INSTRUMENTS.filter(i => i.symbol !== 'XAUUSD'))('preserves $symbol Forex specifications and rounded risk', instrument => {
+    expect(instrument.pipSize).toBe(0.0001);
+    expect(instrument.contractSize).toBe(100000);
+    const pipValue = instrument.contractSize * instrument.pipSize;
+    expect(pipValue).toBe(10);
+    const result = calculatePositionSize(10000, 1, 30, pipValue)!;
+    expect(result).toMatchObject({ lots: 0.33, microLots: 33, riskAmount: 100, lossAtStop: 99 });
+    expect(result.miniLots).toBeCloseTo(3.3, 12);
+    expect(calculatePositionSize(5000, 0.5, 30, pipValue)).toMatchObject({ lots: 0.08, riskAmount: 25, lossAtStop: 24 });
+  });
+  it.each([0.6, 0.75, 1.25, 1.4, 1.65])('retains full Gold precision at %s percent', risk => {
+    const result = calculatePositionSize(10000, risk, 30, 10)!;
+    expect(result.estimate.lots).toBeCloseTo(risk / 3, 12);
+    expect(result.estimate.miniLots).toBeCloseTo(risk * 10 / 3, 12);
+    expect(result.estimate.microLots).toBeCloseTo(risk * 100 / 3, 12);
+    expect(result.estimate.lossAtStop).toBeCloseTo(risk * 100, 10);
+    expect(result.lossAtStop).toBeLessThanOrEqual(result.riskAmount + 1e-10);
   });
 });

@@ -33,13 +33,14 @@ async function main() {
       await page.getByRole('spinbutton', { name: 'Risk percentage', exact: true }).fill('1.25');
       await page.getByRole('slider').focus();
       await page.keyboard.press('ArrowRight');
-      await expect(page.getByRole('spinbutton', { name: 'Risk percentage', exact: true })).toHaveValue('1.26');
-      await expect(page.getByTestId('loss-at-stop')).toHaveText('$126.00');
+      await expect(page.getByRole('spinbutton', { name: 'Risk percentage', exact: true })).toHaveValue('1.5');
+      await expect(page.getByTestId('loss-at-stop')).toHaveText('$150.00');
       const sliderBox = await page.getByRole('slider').boundingBox();
       await page.getByRole('slider').click({ position: { x: sliderBox.width / 2, y: sliderBox.height / 2 } });
       const pointerRisk = Number(await page.getByRole('slider').inputValue());
-      expect(pointerRisk).toBeGreaterThan(40);
-      expect(pointerRisk).toBeLessThan(60);
+      expect(pointerRisk).toBeGreaterThan(4);
+      expect(pointerRisk).toBeLessThan(6);
+      expect(Number.isInteger(pointerRisk / 0.25)).toBe(true);
       await expect(page.getByRole('spinbutton', { name: 'Risk percentage', exact: true })).toHaveValue(String(pointerRisk));
       await expect(page.getByTestId('risk-amount')).toHaveText((pointerRisk * 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' }));
       await page.getByRole('spinbutton', { name: 'Risk percentage', exact: true }).fill('0.75');
