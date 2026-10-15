@@ -1,5 +1,6 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import TradeDateTimePicker from '@/components/TradeDateTimePicker';
-import { holdingDuration, formatHoldingDuration, localTimeZone } from '@/lib/holdingTime';
+import { formatHoldingDuration } from '@/lib/holdingTime';
 import LoadError from '@/components/LoadError';
 import { StrategySetupCard } from '@/components/journal/StrategySetupCard';
 import { parseStrategySetup, serializeStrategySetup } from '@/lib/strategySetup';
@@ -15,7 +16,7 @@ import { Trade, useJournal, useChecklist, useUpdateTrade } from "@/hooks/useTrad
 import { ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 import { toast } from "sonner";
 
-import { toLocalDateTime, toUtcTimestamp } from "@/lib/tradeTimestamps";
+import { toLocalDateTime, toUtcTimestamp, draftHoldingDuration } from "@/lib/tradeTimestamps";
 
 interface EditTradeModalProps {
   trade: Trade | null;
@@ -24,6 +25,7 @@ interface EditTradeModalProps {
 }
 
 export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModalProps) {
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const { data: journal, isLoading: isJournalLoading, isError: journalError, refetch: retryJournal } = useJournal(trade?.id ?? null);
   const { data: checklist, isLoading: isChecklistLoading, isError: checklistError, refetch: retryChecklist } = useChecklist(trade?.id ?? null);
   const updateTrade = useUpdateTrade();
@@ -78,8 +80,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         stopLoss: trade.stop_loss?.toString() || '',
         riskPct: trade.risk_pct?.toString() ?? '',
         takeProfit: trade.take_profit?.toString() || '',
-        openDate: toLocalDateTime(trade.open_time),
-        closeDate: toLocalDateTime(trade.close_time),
+        openDate: toLocalDateTime(trade.open_time, timezone),
+        closeDate: toLocalDateTime(trade.close_time, timezone),
         commission: '', // No direct field in Trade schema yet
         swap: '',       // No direct field in Trade schema yet
         tags: journal?.tags || '',
@@ -111,8 +113,8 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
         risk_pct: form.riskPct.trim() ? Number(form.riskPct) : null,
         stop_loss: form.stopLoss ? parseFloat(form.stopLoss) : null,
         take_profit: form.takeProfit ? parseFloat(form.takeProfit) : null,
-        open_time: toUtcTimestamp(form.openDate, trade.open_time),
-        close_time: toUtcTimestamp(form.closeDate, trade.close_time),
+        open_time: toUtcTimestamp(form.openDate, trade.open_time, timezone),
+        close_time: toUtcTimestamp(form.closeDate, trade.close_time, timezone),
       };
 
       const combinedLessons = form.mistakes
@@ -212,7 +214,7 @@ export default function EditTradeModal({ trade, isOpen, onClose }: EditTradeModa
                 </div>
                 <TradeDateTimePicker label="Open Date & Time" value={form.openDate} onChange={openDate => setForm(f => ({ ...f, openDate }))} />
                 <TradeDateTimePicker label="Close Date & Time" value={form.closeDate} onChange={closeDate => setForm(f => ({ ...f, closeDate }))} />
-                <div className="sm:col-span-2 text-xs text-muted-foreground" aria-live="polite">Holding duration: <strong className="text-foreground">{formatHoldingDuration(holdingDuration({ open_time: form.openDate && toUtcTimestamp(form.openDate, trade?.open_time), close_time: form.closeDate && toUtcTimestamp(form.closeDate, trade?.close_time) }))}</strong><span className="block mt-1">Local time · {localTimeZone()}. Close must be on or after open.</span></div>
+                <div className="sm:col-span-2 text-xs text-muted-foreground" aria-live="polite">Holding duration: <strong className="text-foreground">{formatHoldingDuration(draftHoldingDuration(form.openDate, form.closeDate, timezone, trade?.open_time, trade?.close_time))}</strong><span className="block mt-1">{timezone}. Close must be on or after open.</span></div>
               </div>
 
               <div className="pt-4 border-t border-border space-y-4">

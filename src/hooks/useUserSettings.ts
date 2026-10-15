@@ -34,7 +34,7 @@ export const DEFAULTS = (uid: string): UserSettings => ({
   display_name: null,
   username: null,
   avatar_url: null,
-  timezone: "UTC",
+  timezone: "Asia/Kolkata",
   time_format: "24h",
   currency: "USD",
   account_size: 10000,

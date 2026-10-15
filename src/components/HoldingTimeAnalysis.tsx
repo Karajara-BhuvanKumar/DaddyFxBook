@@ -1,3 +1,4 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import { useState } from 'react';
 import { Clock } from 'lucide-react';
 import { BarChart, Bar, Cell, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
@@ -6,6 +7,7 @@ import { formatHoldingDuration, formatTradeDateTime } from '@/lib/holdingTime';
 
 const money = (value: number) => `${value < 0 ? '-' : ''}$${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 export default function HoldingTimeAnalysis({ data }: { data: ReturnType<typeof analyzeHoldingTime> }) {
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const [metric, setMetric] = useState<'averagePnl' | 'pnl'>('averagePnl');
   const stats = [
     ['Average holding time', data.average], ['Median holding time', data.median],
@@ -16,7 +18,7 @@ export default function HoldingTimeAnalysis({ data }: { data: ReturnType<typeof 
     <div className="an-section-heading"><div><h2><Clock />Holding Time</h2><p>{data.count} completed trades · uses the page’s period and outcome filters</p></div></div>
     <dl className="an-holding-stats">{stats.map(([label, value]) => {
       const record = label === 'Longest-held trade' ? data.longest : label === 'Shortest-held trade' ? data.shortest : null;
-      return <div key={label}><dt className="an-label">{label}</dt><dd>{formatHoldingDuration(value)}</dd>{record && <small title={`Trade ${record.trade.id}`}>{record.trade.symbol} · {formatTradeDateTime(record.trade.open_time)} · {money(record.trade.pnl)}</small>}{label.startsWith('Winning') && <small>{data.wins} trades</small>}{label.startsWith('Losing') && <small>{data.losses} trades</small>}</div>;
+      return <div key={label}><dt className="an-label">{label}</dt><dd>{formatHoldingDuration(value)}</dd>{record && <small title={`Trade ${record.trade.id}`}>{record.trade.symbol} · {formatTradeDateTime(record.trade.open_time, timezone)} · {money(record.trade.pnl)}</small>}{label.startsWith('Winning') && <small>{data.wins} trades</small>}{label.startsWith('Losing') && <small>{data.losses} trades</small>}</div>;
     })}</dl>
     <p className="an-holding-note">Total time adds each trade’s duration, including overlapping trades. Missing, open, or invalid records are excluded. Durations are displayed to whole minutes; calculations use exact timestamps.</p>
     {data.count ? <>

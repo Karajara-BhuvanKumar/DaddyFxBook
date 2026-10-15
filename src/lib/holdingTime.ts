@@ -25,17 +25,17 @@ export function formatHoldingDuration(ms: number | null | undefined): string {
   return [Math.floor(minutes / 1440) && `${Math.floor(minutes / 1440)}d`, Math.floor(minutes / 60) % 24 && `${Math.floor(minutes / 60) % 24}h`, minutes % 60 && `${minutes % 60}m`].filter(Boolean).join(' ');
 }
 
-export function tradeTimeParts(value: unknown) {
+export function tradeTimeParts(value: unknown, timezone = 'Asia/Kolkata') {
   const ms = timestampMs(value);
   if (ms === null) return { date: 'Not recorded', time: 'Not recorded' };
   const date = new Date(ms);
   return {
-    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }),
+    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: timezone }),
+    time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: timezone }),
   };
 }
-export function formatTradeDateTime(value: unknown) {
-  const parts = tradeTimeParts(value);
+export function formatTradeDateTime(value: unknown, timezone = 'Asia/Kolkata') {
+  const parts = tradeTimeParts(value, timezone);
   return parts.date === 'Not recorded' ? parts.date : `${parts.date}, ${parts.time}`;
 }
 export const localTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;

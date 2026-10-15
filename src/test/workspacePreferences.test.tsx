@@ -30,7 +30,7 @@ beforeEach(() => {
   localStorage.clear();
   URL.createObjectURL = vi.fn(() => 'blob:local-preview'); URL.revokeObjectURL = vi.fn();
   backend.upload.mockResolvedValue({ error: null }); backend.signedUrl.mockResolvedValue({ data: { signedUrl: 'https://example.test/avatar.png' }, error: null }); backend.remove.mockResolvedValue({ error: null });
-  saved = DEFAULTS("test-user");
+  saved = { ...DEFAULTS("test-user"), timezone: "UTC" };
   backend.read.mockImplementation(async () => ({ data: saved, error: null }));
   backend.save.mockImplementation(async (patch) => { saved = { ...saved, ...patch }; return { data: saved, error: null }; });
   systemDark = false;

@@ -2,7 +2,7 @@ import { accentAppearance, normalizeAccent } from './accentColors';
 export { ACCENT_COLORS } from './accentColors';
 export const DEFAULT_PREFERENCES = {
   theme: "dark", accent_color: "blue", compact_mode: false,
-  timezone: "UTC", time_format: "24h", currency: "USD",
+  timezone: "Asia/Kolkata", time_format: "24h", currency: "USD",
 };
 export type WorkspacePreferences = typeof DEFAULT_PREFERENCES;
 
@@ -17,7 +17,7 @@ export function resolvePreferences(settings?: Partial<WorkspacePreferences> | nu
       new Intl.DateTimeFormat("en-US", { timeZone: settings.timezone }).format();
       result.timezone = settings.timezone;
     }
-  } catch { /* Old/invalid preferences fall back to UTC. */ }
+  } catch { /* Old/invalid preferences fall back to IST. */ }
   if (["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"].includes(settings?.currency)) result.currency = settings.currency;
   return result;
 }

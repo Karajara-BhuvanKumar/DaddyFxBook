@@ -2,6 +2,7 @@ import type { Trade, Journal } from "@/hooks/useTrades";
 import type { BreakdownItem } from "@/components/BreakdownList";
 import { parseStrategySetup, buildSetupKey, buildBroadSetupKey } from "@/lib/strategySetup";
 import { holdingDuration } from './holdingTime';
+import { calendarDay, localHourToUtc, zonedDateKey } from './marketTime';
 import { IST_MARKET_SESSIONS } from './marketSessions';
 
 export const HOLDING_RANGES = [
@@ -63,12 +64,12 @@ const timestamp = (value: unknown): number => {
   return Date.parse(value);
 };
 
-export function includedTrades(trades: Trade[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
+export function includedTrades(trades: Trade[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number, timezone = 'Asia/Kolkata') {
   const seen = new Set<string>();
   let rejected = 0;
   let start = -Infinity;
   const date = new Date(now);
-  if (period === 'Today') start = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  if (period === 'Today') start = localHourToUtc(calendarDay(now, timezone), 0, timezone);
   if (period === '7 Days' || period === '30 Days') start = now - (period === '7 Days' ? 7 : 30) * 86400000;
   if (period === '3 Months' || period === '1 Year') {
     const day = date.getUTCDate();
@@ -130,8 +131,8 @@ function performanceSession(value: string | null | undefined) {
   return IST_MARKET_SESSIONS.find(session => session.name.toLowerCase() === name)?.name;
 }
 
-export function analyzeTrades(trades: Trade[], journals: Journal[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number) {
-  const { includedClosedTrades, rejected } = includedTrades(trades, period, outcome, now);
+export function analyzeTrades(trades: Trade[], journals: Journal[], period: AnalysisPeriod, outcome: AnalysisOutcome, now: number, timezone = 'Asia/Kolkata') {
+  const { includedClosedTrades, rejected } = includedTrades(trades, period, outcome, now, timezone);
   const core = metrics(includedClosedTrades);
   const holding = analyzeHoldingTime(includedClosedTrades);
   const longTrades = includedClosedTrades.filter(t => t.direction === 'Long'), shortTrades = includedClosedTrades.filter(t => t.direction === 'Short');
@@ -146,11 +147,11 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
   let cumulative = 0, peak = 0, maxDD = 0;
   const chartData: { date: string; cumulative: number; drawdown: number }[] = includedClosedTrades.length ? [{ date: 'Start', cumulative: 0, drawdown: 0 }] : [];
   for (const t of includedClosedTrades) {
-    const date = new Date(t.close_time), day = t.close_time.slice(0, 10), month = day.slice(0, 7);
+    const date = new Date(t.close_time), day = zonedDateKey(date, timezone), month = day.slice(0, 7);
     const bucket = calendarData[day] ??= { pnl: 0, count: 0 };
     bucket.pnl = sum([bucket.pnl, t.pnl]); bucket.count++;
     monthly[month] = sum([monthly[month] ?? 0, t.pnl]);
-    const weekday = dayPerf[(date.getUTCDay() + 6) % 7];
+    const weekday = dayPerf[(new Date(day + 'T12:00:00Z').getUTCDay() + 6) % 7];
     weekday.pnl = sum([weekday.pnl, t.pnl]); weekday.count++;
     // Regular and off-session labels contribute to the same performance bucket.
     // Only the journal's Market Session selection assigns a performance bucket.
@@ -164,7 +165,7 @@ export function analyzeTrades(trades: Trade[], journals: Journal[], period: Anal
     }
     cumulative = sum([cumulative, t.pnl]); peak = Math.max(peak, cumulative);
     const drawdown = sum([cumulative, -peak]); maxDD = Math.max(maxDD, -drawdown);
-    chartData.push({ date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }), cumulative, drawdown });
+    chartData.push({ date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone }), cumulative, drawdown });
   }
   const dailyPnl = Object.entries(calendarData).map(([day, value]): [string, number] => [day, value.pnl]);
   const winningDays = dailyPnl.filter(([, v]) => v > 0), losingDays = dailyPnl.filter(([, v]) => v < 0);

@@ -1,3 +1,5 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
+import { formatTradeDateTime } from '@/lib/holdingTime';
 import { useRef, useState } from "react";
 import {
   Dialog,
@@ -18,6 +20,7 @@ interface ShareTradeModalProps {
 }
 
 export default function ShareTradeModal({ trade, isOpen, onClose }: ShareTradeModalProps) {
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const previewRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -27,13 +30,7 @@ export default function ShareTradeModal({ trade, isOpen, onClose }: ShareTradeMo
   const pnl = Number(trade.pnl);
   const isProfit = pnl >= 0;
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('en-US', { month: 'short' });
-    const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-    return `${day} ${month} ${time}`;
-  };
+  const formatDate = (value: string) => `${formatTradeDateTime(value, timezone)} · ${timezone}`;
 
   const tradeSummary = `
 ${trade.symbol} ${trade.direction.toUpperCase()}

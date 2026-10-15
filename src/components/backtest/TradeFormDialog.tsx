@@ -1,3 +1,5 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
+import { zonedDateKey } from '@/lib/marketTime';
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +85,7 @@ const empty = {
   market_condition: "",
   emotion: "",
   notes: "",
-  trade_date: new Date().toISOString().slice(0, 10),
+  trade_date: '',
   screenshot_url: "",
 };
 
@@ -146,6 +148,7 @@ export default function TradeFormDialog({
   initial,
   onSave,
 }: Props) {
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const { toast } = useToast();
   const [form, setForm] = useState({ ...empty, pair: defaultPair ?? "" });
   const [strategy, setStrategy] = useState<StrategySetup>(emptyStrategy);
@@ -171,12 +174,12 @@ export default function TradeFormDialog({
         market_condition: initial.market_condition ?? "",
         emotion: initial.emotion ?? "",
         notes: initial.notes ?? "",
-        trade_date: initial.trade_date ?? new Date().toISOString().slice(0, 10),
+        trade_date: initial.trade_date ?? zonedDateKey(new Date(), timezone),
         screenshot_url: initial.screenshot_url ?? "",
       });
       setStrategy(parseSummary(initial.setup ?? ""));
     } else {
-      setForm({ ...empty, trade_date: new Date().toLocaleDateString("en-CA"), pair: defaultPair ?? "" });
+      setForm({ ...empty, trade_date: zonedDateKey(new Date(), timezone), pair: defaultPair ?? "" });
       setStrategy(emptyStrategy);
     }
     setStep(1);

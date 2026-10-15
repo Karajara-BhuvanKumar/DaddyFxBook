@@ -23,18 +23,20 @@ async function invoke(body: object, signal?: AbortSignal): Promise<unknown> {
       if (isCode(payload.code) && typeof payload.message === "string")
         throw new CoachConnectionError(payload.code, payload.message, payload.retryable === true);
     }
+    if (response instanceof Response && response.status === 404)
+      throw new CoachConnectionError("configuration", "The Performance Coach function is not deployed in this project's server. Contact the administrator.");
     if (response instanceof Response && response.status === 401)
       throw new CoachConnectionError("authentication", "Your session expired. Sign in again to generate a review.");
   }
   throw new CoachConnectionError("network", "The coach server could not be reached. Check your connection and retry.", true);
 }
 
-export async function getCoachProviderStatus(): Promise<{ ready: boolean; limitRemaining: number | null }> {
-  const data = await invoke({ action: "status" });
+export async function getCoachProviderStatus(signal?: AbortSignal): Promise<{ ready: boolean; limitRemaining: number | null; model?: string }> {
+  const data = await invoke({ action: "status" }, signal);
   if (!data || typeof data !== "object" || (data as { ready?: unknown }).ready !== true)
     throw new CoachConnectionError("invalid_response", "The coach server returned an invalid status.", true);
   const remaining = (data as { limitRemaining?: unknown }).limitRemaining;
-  return { ready: true, limitRemaining: typeof remaining === "number" ? remaining : null };
+  return { ready: true, limitRemaining: typeof remaining === "number" ? remaining : null, model: typeof (data as { model?: unknown }).model === "string" ? (data as { model: string }).model : undefined };
 }
 
 export async function generateCoachReview(prompt: string, systemInstruction: string, signal: AbortSignal): Promise<{ report: string; timestamp: string }> {

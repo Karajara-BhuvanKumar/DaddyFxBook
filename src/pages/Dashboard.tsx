@@ -1,4 +1,7 @@
-import { useMemo, useState } from "react";
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
+import { includedTrades, metrics, sum } from '@/lib/analysisStats';
+import { zonedDateKey } from '@/lib/marketTime';
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTrades, type Trade } from "@/hooks/useTrades";
 import { Activity, ArrowRight, Banknote, ChartNoAxesCombined, ChevronLeft, ChevronRight, ChevronsUp, LayoutDashboard, SlidersHorizontal, Trophy, Wallet } from "lucide-react";
@@ -33,39 +36,45 @@ interface DashboardViewProps {
 }
 
 export function DashboardView({ trades, isLoading = false, initialDate, initialTimeframe = "1M", asOfDate }: DashboardViewProps) {
+  const { preferences } = useWorkspacePreferences();
+  const timezone = preferences.timezone;
   const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
   const [selectedDay, setSelectedDay] = useState<{ date: string; rect: DOMRect } | null>(null);
-  const [currentDate, setCurrentDate] = useState(() => initialDate ? new Date(initialDate) : new Date());
+  const [currentDate, setCurrentDate] = useState(() => initialDate ? new Date(initialDate) : new Date(`${zonedDateKey(new Date(), timezone)}T12:00:00`));
   const [showPerformance, setShowPerformance] = useState(true);
   const [showCalendar, setShowCalendar] = useState(true);
   const [showWeekly, setShowWeekly] = useState(true);
+  const [liveTime, setLiveTime] = useState(() => Date.now());
+  useEffect(() => {
+    if (asOfDate) return;
+    const refresh = () => setLiveTime(Date.now());
+    const timer = window.setInterval(refresh, 60000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [asOfDate]);
+  const scopeTime = asOfDate?.getTime() ?? liveTime;
 
+  const validTrades = useMemo(() => includedTrades(trades, 'All Time', 'All Trades', scopeTime, timezone).includedClosedTrades, [trades, scopeTime, timezone]);
   const { filteredTrades, prevPnl } = useMemo(() => {
-    if (timeframe === "ALL") return { filteredTrades: trades, prevPnl: null };
-    const cutoff = new Date(asOfDate?.getTime() ?? Date.now());
-    const prevCutoff = new Date(cutoff);
-    if (timeframe === "1D" || timeframe === "1W") {
-      const days = timeframe === "1D" ? 1 : 7;
-      cutoff.setDate(cutoff.getDate() - days);
-      prevCutoff.setDate(prevCutoff.getDate() - days * 2);
-    } else {
-      const months = timeframe === "1M" ? 1 : 3;
-      cutoff.setMonth(cutoff.getMonth() - months);
-      prevCutoff.setMonth(prevCutoff.getMonth() - months * 2);
-    }
+    if (timeframe === "ALL") return { filteredTrades: validTrades, prevPnl: null };
+    const now = scopeTime;
+    const cutoff = new Date(now);
+    if (timeframe === "3M") {
+      const day = cutoff.getUTCDate(); cutoff.setUTCDate(1); cutoff.setUTCMonth(cutoff.getUTCMonth() - 3);
+      cutoff.setUTCDate(Math.min(day, new Date(Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth() + 1, 0)).getUTCDate()));
+    } else cutoff.setTime(now - ({ "1D": 1, "1W": 7, "1M": 30 }[timeframe]) * 86400000);
+    const previous = +cutoff - (now - +cutoff);
     return {
-      filteredTrades: trades.filter((t) => new Date(t.close_time) >= cutoff),
-      prevPnl: trades.filter((t) => new Date(t.close_time) >= prevCutoff && new Date(t.close_time) < cutoff)
-        .reduce((sum, t) => sum + Number(t.pnl), 0),
+      filteredTrades: validTrades.filter(t => Date.parse(t.close_time) >= +cutoff),
+      prevPnl: sum(validTrades.filter(t => Date.parse(t.close_time) >= previous && Date.parse(t.close_time) < +cutoff).map(t => t.pnl)),
     };
-  }, [trades, timeframe, asOfDate]);
+  }, [validTrades, timeframe, scopeTime]);
 
-  // The existing trade schema records closed trades only.
-  const realized = filteredTrades.reduce((sum, trade) => sum + Number(trade.pnl), 0);
+  const { totalPnl, winRate } = metrics(filteredTrades);
+  const realized = totalPnl;
   const unrealized = 0;
-  const totalPnl = realized + unrealized;
   const closedCount = filteredTrades.length;
-  const winRate = closedCount ? filteredTrades.filter((t) => Number(t.pnl) > 0).length / closedCount * 100 : 0;
   const perfPct = prevPnl === null || prevPnl === 0 ? null : (totalPnl - prevPnl) / Math.abs(prevPnl) * 100;
 
   const chartData = useMemo(() => {
@@ -74,11 +83,11 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
     // Daily points keep flat stretches visible without changing cumulative P&L.
     const daily = new Map<string, number>();
     sorted.forEach((trade) => {
-      const key = new Date(trade.close_time).toISOString().slice(0, 10);
-      daily.set(key, (daily.get(key) || 0) + Number(trade.pnl));
+      const key = zonedDateKey(new Date(trade.close_time), timezone);
+      daily.set(key, sum([daily.get(key) || 0, trade.pnl]));
     });
-    const start = new Date(`${new Date(sorted[0].close_time).toISOString().slice(0, 10)}T12:00:00`);
-    const lastTradeDate = new Date(`${new Date(sorted[sorted.length - 1].close_time).toISOString().slice(0, 10)}T12:00:00`);
+    const start = new Date(`${zonedDateKey(new Date(sorted[0].close_time), timezone)}T12:00:00`);
+    const lastTradeDate = new Date(`${zonedDateKey(new Date(sorted[sorted.length - 1].close_time), timezone)}T12:00:00`);
     const last = asOfDate && asOfDate > lastTradeDate ? new Date(asOfDate) : lastTradeDate;
     const dayCount = Math.round((last.getTime() - start.getTime()) / 86400000);
     let cumulative = 0;
@@ -86,7 +95,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
     const cursor = new Date(start);
     for (let index = 0; index <= dayCount; index++) {
       const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
-      cumulative += daily.get(key) || 0;
+      cumulative = sum([cumulative, daily.get(key) || 0]);
       // Bound long history charts while always retaining trade days and endpoints.
       if (daily.has(key) || index % Math.max(1, Math.ceil(dayCount / 180)) === 0 || index === dayCount) {
         points.push({
@@ -98,18 +107,18 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
       cursor.setDate(cursor.getDate() + 1);
     }
     return points.length === 1 ? [{ date: "Start", fullDate: "Start", cumulative: 0 }, points[0]] : points;
-  }, [filteredTrades, asOfDate]);
+  }, [filteredTrades, asOfDate, timezone]);
 
   const calendarData = useMemo(() => {
     const daily: Record<string, { pnl: number; count: number }> = {};
-    trades.forEach((t) => {
-      const day = new Date(t.close_time).toISOString().slice(0, 10);
+    validTrades.forEach((t) => {
+      const day = zonedDateKey(new Date(t.close_time), timezone);
       daily[day] ??= { pnl: 0, count: 0 };
-      daily[day].pnl += Number(t.pnl);
+      daily[day].pnl = sum([daily[day].pnl, t.pnl]);
       daily[day].count++;
     });
     return daily;
-  }, [trades]);
+  }, [validTrades, timezone]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -132,7 +141,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
     });
     return { pnl, count, days, firstDay: Math.max(1, week * 7 - startDow + 1), lastDay: Math.min(daysInMonth, (week + 1) * 7 - startDow) };
   });
-  const now = new Date();
+  const todayKey = zonedDateKey(scopeTime, timezone);
   const dataMax = Math.max(...chartData.map((point) => point.cumulative), 0);
   const dataMin = Math.min(...chartData.map((point) => point.cumulative), 0);
   const gradientOffset = dataMax === 0 && dataMin === 0 ? 1 : dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
@@ -148,7 +157,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
   return (
     <div className="trading-dashboard">
       <div className="dashboard-toolbar">
-        <p className="mr-auto text-xs text-muted-foreground">{{ "1D": "Last 24 hours", "1W": "Last 7 days", "1M": "Last month", "3M": "Last 3 months", "ALL": "All time" }[timeframe]} · Closed trades</p>
+        <p className="mr-auto text-xs text-muted-foreground">{{ "1D": "Last 24 hours", "1W": "Last 7 days", "1M": "Last 30 days", "3M": "Last 3 months", "ALL": "All time" }[timeframe]} · Closed trades</p>
         <Popover>
           <PopoverTrigger asChild><button className="customize-button"><LayoutDashboard size={17} />Customize</button></PopoverTrigger>
           <PopoverContent align="end" className="dashboard-customize">
@@ -174,7 +183,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
         <article className="dashboard-stat">
           <div className="dashboard-stat-icon"><Trophy size={25} strokeWidth={1.8} /></div>
           <div className="dashboard-stat-content">
-            <h2>Win rate</h2><p className="dashboard-stat-value">{winRate.toFixed(0)}%</p>
+            <h2 title="Winning trades divided by wins and losses. Breakeven trades are excluded, as in Analysis.">Win rate</h2><p className="dashboard-stat-value">{winRate.toFixed(0)}%</p>
             <div className="win-rate-track" role="meter" aria-label="Win rate" aria-valuenow={Math.round(winRate)} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${winRate}%` }} /></div>
           </div>
         </article>
@@ -217,7 +226,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
 
         {showCalendar && <section className="dashboard-panel calendar-panel" aria-label="Monthly profit and loss">
           <div className="calendar-heading">
-            <h2>Monthly P&L <span className="text-xs font-normal text-muted-foreground">UTC</span></h2>
+            <h2>Monthly P&L <span className="text-xs font-normal text-muted-foreground">{timezone}</span></h2>
             <div className="calendar-controls"><p className="calendar-total">Monthly: <strong className={pnlTone(monthlyPnl)}>{money(monthlyPnl)}</strong></p>
               <div className="calendar-navigation"><button aria-label="Previous month" onClick={() => { setCurrentDate(new Date(year, month - 1, 1)); setSelectedDay(null); }}><ChevronLeft size={17} /></button><span aria-live="polite">{monthLabel}</span><button aria-label="Next month" onClick={() => { setCurrentDate(new Date(year, month + 1, 1)); setSelectedDay(null); }}><ChevronRight size={17} /></button></div>
             </div>
@@ -229,7 +238,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
                 {week.days.map((entry, column) => {
                   if (!entry) return <div key={column} className="calendar-blank" aria-hidden="true" />;
                   const { day, key, data } = entry;
-                  const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+                  const today = key === todayKey;
                   return <button key={column} className={cn("pnl-day", data && (data.pnl < 0 ? "loss-day" : data.pnl > 0 ? "profit-day" : "flat-day"), today && "today")} aria-label={`${monthLabel} ${day}, ${data ? `${data.count} trades, ${money(data.pnl)}` : "no trades"}`} aria-current={today ? "date" : undefined} onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
                     <span className="pnl-day-heading"><span className="pnl-day-number">{day}</span>{data && <span className="pnl-day-count" aria-hidden="true">{data.count}</span>}</span>{data && <CalendarPnlValue title={money(data.pnl)} formatted={compactMoney(data.pnl)} />}
                   </button>;
@@ -248,7 +257,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
                 {week.days.map((entry) => {
                   if (!entry?.data) return null;
                   const { day, key, data, weekday } = entry;
-                  const today = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+                  const today = key === todayKey;
                   return <button key={key} type="button" className="mobile-pnl-day" aria-label={`${monthLabel} ${day}, ${data.count} ${data.count === 1 ? "trade" : "trades"}, ${money(data.pnl)}`} aria-current={today ? "date" : undefined} aria-haspopup="dialog" onClick={(event) => setSelectedDay({ date: key, rect: event.currentTarget.getBoundingClientRect() })}>
                     <span className="mobile-pnl-date" aria-hidden="true">{day}</span>
                     <span className="mobile-pnl-day-label"><span>{weekday}{today && <span className="mobile-pnl-today">Today</span>}</span></span>
@@ -264,7 +273,7 @@ export function DashboardView({ trades, isLoading = false, initialDate, initialT
         </section>}
       </div>
       {!showCalendar && !showPerformance && <div className="dashboard-hidden-state">Your widgets are hidden. Select Customize to bring them back.</div>}
-      {selectedDay && <DayTradesPopup anchorRect={selectedDay.rect} dateStr={selectedDay.date} trades={trades.filter((trade) => new Date(trade.close_time).toISOString().slice(0, 10) === selectedDay.date)} onClose={() => setSelectedDay(null)} />}
+      {selectedDay && <DayTradesPopup anchorRect={selectedDay.rect} dateStr={selectedDay.date} trades={validTrades.filter((trade) => zonedDateKey(new Date(trade.close_time), timezone) === selectedDay.date)} onClose={() => setSelectedDay(null)} />}
     </div>
   );
 }

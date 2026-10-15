@@ -11,6 +11,8 @@ export class CoachProviderError extends Error {
   ) { super(message); }
 }
 
+export const DEFAULT_COACH_MODEL = "google/gemini-2.5-flash";
+
 const endpoint = "https://openrouter.ai/api/v1";
 const timeoutMs = 110_000;
 
@@ -27,33 +29,48 @@ export function providerError(status: number, body: unknown): CoachProviderError
 }
 
 async function requestOpenRouter(path: string, key: string, init: RequestInit, fetcher: typeof fetch): Promise<unknown> {
-  let response: Response;
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   try {
-    response = await fetcher(`${endpoint}${path}`, {
+    const response = await fetcher(`${endpoint}${path}`, {
       ...init,
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...init.headers },
       signal: controller.signal,
     });
+    const body: unknown = await response.json().catch(error => { if (timedOut) throw error; return null; });
+    if (!response.ok) throw providerError(response.status, body);
+    if (!body || typeof body !== "object")
+      throw new CoachProviderError("invalid_response", "OpenRouter returned an unreadable response. Please retry.", 502, true);
+    if ("error" in body) {
+      const code = (body as { error?: { code?: unknown } }).error?.code;
+      throw providerError(typeof code === "number" ? code : 502, body);
+    }
+    return body;
   } catch (error) {
+    if (error instanceof CoachProviderError) throw error;
     if (timedOut || (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")))
       throw new CoachProviderError("timeout", "The AI provider timed out. Retry with a shorter review period.", 504, true);
     throw new CoachProviderError("network", "The AI provider could not be reached. Check the connection and retry.", 502, true);
   } finally {
     clearTimeout(timer);
   }
-  const body: unknown = await response.json().catch(() => ({}));
-  if (!response.ok) throw providerError(response.status, body);
-  return body;
 }
 
-export async function checkCoachProvider(key: string, fetcher: typeof fetch = fetch): Promise<{ limitRemaining: number | null }> {
+export async function checkCoachProvider(key: string, fetcher: typeof fetch = fetch, model = DEFAULT_COACH_MODEL): Promise<{ limitRemaining: number | null; model: string; checkedAt: string }> {
   const body = await requestOpenRouter("/key", key, { method: "GET" }, fetcher) as { data?: { limit_remaining?: unknown } };
   const remaining = body.data?.limit_remaining;
+  if (!body.data || !(remaining === null || (typeof remaining === "number" && Number.isFinite(remaining))))
+    throw new CoachProviderError("invalid_response", "OpenRouter could not confirm the key status. Please retry.", 502, true);
   if (typeof remaining === "number" && remaining <= 0) throw providerError(402, {});
-  return { limitRemaining: typeof remaining === "number" ? remaining : null };
+  // The user catalogue respects provider/privacy restrictions, unlike the public list.
+  for (let offset = 0; offset < 10000; offset += 500) {
+    const catalogue = await requestOpenRouter(`/models/user?limit=500&offset=${offset}`, key, { method: "GET" }, fetcher) as { data?: Array<{ id?: string }> };
+    if (!Array.isArray(catalogue.data)) throw new CoachProviderError("invalid_response", "OpenRouter could not confirm model availability. Please retry.", 502, true);
+    if (catalogue.data.some(item => item?.id === model)) return { limitRemaining: typeof remaining === "number" ? remaining : null, model, checkedAt: new Date().toISOString() };
+    if (catalogue.data.length < 500) throw providerError(404, {});
+  }
+  throw new CoachProviderError("invalid_response", "OpenRouter's model list could not be fully checked. Please retry.", 502, true);
 }
 
 export async function generateCoachCompletion(
@@ -69,6 +86,7 @@ export async function generateCoachCompletion(
       model,
       messages: [{ role: "system", content: systemInstruction }, { role: "user", content: prompt }],
       temperature: 0.3,
+      response_format: { type: "json_object" },
       max_tokens: 6500,
     }),
   }, fetcher) as { choices?: Array<{ message?: { content?: unknown }; finish_reason?: string }> };

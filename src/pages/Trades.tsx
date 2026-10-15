@@ -1,24 +1,19 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import TradeDateTimePicker from '@/components/TradeDateTimePicker';
-import { holdingDuration, formatHoldingDuration, localTimeZone } from '@/lib/holdingTime';
+import { formatHoldingDuration } from '@/lib/holdingTime';
 import LoadError from '@/components/LoadError';
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { toUtcTimestamp } from "@/lib/tradeTimestamps";
+import { toUtcTimestamp, toLocalDateTime, draftHoldingDuration } from "@/lib/tradeTimestamps";
 import { useTrades, useAddTrade, useDeleteTrade, useDeleteTrades, calculatePnl, Trade, useAllJournals } from "@/hooks/useTrades";
 import { Plus, Trash2, Activity, ArrowUpRight, ArrowDownRight, X } from "lucide-react";
 import { toast } from "sonner";
 import TradeHistory from "@/components/TradeHistory";
 import EditTradeModal from "@/components/EditTradeModal";
 import ShareTradeModal from "@/components/ShareTradeModal";
-/** Return current local time as YYYY-MM-DDThh:mm for datetime-local inputs. */
-function localNow(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 // ─── Main Component ────────────────────────────────────────────
 export default function Trades() {
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const { data: trades = [], isLoading, isError, refetch } = useTrades();
   const addTrade = useAddTrade();
   const deleteTrade = useDeleteTrade();
@@ -39,8 +34,8 @@ export default function Trades() {
     exitPrice: '',
     lotSize: '0.1',
     riskPct: '',
-    openDate: localNow(),
-    closeDate: localNow(),
+    openDate: toLocalDateTime(new Date().toISOString(), timezone),
+    closeDate: toLocalDateTime(new Date().toISOString(), timezone),
   });
 
   // Auto-open form when navigated with ?add=true
@@ -66,10 +61,10 @@ export default function Trades() {
     const lot = parseFloat(form.lotSize);
     if (isNaN(entry) || isNaN(exit) || isNaN(lot)) return;
     try {
-      await addTrade.mutateAsync({ symbol: 'XAUUSD', risk_pct: form.riskPct.trim() ? Number(form.riskPct) : null, direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: toUtcTimestamp(form.openDate), close_time: toUtcTimestamp(form.closeDate) });
+      await addTrade.mutateAsync({ symbol: 'XAUUSD', risk_pct: form.riskPct.trim() ? Number(form.riskPct) : null, direction: form.direction, entry_price: entry, exit_price: exit, lot_size: lot, open_time: toUtcTimestamp(form.openDate, undefined, timezone), close_time: toUtcTimestamp(form.closeDate, undefined, timezone) });
       toast.success("Trade added!");
       setShowForm(false);
-      setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', riskPct: '', openDate: localNow(), closeDate: localNow() });
+      setForm({ direction: 'Long', entryPrice: '', exitPrice: '', lotSize: '0.1', riskPct: '', openDate: toLocalDateTime(new Date().toISOString(), timezone), closeDate: toLocalDateTime(new Date().toISOString(), timezone) });
     } catch (err: any) { toast.error(err.message); }
   }
 
@@ -158,7 +153,7 @@ export default function Trades() {
             </div>
             <TradeDateTimePicker label="Open Date & Time" value={form.openDate} onChange={openDate => setForm(f => ({ ...f, openDate }))} />
                 <TradeDateTimePicker label="Close Date & Time" value={form.closeDate} onChange={closeDate => setForm(f => ({ ...f, closeDate }))} />
-                <div className="sm:col-span-2 text-xs text-muted-foreground" aria-live="polite">Holding duration: <strong className="text-foreground">{formatHoldingDuration(holdingDuration({ open_time: form.openDate, close_time: form.closeDate }))}</strong><span className="block mt-1">Local time · {localTimeZone()}. Close must be on or after open.</span></div>
+                <div className="sm:col-span-2 text-xs text-muted-foreground" aria-live="polite">Holding duration: <strong className="text-foreground">{formatHoldingDuration(draftHoldingDuration(form.openDate, form.closeDate, timezone))}</strong><span className="block mt-1">{timezone}. Close must be on or after open.</span></div>
             <div className="flex items-end">
               {previewPnl !== null && (
                 <div className={`text-2xl font-extrabold font-mono-num ${previewPnl >= 0 ? 'text-profit' : 'text-loss'}`}>

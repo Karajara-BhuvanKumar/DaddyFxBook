@@ -1,5 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { checkCoachProvider, CoachProviderError, generateCoachCompletion } from "./openrouter.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.100.0";
+import { checkCoachProvider, CoachProviderError, DEFAULT_COACH_MODEL, generateCoachCompletion } from "./openrouter.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -27,18 +27,18 @@ Deno.serve(async (request) => {
     const { data: { user }, error } = await client.auth.getUser(authorization.slice(7));
     if (error || !user) return json(401, { code: "authentication", message: "Your session expired. Sign in again to generate a review." });
 
-    const key = Deno.env.get("OPENROUTER_API_KEY");
+    const key = Deno.env.get("OPENROUTER_API_KEY")?.trim();
     if (!key) return json(503, { code: "configuration", message: "The coach is not connected to OpenRouter on the server. An administrator needs to configure the provider key." });
+    const model = Deno.env.get("OPENROUTER_MODEL")?.trim() || DEFAULT_COACH_MODEL;
     const body = await request.json().catch(() => null) as { action?: unknown; prompt?: unknown; systemInstruction?: unknown } | null;
     if (body?.action === "status") {
-      const status = await checkCoachProvider(key);
-      return json(200, { ready: true, limitRemaining: status.limitRemaining });
+      const status = await checkCoachProvider(key, fetch, model);
+      return json(200, { ready: true, ...status });
     }
     if (body?.action !== "generate" || typeof body.prompt !== "string" || typeof body.systemInstruction !== "string"
       || !body.prompt.length || body.prompt.length > 250_000 || !body.systemInstruction.length || body.systemInstruction.length > 12_000)
       return json(400, { code: "request", message: "The review request is invalid or too large." });
 
-    const model = Deno.env.get("OPENROUTER_MODEL") || "google/gemini-2.5-flash";
     const result = await generateCoachCompletion(key, model, body.prompt, body.systemInstruction);
     return json(200, result);
   } catch (error) {

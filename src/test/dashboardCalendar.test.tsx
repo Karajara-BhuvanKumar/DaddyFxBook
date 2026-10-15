@@ -17,9 +17,10 @@ function renderCalendar(date: Date, days: [number, number][]) {
     ...previewTrades[0],
     id: `test-${index}`,
     pnl,
+    open_time: new Date(date.getFullYear(), date.getMonth(), day, 9).toISOString(),
     close_time: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T12:00:00Z`,
   }));
-  const view = render(<MemoryRouter><DashboardView trades={trades} initialDate={date} initialTimeframe="ALL" /></MemoryRouter>);
+  const view = render(<MemoryRouter><DashboardView trades={trades} initialDate={date} initialTimeframe="ALL" asOfDate={new Date(date.getFullYear(), date.getMonth() + 1, 1)} /></MemoryRouter>);
   return { ...view, list: within(view.container.querySelector(".mobile-pnl-list") as HTMLElement) };
 }
 

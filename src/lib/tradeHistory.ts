@@ -1,3 +1,5 @@
+import { calendarDay, localHourToUtc } from './marketTime';
+import { toUtcTimestamp } from './tradeTimestamps';
 import type { Trade } from '@/hooks/useTrades';
 import { holdingDuration, formatHoldingDuration, formatTradeDateTime, timestampMs } from './holdingTime';
 
@@ -21,12 +23,12 @@ export const DEFAULT_FILTERS: HistoryFilters = { pnl: 'All', direction: 'All', p
 export type Sort = { column: ColumnId; direction: 'asc' | 'desc' };
 export const DEFAULT_SORT: Sort[] = [{ column: 'close_time', direction: 'desc' }];
 export const isFiltersActive = (f: HistoryFilters) => f.pnl !== 'All' || f.direction !== 'All' || f.period !== 'All Time' || f.rules.some(r => r.value.trim()) || f.groups.some(g => g.rules.some(r => r.value.trim()));
-export function columnValue(t: HistoryTrade, id: ColumnId): string | number | null {
+export function columnValue(t: HistoryTrade, id: ColumnId, timezone = 'Asia/Kolkata'): string | number | null {
   switch (id) {
     case 'openClose': case 'close_time': return timestampMs(t.close_time);
     case 'open_time': return timestampMs(t.open_time);
     case 'duration': { const ms = holdingDuration(t); return ms === null ? null : ms / 60000; }
-    case 'day': return new Date(t.close_time).toLocaleDateString('en-US', { weekday: 'long' });
+    case 'day': return new Date(t.close_time).toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
     // Stored realized P&L is used when no separately recorded net figure exists.
     case 'net_pnl': return t.net_pnl ?? Number(t.pnl);
     case 'commission': case 'swap': return t[id] == null ? null : Number(t[id]);
@@ -36,48 +38,54 @@ export function columnValue(t: HistoryTrade, id: ColumnId): string | number | nu
     default: return t[id];
   }
 }
-export function formatHistoryDate(value: string) {
-  return formatTradeDateTime(value);
+export function formatHistoryDate(value: string, timezone = 'Asia/Kolkata') {
+  return formatTradeDateTime(value, timezone);
 }
-export function columnText(t: HistoryTrade, id: ColumnId): string {
+export function columnText(t: HistoryTrade, id: ColumnId, timezone = 'Asia/Kolkata'): string {
   if (id === 'duration') return formatHoldingDuration(holdingDuration(t));
-  if (id === 'openClose') return `Open: ${formatHistoryDate(t.open_time)}; Close: ${formatHistoryDate(t.close_time)}`;
-  if (id === 'open_time' || id === 'close_time') return formatHistoryDate(t[id]);
-  const value = columnValue(t, id);
+  if (id === 'openClose') return `Open: ${formatHistoryDate(t.open_time, timezone)}; Close: ${formatHistoryDate(t.close_time, timezone)}`;
+  if (id === 'open_time' || id === 'close_time') return formatHistoryDate(t[id], timezone);
+  const value = columnValue(t, id, timezone);
   if (value === null) return 'Not recorded';
   return String(value);
 }
-export function dateBounds(f: HistoryFilters, now: Date): [number, number] {
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const end = new Date(start); end.setDate(end.getDate() + 1);
+export function dateBounds(f: HistoryFilters, now: Date, timezone = 'Asia/Kolkata'): [number, number] {
+  const start = new Date(calendarDay(now, timezone));
+  const end = new Date(start); end.setUTCDate(end.getUTCDate() + 1);
   switch (f.period) {
     case 'All Time': return [-Infinity, Infinity];
     case 'Today': break;
-    case 'This Week': start.setDate(start.getDate() - (start.getDay() + 6) % 7); break;
-    case 'Last 30 Days': start.setDate(start.getDate() - 29); break;
-    case 'This Month': start.setDate(1); break;
-    case 'Last Month': end.setDate(1); start.setDate(1); start.setMonth(start.getMonth() - 1); break;
+    case 'This Week': start.setUTCDate(start.getUTCDate() - (start.getUTCDay() + 6) % 7); break;
+    case 'Last 30 Days': start.setUTCDate(start.getUTCDate() - 29); break;
+    case 'This Month': start.setUTCDate(1); break;
+    case 'Last Month': end.setTime(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1)); start.setUTCDate(1); start.setUTCMonth(start.getUTCMonth() - 1); break;
     case 'Last 3 Months': {
-      const day = start.getDate(); start.setDate(1); start.setMonth(start.getMonth() - 3);
-      const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
-      start.setDate(Math.min(day, lastDay)); break;
+      const day = start.getUTCDate(); start.setUTCDate(1); start.setUTCMonth(start.getUTCMonth() - 3);
+      const lastDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0)).getUTCDate();
+      start.setUTCDate(Math.min(day, lastDay)); break;
     }
     case 'Custom': {
-      const from = f.start ? new Date(`${f.start}T00:00:00`).getTime() : -Infinity;
-      const until = f.end ? new Date(`${f.end}T00:00:00`) : null;
-      if (until) until.setDate(until.getDate() + 1);
-      return [from, until?.getTime() ?? Infinity];
+      const from = f.start ? new Date(`${f.start}T00:00:00Z`).getTime() : -Infinity;
+      const until = f.end ? new Date(`${f.end}T00:00:00Z`) : null;
+      if (until) until.setUTCDate(until.getUTCDate() + 1);
+      return [Number.isFinite(from) ? localHourToUtc(from, 0, timezone) : from, until ? localHourToUtc(+until, 0, timezone) : Infinity];
     }
   }
-  return [start.getTime(), end.getTime()];
+  return [localHourToUtc(+start, 0, timezone), localHourToUtc(+end, 0, timezone)];
 }
-function matches(t: HistoryTrade, rule: Condition) {
+function conditionTimestamp(value: string, timezone: string) {
+  value = value.trim();
+  // Explicit offsets identify an instant; only wall-time input uses the saved zone.
+  if (/T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)) return timestampMs(value) ?? NaN;
+  try { return Date.parse(toUtcTimestamp(value.length === 10 ? `${value}T00:00` : value, undefined, timezone)); } catch { return NaN; }
+}
+function matches(t: HistoryTrade, rule: Condition, timezone: string) {
   if (!rule.value.trim()) return true;
-  const actual = columnValue(t, rule.field);
-  if (rule.operator === 'contains') return columnText(t, rule.field).toLowerCase().includes(rule.value.trim().toLowerCase());
+  const actual = columnValue(t, rule.field, timezone);
+  if (rule.operator === 'contains') return columnText(t, rule.field, timezone).toLowerCase().includes(rule.value.trim().toLowerCase());
   if (actual === null) return false;
   const expected = typeof actual === 'number'
-    ? (['openClose', 'open_time', 'close_time'].includes(rule.field) ? new Date(rule.value).getTime() : Number(rule.value))
+    ? (['openClose', 'open_time', 'close_time'].includes(rule.field) ? conditionTimestamp(rule.value, timezone) : Number(rule.value))
     : rule.value.trim().toLowerCase();
   const value = typeof actual === 'string' ? actual.toLowerCase() : actual;
   if (rule.operator === 'eq') return value === expected;
@@ -85,22 +93,22 @@ function matches(t: HistoryTrade, rule: Condition) {
   if (rule.operator === 'gt') return value > expected;
   return value < expected;
 }
-export function filterHistory(trades: HistoryTrade[], f: HistoryFilters, columns: Partial<Record<ColumnId, string>>, now = new Date()) {
-  const [start, end] = dateBounds(f, now);
+export function filterHistory(trades: HistoryTrade[], f: HistoryFilters, columns: Partial<Record<ColumnId, string>>, now = new Date(), timezone = 'Asia/Kolkata') {
+  const [start, end] = dateBounds(f, now, timezone);
   return trades.filter(t => {
     const time = timestampMs(t.close_time) ?? timestampMs(t.open_time);
     return (f.pnl === 'All' || (f.pnl === 'Profitable' ? Number(t.pnl) > 0 : Number(t.pnl) < 0))
       && (f.direction === 'All' || t.direction === f.direction)
       && (f.period === 'All Time' || (time !== null && time >= start && time < end))
-      && f.rules.every(r => matches(t, r))
-      && f.groups.every(g => { const rules = g.rules.filter(r => r.value.trim()); return !rules.length || (g.match === 'all' ? rules.every(r => matches(t, r)) : rules.some(r => matches(t, r))); })
-      && Object.entries(columns).every(([id, value]) => !value || columnText(t, id as ColumnId).toLowerCase().includes(value.trim().toLowerCase()));
+      && f.rules.every(r => matches(t, r, timezone))
+      && f.groups.every(g => { const rules = g.rules.filter(r => r.value.trim()); return !rules.length || (g.match === 'all' ? rules.every(r => matches(t, r, timezone)) : rules.some(r => matches(t, r, timezone))); })
+      && Object.entries(columns).every(([id, value]) => !value || columnText(t, id as ColumnId, timezone).toLowerCase().includes(value.trim().toLowerCase()));
   });
 }
-export function sortHistory(trades: HistoryTrade[], sorts: Sort[]) {
+export function sortHistory(trades: HistoryTrade[], sorts: Sort[], timezone = 'Asia/Kolkata') {
   return [...trades].sort((a, b) => {
     for (const sort of sorts) {
-      const left = columnValue(a, sort.column), right = columnValue(b, sort.column);
+      const left = columnValue(a, sort.column, timezone), right = columnValue(b, sort.column, timezone);
       if (left === right) continue;
       if (left === null) return 1;
       if (right === null) return -1;
@@ -110,10 +118,10 @@ export function sortHistory(trades: HistoryTrade[], sorts: Sort[]) {
     return 0;
   });
 }
-export function exportHistoryRows(trades: HistoryTrade[], columns: ColumnId[]) {
+export function exportHistoryRows(trades: HistoryTrade[], columns: ColumnId[], timezone = 'Asia/Kolkata') {
   return [columns.map(id => COLUMNS.find(c => c[0] === id)![1]), ...trades.map(t => columns.map(id => {
-    const value = columnValue(t, id);
-    return typeof value === 'number' && !['openClose', 'open_time', 'close_time', 'duration'].includes(id) ? value : columnText(t, id);
+    const value = columnValue(t, id, timezone);
+    return typeof value === 'number' && !['openClose', 'open_time', 'close_time', 'duration'].includes(id) ? value : columnText(t, id, timezone);
   }))];
 }
 export function historyCsv(rows: (string | number)[][]) {

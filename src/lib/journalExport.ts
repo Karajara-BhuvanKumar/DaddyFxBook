@@ -1,12 +1,13 @@
+import { localHourToUtc } from './marketTime';
 import type { Trade, Journal, Checklist } from '@/hooks/useTrades';
 import { buildStrategySummary, parseStrategySetup } from './strategySetup';
-import { tradeTimeParts, localTimeZone, holdingDuration, formatHoldingDuration } from './holdingTime';
+import { tradeTimeParts, holdingDuration, formatHoldingDuration } from './holdingTime';
 
 export interface JournalScreenshot { id: string; trade_id: string; image_url: string; signed_url?: string }
 export interface ExportData { trades: Trade[]; journals: Journal[]; checklists: Checklist[]; screenshots: JournalScreenshot[] }
-export interface ExportOptions { includeFields: Record<string, boolean>; formats?: string[] }
+export interface ExportOptions { includeFields: Record<string, boolean>; formats?: string[]; timezone?: string }
 export type ExportScope = 'current' | 'journaled' | 'all' | 'selected';
-export interface JournalFilters { search: string; days: string; start?: string; end?: string; status: 'ALL' | 'JOURNALED' | 'PENDING'; sort: string }
+export interface JournalFilters { timezone?: string; search: string; days: string; start?: string; end?: string; status: 'ALL' | 'JOURNALED' | 'PENDING'; sort: string }
 export const DEFAULT_JOURNAL_FILTERS: JournalFilters = { search: '', days: 'all', status: 'ALL', sort: 'newest' };
 export const EXPORT_FIELDS = [
   ['trade', 'Trade details'], ['notes', 'Analysis & reflections'], ['review', 'Risk, rating & tags'],
@@ -16,10 +17,11 @@ export const DEFAULT_EXPORT_FIELDS = Object.fromEntries(EXPORT_FIELDS.map(([id])
 
 export function filterJournalTrades(trades: Trade[], journals: Journal[], filters: JournalFilters, now = new Date()) {
   const journaled = new Set(journals.map(j => j.trade_id));
+  const timezone = filters.timezone ?? 'Asia/Kolkata';
   const cutoff = new Date(now);
-  if (filters.days !== 'all' && filters.days !== 'custom') cutoff.setDate(cutoff.getDate() - Number(filters.days));
-  const start = filters.start ? new Date(`${filters.start}T00:00:00`) : null;
-  const end = filters.end ? new Date(`${filters.end}T23:59:59.999`) : null;
+  if (filters.days !== 'all' && filters.days !== 'custom') cutoff.setTime(+now - Number(filters.days) * 86400000);
+  const start = filters.start ? new Date(localHourToUtc(Date.parse(`${filters.start}T00:00:00Z`), 0, timezone)) : null;
+  const end = filters.end ? new Date(localHourToUtc(Date.parse(`${filters.end}T00:00:00Z`) + 86400000, 0, timezone) - 1) : null;
   return trades.filter(t => (!filters.search.trim() || t.symbol.toLowerCase().includes(filters.search.trim().toLowerCase()))
     && (filters.days === 'all' || (filters.days === 'custom'
       ? (!start || new Date(t.open_time) >= start) && (!end || new Date(t.open_time) <= end)
@@ -57,9 +59,9 @@ export function journalExportSections(trade: Trade, data: ExportData, options: E
       ['Trade ID', trade.id], ['Journal status', j ? 'Journaled' : 'Pending'], ['Symbol', trade.symbol], ['Direction', trade.direction],
       ['Entry', number(trade.entry_price)], ['Exit', number(trade.exit_price)], ['Size', number(trade.lot_size)], ['P&L', number(trade.pnl)],
       ['Trade date/time (UTC)', date(trade.open_time)], ['Close date/time (UTC)', date(trade.close_time)],
-      ['Opening date', tradeTimeParts(trade.open_time).date], ['Opening time', tradeTimeParts(trade.open_time).time],
-      ['Closing date', tradeTimeParts(trade.close_time).date], ['Closing time', tradeTimeParts(trade.close_time).time],
-      ['Display timezone', localTimeZone()], ['Holding duration', formatHoldingDuration(holdingDuration(trade))],
+      ['Opening date', tradeTimeParts(trade.open_time, options.timezone).date], ['Opening time', tradeTimeParts(trade.open_time, options.timezone).time],
+      ['Closing date', tradeTimeParts(trade.close_time, options.timezone).date], ['Closing time', tradeTimeParts(trade.close_time, options.timezone).time],
+      ['Display timezone', options.timezone ?? 'Asia/Kolkata'], ['Holding duration', formatHoldingDuration(holdingDuration(trade))],
       ['Stop loss', number(trade.stop_loss)], ['Take profit', number(trade.take_profit)], ['Trade session', trade.session],
     ] },
     { id: 'notes', title: 'Analysis & reflections', fields: [

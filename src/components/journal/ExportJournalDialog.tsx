@@ -1,3 +1,5 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
+import { formatTradeDateTime } from '@/lib/holdingTime';
 import { useEffect, useMemo, useState } from 'react';
 import { Download, FileText, FileSpreadsheet, Loader2, AlertCircle, Image } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +27,7 @@ const EMPTY: ExportData = { trades: [], journals: [], checklists: [], screenshot
 export function ExportJournalDialog({ currentTradeId = null, filters = DEFAULT_JOURNAL_FILTERS }: { currentTradeId?: string | null; filters?: JournalFilters }) {
   const { user } = useAuth();
   const userId = user?.id;
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const [open, setOpen] = useState(false);
   const [scope, setScope] = useState<ExportScope>('current');
   const [format, setFormat] = useState('pdf');
@@ -61,7 +64,7 @@ export function ExportJournalDialog({ currentTradeId = null, filters = DEFAULT_J
     setBusy(true); setProgress('Preparing your journal…');
     try {
       const exporters = await import('@/lib/exportUtils');
-      const options = { includeFields: fields };
+      const options = { includeFields: fields, timezone };
       let missing = 0;
       if (format === 'pdf') {
         setProgress('Preparing report and screenshots…');
@@ -102,7 +105,7 @@ export function ExportJournalDialog({ currentTradeId = null, filters = DEFAULT_J
           {scope === 'selected' && <div className="space-y-2 rounded-xl border border-border dark:border-white/10 p-3">
             <input aria-label="Find trades to export" placeholder="Find a symbol…" value={search} onChange={e => setSearch(e.target.value)} className="h-11 w-full rounded-lg border border-border dark:border-white/10 bg-secondary px-3 text-sm" />
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs"><span className="text-muted-foreground">{count} selected for export</span><div className="flex gap-3"><button type="button" className="min-h-9 text-blue-400" onClick={() => setSelectedIds(new Set([...selectedIds, ...candidates.map(t => t.id)]))}>Select visible</button><button type="button" className="min-h-9 text-muted-foreground" onClick={() => setSelectedIds(new Set())}>Clear</button></div></div>
-            <div className="max-h-48 overflow-y-auto">{candidates.length ? candidates.map(t => <label key={t.id} className="flex cursor-pointer items-center gap-3 border-t border-border dark:border-white/5 py-3"><input aria-label={`Select ${t.symbol} ${t.id}`} type="checkbox" checked={selectedIds.has(t.id)} onChange={() => toggle(t.id)} className="h-4 w-4 accent-blue-500" /><span className="min-w-0 flex-1 text-sm"><strong>{t.symbol}</strong><span className="block text-xs text-muted-foreground">{t.direction} · {new Date(t.open_time).toLocaleString()}</span></span><span className={cn('text-xs font-semibold', Number(t.pnl) >= 0 ? 'text-blue-400' : 'text-red-700 dark:text-red-400')}>{Number(t.pnl).toFixed(2)}</span></label>) : <p className="py-4 text-center text-sm text-muted-foreground">No trades match these filters.</p>}</div>
+            <div className="max-h-48 overflow-y-auto">{candidates.length ? candidates.map(t => <label key={t.id} className="flex cursor-pointer items-center gap-3 border-t border-border dark:border-white/5 py-3"><input aria-label={`Select ${t.symbol} ${t.id}`} type="checkbox" checked={selectedIds.has(t.id)} onChange={() => toggle(t.id)} className="h-4 w-4 accent-blue-500" /><span className="min-w-0 flex-1 text-sm"><strong>{t.symbol}</strong><span className="block text-xs text-muted-foreground">{t.direction} · {formatTradeDateTime(t.open_time, timezone)}</span></span><span className={cn('text-xs font-semibold', Number(t.pnl) >= 0 ? 'text-blue-400' : 'text-red-700 dark:text-red-400')}>{Number(t.pnl).toFixed(2)}</span></label>) : <p className="py-4 text-center text-sm text-muted-foreground">No trades match these filters.</p>}</div>
           </div>}
           <fieldset className="min-w-0"><legend className="mb-3 text-sm font-semibold">2. Export format</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{FORMATS.map(item => <label key={item.id} className={cn('relative cursor-pointer rounded-xl border p-3', format === item.id ? 'border-blue-500/60 bg-blue-500/10' : 'border-border dark:border-white/[0.08] bg-foreground/[0.025] dark:bg-white/[0.025]')}><input className="absolute right-3 top-3 h-4 w-4 accent-blue-500" type="radio" name="export-format" aria-label={item.label} checked={format === item.id} onChange={() => setFormat(item.id)} /><item.icon className="mb-3 h-5 w-5 text-blue-400" /><strong className="block text-sm">{item.label}</strong><span className="mt-1 block text-xs text-muted-foreground">{item.detail}</span></label>)}</div></fieldset>
           <details className="rounded-xl border border-border dark:border-white/[0.08] p-3"><summary className="cursor-pointer text-sm font-semibold">Included sections <span className="ml-2 text-xs font-normal text-muted-foreground">{Object.values(fields).filter(Boolean).length} of {EXPORT_FIELDS.length}</span></summary><div className="mt-3 grid grid-cols-1 gap-1 sm:grid-cols-2">{EXPORT_FIELDS.map(([id, label]) => <label key={id} className="flex min-h-10 cursor-pointer items-center gap-2 text-xs"><input type="checkbox" className="h-4 w-4 accent-blue-500" checked={fields[id]} onChange={e => setFields(previous => ({ ...previous, [id]: e.target.checked }))} />{label}</label>)}</div></details>

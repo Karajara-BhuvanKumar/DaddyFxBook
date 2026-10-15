@@ -59,7 +59,7 @@ describe('analysis accounting', () => {
     trades[0].close_time = '2026-10-01T15:00:00+05:30';
     trades[1].close_time = '2026-10-01T10:00:00Z';
     trades[2].close_time = '2026-10-02T00:15:00+05:30';
-    const m = analyze(trades.reverse());
+    const m = analyzeTrades(trades.reverse(), [], 'All Time', 'All Trades', Date.parse('2026-10-10T00:00:00Z'), 'UTC');
     expect(m.chartData.map(p => p.cumulative)).toEqual([0, 100, 20, 70]);
     expect(m.maxDD).toBe(80);
     expect(m.dailyPnl).toEqual([['2026-10-01', 70]]);

@@ -1,3 +1,4 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowDown, ArrowUp, ArrowDownRight, ArrowUpRight, ChevronDown, ChevronRight, DollarSign, Download, FileSpreadsheet, FileText, Filter, GripVertical, Pencil, RotateCcw, Share2, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { Close as PopoverClose } from '@radix-ui/react-popover';
@@ -12,18 +13,20 @@ type Props = { trades: HistoryTrade[]; onEdit: (trade: Trade) => void; onShare: 
 const labelFor = (id: ColumnId) => COLUMNS.find(c => c[0] === id)![1];
 const money = (n: number, signed = false) => `${signed ? n >= 0 ? '+' : '-' : n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 function Cell({ trade: t, column: id }: { trade: HistoryTrade; column: ColumnId }) {
-  const value = columnValue(t, id);
-  if (id === 'openClose') return <div className="th-dates"><div>Open: <span>{formatHistoryDate(t.open_time)}</span></div><div>Close: <span>{formatHistoryDate(t.close_time)}</span></div></div>;
+  const { preferences: { timezone } } = useWorkspacePreferences();
+  const value = columnValue(t, id, timezone);
+  if (id === 'openClose') return <div className="th-dates"><div>Open: <span>{formatHistoryDate(t.open_time, timezone)}</span></div><div>Close: <span>{formatHistoryDate(t.close_time, timezone)}</span></div></div>;
   if (id === 'symbol') return <span className="th-symbol"><span className="th-coin"><DollarSign size={14} /></span><strong>{t.symbol}</strong></span>;
   if (id === 'direction') return <span className={`th-direction ${t.direction === 'Long' ? 'th-profit' : 'th-loss'}`}>{t.direction === 'Long' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}{t.direction}</span>;
-  if (id === 'source') return <span className="th-source"><Pencil size={13} />{columnText(t, id)}</span>;
+  if (id === 'source') return <span className="th-source"><Pencil size={13} />{columnText(t, id, timezone)}</span>;
   if (['pnl', 'net_pnl'].includes(id)) return <strong title={id === 'net_pnl' && t.net_pnl == null ? 'Stored realized P&L; separate fees are not recorded.' : undefined} className={`th-pnl ${Number(value) >= 0 ? 'th-profit' : 'th-loss'}`}>{money(Number(value), true)}</strong>;
   if (['entry_price', 'exit_price', 'commission', 'swap'].includes(id)) return value === null ? <span className="th-missing">Not recorded</span> : <strong>{money(Number(value))}</strong>;
-  if (id === 'notes') return <span className="th-notes">{columnText(t, id) || '—'}</span>;
-  return <span>{columnText(t, id)}</span>;
+  if (id === 'notes') return <span className="th-notes">{columnText(t, id, timezone) || '—'}</span>;
+  return <span>{columnText(t, id, timezone)}</span>;
 }
 
 export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Props) {
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
   const [order, setOrder] = useState<ColumnId[]>(COLUMNS.map(([id]) => id));
@@ -42,8 +45,8 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
   const columns = order.filter(id => visible.includes(id));
   const summaryColumns = columns.filter(id => ['symbol', 'direction', 'pnl'].includes(id));
   const activeColumnFilters = useMemo(() => columnFiltersOn ? Object.fromEntries(Object.entries(columnFilters).filter(([id]) => visible.includes(id as ColumnId))) : {}, [columnFiltersOn, columnFilters, visible]);
-  const filtered = useMemo(() => sortHistory(filterHistory(trades, filters, activeColumnFilters), sorts), [trades, filters, activeColumnFilters, sorts]);
-  useEffect(() => { setPage(1); setSelected(new Set()); }, [filters, activeColumnFilters, sorts, pageSize]);
+  const filtered = useMemo(() => sortHistory(filterHistory(trades, filters, activeColumnFilters, new Date(), timezone), sorts, timezone), [trades, filters, activeColumnFilters, sorts, timezone]);
+  useEffect(() => { setPage(1); setSelected(new Set()); }, [filters, activeColumnFilters, sorts, pageSize, timezone]);
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pages);
   const pageTrades = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -65,7 +68,7 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
   async function download(kind: 'xlsx' | 'csv') {
     setExporting(true);
     try {
-      const rows = exportHistoryRows(exportable, columns);
+      const rows = exportHistoryRows(exportable, columns, timezone);
       let blob: Blob;
       if (kind === 'xlsx') {
         const XLSX = await import('xlsx');
@@ -82,7 +85,7 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
   }
   const actions = (t: Trade) => <div className="th-row-actions"><button aria-label="Edit Trade" onClick={() => onEdit(t)}><Pencil size={16} /></button><button aria-label="Share Trade" onClick={() => onShare(t)}><Share2 size={16} /></button><button aria-label="Delete Trade" className="th-loss" onClick={() => onDelete(t.id)}><Trash2 size={16} /></button></div>;
   return <section className={`surface-card p-4 sm:p-6 th-history th-height-${height.toLowerCase()}`} aria-label="Trade History">
-    <div className="th-toolbar"><div className="th-title"><h3 className="text-base sm:text-[18px] font-bold text-foreground tracking-tight">Trade History <span className="text-xs font-normal text-muted-foreground">Local time</span></h3><span aria-live="polite" data-testid="history-count">{pageTrades.length} of {trades.length} trades</span></div>
+    <div className="th-toolbar"><div className="th-title"><h3 className="text-base sm:text-[18px] font-bold text-foreground tracking-tight">Trade History <span className="text-xs font-normal text-muted-foreground">{timezone}</span></h3><span aria-live="polite" data-testid="history-count">{pageTrades.length} of {filtered.length} {active ? `matching trades (${trades.length} total)` : "trades"}</span></div>
       <div className="th-toolbar-buttons">
         <button className="th-button" data-active={showFilters || active} aria-expanded={showFilters} aria-controls="trade-history-filters" onClick={() => setShowFilters(!showFilters)}><Filter size={18} />Filters{active && <i className="th-dot" />}</button>
         <Popover><PopoverTrigger asChild><button className="th-button"><SlidersHorizontal size={18} />View</button></PopoverTrigger>
@@ -124,7 +127,7 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
         {columns.map(id => <label key={id}>{labelFor(id)}<input aria-label={`Filter ${labelFor(id)}`} placeholder="Filter…" value={columnFilters[id] || ''} onChange={e => setColumnFilters({ ...columnFilters, [id]: e.target.value })} /></label>)}
       </div>}
       {pageTrades.map(t => <article className="th-mobile-card" key={t.id} data-selected={selected.has(t.id)}>
-        <button className="th-mobile-summary" aria-label={`Trade details for ${t.symbol} ${formatHistoryDate(t.close_time)}`} aria-expanded={expanded.has(t.id)} aria-controls={`trade-details-${t.id}`} onClick={() => setExpanded(toggle(expanded, t.id))}>
+        <button className="th-mobile-summary" aria-label={`Trade details for ${t.symbol} ${formatHistoryDate(t.close_time, timezone)}`} aria-expanded={expanded.has(t.id)} aria-controls={`trade-details-${t.id}`} onClick={() => setExpanded(toggle(expanded, t.id))}>
           <span className="th-mobile-summary-values">
             {summaryColumns.map(id => <span key={id} className={`th-mobile-summary-${id}`}><Cell trade={t} column={id} /></span>)}
             {!summaryColumns.length && <span>Trade details</span>}
@@ -147,8 +150,8 @@ export default function TradeHistory({ trades, onEdit, onShare, onDelete }: Prop
       {columns.map(id => <th key={id} aria-sort={sorts[0]?.column === id ? sorts[0].direction === 'asc' ? 'ascending' : 'descending' : 'none'} draggable onDragStart={e => e.dataTransfer.setData('text/plain', id)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); moveColumn(e.dataTransfer.getData('text/plain') as ColumnId, id); }}><button onClick={e => sortBy(id, e.shiftKey)}>{labelFor(id)}{sorts.some(s => s.column === id) && (sorts.find(s => s.column === id)!.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</button></th>)}<th><span className="sr-only">Actions</span></th></tr>
       {columnFiltersOn && <tr className="th-column-filters"><th />{columns.map(id => <th key={id}><input aria-label={`Filter ${labelFor(id)}`} placeholder="Filter…" value={columnFilters[id] || ''} onChange={e => setColumnFilters({ ...columnFilters, [id]: e.target.value })} /></th>)}<th /></tr>}
     </thead><tbody>
-      {pageTrades.map(t => <Fragment key={t.id}><tr className="th-trade-row"><td className="th-select-cell"><div><input aria-label={`Select trade ${t.id}`} type="checkbox" checked={selected.has(t.id)} onChange={() => setSelected(toggle(selected, t.id))} /><button aria-label={`Executions for ${t.symbol} ${formatHistoryDate(t.close_time)}`} aria-expanded={expanded.has(t.id)} onClick={() => setExpanded(toggle(expanded, t.id))}>{expanded.has(t.id) ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</button></div></td>{columns.map(id => <td key={id}><Cell trade={t} column={id} /></td>)}<td>{actions(t)}</td></tr>
-        {expanded.has(t.id) && <tr><td colSpan={columns.length + 2} className="th-executions-cell"><div className="th-executions"><div className="th-label">Executions</div><table><thead><tr>{['Action', 'Side', 'Time', 'Price', 'Volume', 'Commission', 'Swap', 'P&L'].map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{['Open', 'Close'].map(action => <tr key={action}><td><span className={action === 'Open' ? 'th-profit' : ''}>{action}</span></td><td>{(action === 'Open') === (t.direction === 'Long') ? 'Buy' : 'Sell'}</td><td>{formatHistoryDate(action === 'Open' ? t.open_time : t.close_time)}</td><td>{money(action === 'Open' ? t.entry_price : t.exit_price)}</td><td>{t.lot_size}</td><td>{action === 'Open' ? '—' : columnText(t, 'commission')}</td><td>{action === 'Open' ? '—' : columnText(t, 'swap')}</td><td>{action === 'Open' ? '—' : <Cell trade={t} column="pnl" />}</td></tr>)}</tbody></table></div></td></tr>}
+      {pageTrades.map(t => <Fragment key={t.id}><tr className="th-trade-row"><td className="th-select-cell"><div><input aria-label={`Select trade ${t.id}`} type="checkbox" checked={selected.has(t.id)} onChange={() => setSelected(toggle(selected, t.id))} /><button aria-label={`Executions for ${t.symbol} ${formatHistoryDate(t.close_time, timezone)}`} aria-expanded={expanded.has(t.id)} onClick={() => setExpanded(toggle(expanded, t.id))}>{expanded.has(t.id) ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</button></div></td>{columns.map(id => <td key={id}><Cell trade={t} column={id} /></td>)}<td>{actions(t)}</td></tr>
+        {expanded.has(t.id) && <tr><td colSpan={columns.length + 2} className="th-executions-cell"><div className="th-executions"><div className="th-label">Executions</div><table><thead><tr>{['Action', 'Side', 'Time', 'Price', 'Volume', 'Commission', 'Swap', 'P&L'].map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{['Open', 'Close'].map(action => <tr key={action}><td><span className={action === 'Open' ? 'th-profit' : ''}>{action}</span></td><td>{(action === 'Open') === (t.direction === 'Long') ? 'Buy' : 'Sell'}</td><td>{formatHistoryDate(action === 'Open' ? t.open_time : t.close_time, timezone)}</td><td>{money(action === 'Open' ? t.entry_price : t.exit_price)}</td><td>{t.lot_size}</td><td>{action === 'Open' ? '—' : columnText(t, 'commission')}</td><td>{action === 'Open' ? '—' : columnText(t, 'swap')}</td><td>{action === 'Open' ? '—' : <Cell trade={t} column="pnl" />}</td></tr>)}</tbody></table></div></td></tr>}
       </Fragment>)}
       {!pageTrades.length && <tr><td colSpan={columns.length + 2} className="th-empty"><Activity size={40} /><p>{trades.length ? 'No trades match the selected filters.' : 'No trades yet. Click "+ Add Trade" to get started.'}</p></td></tr>}
     </tbody></table></div>

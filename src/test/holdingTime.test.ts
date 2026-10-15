@@ -49,6 +49,6 @@ describe('holding time across trade records', () => {
     expect(exportHistoryRows([t], ['duration'])[1][0]).toBe(row['Holding duration']);
     expect(row['Opening time']).toBe(tradeTimeParts(t.open_time).time);
     expect(row['Closing date']).toBe(tradeTimeParts(t.close_time).date);
-    expect(row['Display timezone']).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    expect(row['Display timezone']).toBe('Asia/Kolkata');
   });
 });

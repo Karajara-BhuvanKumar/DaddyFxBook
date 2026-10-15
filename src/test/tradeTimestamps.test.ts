@@ -4,7 +4,7 @@ import { toLocalDateTime, toUtcTimestamp } from '@/lib/tradeTimestamps';
 describe('trade timestamp serialization', () => {
   it('converts wall-clock input to an absolute timestamp', () => {
     const local = '2026-10-05T18:16';
-    expect(toUtcTimestamp(local)).toBe(new Date(2026, 9, 5, 18, 16).toISOString());
+    expect(toUtcTimestamp(local)).toBe('2026-10-05T12:46:00.000Z');
     expect(toLocalDateTime(toUtcTimestamp(local))).toBe(local);
   });
   it('preserves seconds, milliseconds and the original instant for an unchanged edit', () => {

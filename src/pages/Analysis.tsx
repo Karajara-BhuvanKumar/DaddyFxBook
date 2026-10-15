@@ -61,7 +61,7 @@ export function AnalysisView({ trades, allJournals, isLoading = false, initialDa
   const [timePeriod, setTimePeriod] = useState<'Today' | '7 Days' | '30 Days' | '3 Months' | '1 Year' | 'All Time'>('30 Days');
   const [filterBy, setFilterBy] = useState<'All Trades' | 'Winners' | 'Losers'>('All Trades');
   const now = new Date(scopeTime);
-  const analysis = useMemo(() => analyzeTrades(trades, allJournals, timePeriod, filterBy, scopeTime), [trades, allJournals, timePeriod, filterBy, scopeTime]);
+  const analysis = useMemo(() => analyzeTrades(trades, allJournals, timePeriod, filterBy, scopeTime, preferences.timezone), [trades, allJournals, timePeriod, filterBy, scopeTime, preferences.timezone]);
   const { includedClosedTrades: filteredTrades, rejected, totalPnl, winners, losers, grossProfit, grossLoss,
     winRate, profitFactor, expectancy, avgWin, avgLoss, bestTrade, worstTrade, winStreak, lossStreak,
     avgHoldAll, avgHoldWinners, avgHoldLosers, longTrades, shortTrades, longPnl, shortPnl, longWinRate, shortWinRate,

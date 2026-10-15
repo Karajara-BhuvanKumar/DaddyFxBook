@@ -1,3 +1,4 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ const POPUP_WIDTH = 360;
 const GAP = 12;
 
 export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) {
+  const { preferences } = useWorkspacePreferences();
   const ref = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -92,7 +94,7 @@ export function DayTradesPopup({ anchorRect, dateStr, trades, onClose }: Props) 
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
-            Trades on {dateLabel} <span className="text-xs font-normal text-muted-foreground">UTC</span>
+            Trades on {dateLabel} <span className="text-xs font-normal text-muted-foreground">{preferences.timezone}</span>
           </h3>
           <p style={{ fontSize: 14, color: "var(--popup-muted)", marginTop: 4 }}>
             {trades.length} {trades.length === 1 ? "trade" : "trades"}

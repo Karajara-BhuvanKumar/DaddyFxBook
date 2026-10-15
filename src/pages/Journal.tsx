@@ -1,3 +1,4 @@
+import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import LoadError from '@/components/LoadError';
@@ -12,10 +13,11 @@ import { emptyStrategySetup, parseStrategySetup, type StrategySetup } from "@/li
 import { cn } from "@/lib/utils";
 import { filterJournalTrades } from '@/lib/journalExport';
 import '@/styles/journal.css';
-import { formatTradeDateTime, formatHoldingDuration, holdingDuration, localTimeZone } from '@/lib/holdingTime';
+import { formatTradeDateTime, formatHoldingDuration, holdingDuration } from '@/lib/holdingTime';
 
 export default function Journal() {
   const { user } = useAuth();
+  const { preferences: { timezone } } = useWorkspacePreferences();
   const tradesQuery = useTrades();
   const { data: trades = [], isLoading: isTradesLoading } = tradesQuery;
   const journalsQuery = useAllJournals();
@@ -30,7 +32,7 @@ export default function Journal() {
   const [sort, setSort] = useState('newest');
   const [mobileEditor, setMobileEditor] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
-  const filters = useMemo(() => ({ search, days, start, end, sort, status: activeTab }), [search, days, start, end, sort, activeTab]);
+  const filters = useMemo(() => ({ search, days, start, end, sort, status: activeTab, timezone }), [search, days, start, end, sort, activeTab, timezone]);
   
   const journaledTradeIds = useMemo(() => new Set(allJournals.map(j => j.trade_id)), [allJournals]);
   const journaledTrades = useMemo(() => trades.filter(t => journaledTradeIds.has(t.id)), [trades, journaledTradeIds]);
@@ -110,14 +112,7 @@ export default function Journal() {
     toast.success('Journal refreshed');
   }
 
-  const formatJournalDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('en-US', { month: 'short' });
-    const year = d.getFullYear();
-    const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-    return `${month} ${day}, ${year}, ${time}`;
-  };
+  const formatJournalDate = (value: string) => formatTradeDateTime(value, timezone);
 
   async function handleSave() {
     if (!selectedId || editorLoading || saving) return;
@@ -329,10 +324,10 @@ export default function Journal() {
               </div>
 
               <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-2xl border border-border bg-secondary/40 p-4 text-xs">
-                <div><dt className="text-muted-foreground mb-1">Open date & time</dt><dd className="font-semibold">{formatTradeDateTime(selectedTrade.open_time)}</dd></div>
-                <div><dt className="text-muted-foreground mb-1">Close date & time</dt><dd className="font-semibold">{formatTradeDateTime(selectedTrade.close_time)}</dd></div>
+                <div><dt className="text-muted-foreground mb-1">Open date & time</dt><dd className="font-semibold">{formatTradeDateTime(selectedTrade.open_time, timezone)}</dd></div>
+                <div><dt className="text-muted-foreground mb-1">Close date & time</dt><dd className="font-semibold">{formatTradeDateTime(selectedTrade.close_time, timezone)}</dd></div>
                 <div><dt className="text-muted-foreground mb-1">Holding duration</dt><dd className="font-semibold">{formatHoldingDuration(holdingDuration(selectedTrade))}</dd></div>
-                <div className="sm:col-span-3 text-muted-foreground">Local time · {localTimeZone()}</div>
+                <div className="sm:col-span-3 text-muted-foreground">{timezone}</div>
               </dl>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
