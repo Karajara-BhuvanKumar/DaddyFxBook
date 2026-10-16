@@ -56,7 +56,7 @@ export function dateBounds(f: HistoryFilters, now: Date, timezone = 'Asia/Kolkat
     case 'All Time': return [-Infinity, Infinity];
     case 'Today': break;
     case 'This Week': start.setUTCDate(start.getUTCDate() - (start.getUTCDay() + 6) % 7); break;
-    case 'Last 30 Days': start.setUTCDate(start.getUTCDate() - 29); break;
+    case 'Last 30 Days': return [+now - 30 * 86400000, +now + 1];
     case 'This Month': start.setUTCDate(1); break;
     case 'Last Month': end.setTime(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1)); start.setUTCDate(1); start.setUTCMonth(start.getUTCMonth() - 1); break;
     case 'Last 3 Months': {
