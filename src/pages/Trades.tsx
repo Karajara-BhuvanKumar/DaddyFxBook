@@ -1,5 +1,6 @@
 import { useWorkspacePreferences } from '@/contexts/WorkspacePreferencesContext';
 import TradeDateTimePicker from '@/components/TradeDateTimePicker';
+import UtcToIstConverter from '@/components/UtcToIstConverter';
 import { formatHoldingDuration } from '@/lib/holdingTime';
 import LoadError from '@/components/LoadError';
 import { useState, useMemo, useEffect } from "react";
@@ -96,12 +97,15 @@ export default function Trades() {
   return (
     <div className="trades-page space-y-6 md:space-y-8 overflow-guard">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="page-title text-foreground hidden lg:block">Trades</h1>
-          <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
-            <span className="w-2 h-2 rounded-full bg-zinc-600" />
-            <span className="text-[13px] text-muted-foreground dark:text-zinc-500 font-semibold tracking-wide">Manual trade entry</span>
+        <div className="flex items-center justify-between gap-3 lg:justify-start">
+          <div>
+            <h1 className="page-title text-foreground hidden lg:block">Trades</h1>
+            <div className="flex items-center gap-2 mt-0 lg:mt-1.5">
+              <span className="w-2 h-2 rounded-full bg-zinc-600" />
+              <span className="text-[13px] text-muted-foreground dark:text-zinc-500 font-semibold tracking-wide">Manual trade entry</span>
+            </div>
           </div>
+          <UtcToIstConverter />
         </div>
         <div className="trades-page-actions flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
           <button disabled title="Broker sync is not available yet. Add trades manually." className="touch-target disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[20px] font-bold text-[13px] transition-all duration-200">
