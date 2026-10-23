@@ -1,0 +1,46 @@
+/* Scoped to the converter: existing trade date/time pickers retain their behavior. */
+.utc-converter.trade-time-picker {
+  --picker-accent:hsl(var(--primary)); width:350px; padding:14px;
+  max-width:calc(100vw - 24px); max-height:var(--radix-popover-content-available-height);
+  border-radius:22px; box-shadow:0 4px 18px #0002; overscroll-behavior:contain;
+}
+.utc-converter-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.utc-converter-heading h2 { font-size:14px; font-weight:750; }
+.utc-converter-zone { margin:0 0 16px; font-size:11px; color:var(--picker-muted); }
+.utc-paste-row { display:flex; gap:8px; }
+.utc-date-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
+.utc-date-trigger { display:flex; align-items:center; gap:8px; min-height:48px; text-align:left; font-size:12px; font-weight:650; }
+.utc-date-trigger svg { color:var(--picker-muted); flex-shrink:0; }
+.utc-date-trigger small { display:block; font-size:10px; font-weight:500; color:var(--picker-muted); }
+.utc-now { min-height:44px; font-size:11px; color:hsl(var(--primary)); text-align:right; }
+.utc-converter-hint { margin:8px 0 14px; min-height:32px; font-size:11px; line-height:1.5; }
+.utc-converter-result { border:1px solid hsl(var(--border)); background:var(--picker-control); padding:12px; border-radius:16px; }
+.utc-result-row { display:flex; align-items:center; justify-content:space-between; gap:4px; }
+.utc-result-row output { min-width:0; display:block; user-select:text; }
+.utc-result-row strong { display:block; font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.8; overflow-wrap:anywhere; }
+.utc-result-row output > span { display:flex; gap:6px; flex-wrap:wrap; align-items:center; color:var(--picker-muted); font-size:11px; }
+.utc-result-row b { border:1px solid hsl(var(--primary) / .25); border-radius:6px; padding:2px 5px; color:hsl(var(--primary)); font-size:10px; font-weight:600; }
+.utc-copy-full { min-height:44px; margin-top:6px; font-size:11px; color:hsl(var(--primary)); }
+.utc-copy-full:disabled { color:var(--picker-muted); opacity:.5; cursor:not-allowed; }
+.utc-picker-back { margin:0 0 10px; }
+.utc-picker-back button { display:flex; align-items:center; gap:4px; min-height:44px; font-size:12px; color:var(--picker-muted); }
+.utc-converter .trade-calendar-selected,
+.utc-converter .trade-calendar-selected:hover { color:hsl(var(--primary-foreground)); box-shadow:none; outline:1px solid var(--picker-accent); outline-offset:2px; }
+.utc-converter .trade-time-done { background:var(--picker-accent); color:hsl(var(--primary-foreground)); border-radius:16px; }
+.utc-converter .trade-time-done:hover { background:hsl(var(--primary) / .9); }
+.utc-converter .trade-time-done:disabled { opacity:.4; cursor:not-allowed; }
+.utc-converter .trade-time-heading { font-size:14px; }
+.utc-converter .trade-time-heading button { min-height:44px; }
+.utc-converter .trade-time-shortcuts button { min-height:44px; }
+.utc-converter .trade-time-caption { margin:20px 0 16px; }
+.utc-converter .utc-time-clock { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)) minmax(48px,.9fr); gap:12px; padding:0 0 18px; }
+.utc-converter .trade-time-unit { width:100%; gap:6px; min-width:0; }
+.utc-converter .trade-time-unit button { width:100%; height:44px; }
+.utc-converter .trade-time-unit input { width:100%; font-size:30px; height:42px; }
+.utc-converter .trade-time-unit:not(:nth-child(3))::after { content:':'; position:absolute; top:49px; right:-10px; font-size:26px; color:var(--picker-muted); font-weight:750; }
+.utc-converter .trade-time-period { min-width:0; width:100%; padding:10px 2px; margin-top:-22px; font-size:14px; }
+.utc-unit-label { color:var(--picker-muted); font-size:10px; font-weight:600; }
+@media(max-width:639px) {
+  .utc-converter .trade-time-unit input { font-size:28px; }
+  .utc-converter .trade-time-heading { font-size:12px; }
+}
